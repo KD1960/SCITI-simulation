@@ -14,7 +14,7 @@ All shell commands run from the project root: `cd "$HOME/Claude/Projects/SCITI s
 - **Road/Rail** allowed only when lane distance < 2,500 miles; mode shares renormalized.
 - **Production targets:** finished-goods cover of `fg_cover_weeks` (default 2) of forecast, net of backlog owed.
 - **Forecast:** exponential smoothing (α) of the observed signal. Observed = orders received (retail: demand), blended with end-customer demand by `visibility`. Forecast used for ordering = `(1−w)·ES + w·expected`, where `w = forecast_skill` and `expected` is the demand model's propagated expectation for next week. Forecast SD = `1.25 · smoothed |error| · (1 − w/2)`.
-- **Ordering:** `order = max(0, f·(L+1) + z·σ·sqrt(L+1) − position)`, `z = NormalDist().inv_cdf(target_service_level) + z_boost`. Position = recorded stock (true stock × (1 + N(0, record_error_sd)), floored at 0) + in-transit to me + backlog owed to me − backlog I owe (DC only).
+- **Ordering:** `order = max(0, f·(L+1) + z·σ·sqrt(L+1) − position)`, `z = NormalDist().inv_cdf(target_service_level) + z_boost`. Position = recorded stock (true stock × (1 + N(0, record_error_sd)), floored at 0) + in-transit to me + backlog owed to me − net backlog I owe downstream in input units (DC: owed products; MFG: max(0, owed products − finished stock) × BOM units; CM: max(0, owed sku − sku stock)). Amended 2026-09-12 after Task 6 review (Kevin approved): the DC-only rule let MFG backlog grow without limit.
 - **Quality** (network, weekly) = 1 − escaped defects ÷ units received at CMs; carries forward in weeks with no CM receipts.
 
 ---
