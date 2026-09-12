@@ -1,0 +1,105 @@
+# SCITI 1 MVP technology catalog. All effect sizes and costs are assumptions (spec §6, §9.7).
+- id: ml_forecast
+  name: ML demand forecasting
+  observatory_name: ML demand forecasting
+  eligible_roles: [Retail, DC, MFG]
+  cost_one_time: {Retail: 400000, DC: 600000, MFG: 900000}
+  cost_per_week: {Retail: 4000, DC: 6000, MFG: 9000}
+  setup_weeks: 8
+  network_requirement: solo
+  group_bonus: 0.25
+  effects: [{param: forecast_skill, op: add, value: 0.3}]
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: control_tower
+  name: Supply chain control tower
+  observatory_name: Supply chain control towers
+  eligible_roles: [Supplier, CM, MFG, DC, Retail]
+  cost_one_time: {Supplier: 150000, CM: 500000, MFG: 1200000, DC: 700000, Retail: 250000}
+  cost_per_week: {Supplier: 1500, CM: 5000, MFG: 12000, DC: 7000, Retail: 2500}
+  setup_weeks: 12
+  network_requirement: chain
+  group_bonus: 0.25
+  effects: [{param: visibility, op: add, value: 1.0}]
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: rfid
+  name: Item-level RFID
+  observatory_name: Item-level RFID
+  eligible_roles: [CM, MFG, DC, Retail]
+  cost_one_time: {CM: 300000, MFG: 500000, DC: 400000, Retail: 200000}
+  cost_per_week: {CM: 3000, MFG: 5000, DC: 4000, Retail: 2000}
+  setup_weeks: 6
+  network_requirement: solo
+  group_bonus: 0.25
+  effects:
+    - {param: record_error_sd, op: mul, value: 0.2}
+    - {param: shrink_rate, op: mul, value: 0.5}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: aps
+  name: Advanced planning and scheduling
+  observatory_name: Advanced planning and scheduling
+  eligible_roles: [CM, MFG]
+  cost_one_time: {CM: 600000, MFG: 1500000}
+  cost_per_week: {CM: 6000, MFG: 15000}
+  setup_weeks: 10
+  network_requirement: solo
+  group_bonus: 0.25
+  effects: [{param: capacity_mult, op: add, value: 0.08}]
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: routing
+  name: Vehicle routing and path optimization
+  observatory_name: Vehicle routing and path optimization
+  eligible_roles: [CM, MFG, DC]
+  cost_one_time: {CM: 200000, MFG: 400000, DC: 300000}
+  cost_per_week: {CM: 2000, MFG: 4000, DC: 3000}
+  setup_weeks: 4
+  network_requirement: solo
+  group_bonus: 0.25
+  effects:
+    - {param: ship_cost_mult, op: mul, value: 0.92}
+    - {param: co2_mult, op: mul, value: 0.90}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: wh_robotics
+  name: Warehouse robotics
+  observatory_name: Warehouse robotics
+  eligible_roles: [DC]
+  cost_one_time: {DC: 2500000}
+  cost_per_week: {DC: 15000}
+  setup_weeks: 16
+  network_requirement: solo
+  group_bonus: 0.25
+  effects:
+    - {param: handling_cost_per_unit, op: mul, value: 0.8}
+    - {param: dispatch_delay_days, op: add, value: -1.0}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: blockchain
+  name: Blockchain traceability
+  observatory_name: Blockchain traceability
+  eligible_roles: [Supplier, CM, MFG]
+  cost_one_time: {Supplier: 100000, CM: 300000, MFG: 500000}
+  cost_per_week: {Supplier: 1000, CM: 3000, MFG: 5000}
+  setup_weeks: 8
+  network_requirement: pair
+  group_bonus: 0.25
+  effects: [{param: defect_mult, op: mul, value: 0.6}]
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
+- id: risk_intel
+  name: Supply chain risk intelligence
+  observatory_name: Supply chain risk intelligence
+  eligible_roles: [CM, MFG, DC]
+  cost_one_time: {CM: 250000, MFG: 500000, DC: 300000}
+  cost_per_week: {CM: 2500, MFG: 5000, DC: 3000}
+  setup_weeks: 4
+  network_requirement: solo
+  group_bonus: 0.25
+  effects:
+    - {param: recovery_mult, op: mul, value: 0.6}
+    - {param: early_warning_weeks, op: add, value: 2.0}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
