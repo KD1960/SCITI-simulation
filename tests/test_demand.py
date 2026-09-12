@@ -48,3 +48,27 @@ def test_growth_mult_scales_future(baseline):
     lo = DemandModel.from_baseline(baseline, 0.15, growth_mult=0.0)
     hi = DemandModel.from_baseline(baseline, 0.15, growth_mult=2.0)
     assert hi.expected("Retail_1", "A", 150) > lo.expected("Retail_1", "A", 150)
+
+
+def test_ar1_first_week_stationary():
+    """AR(1) noise should start at stationary variance, not zero."""
+    from sciti.data.demand import SeriesFit
+    # Hand-made fit with high autocorrelation (φ = 0.8) and resid_sd = 0.5
+    fit = SeriesFit(level=1000.0, growth=0.0, season=[1.0] * 52, resid_sd=0.5, phi=0.8, n_hist=260)
+    m = DemandModel({("R", "P"): fit}, growth_mult=1.0)
+    k = ("R", "P")
+
+    # Generate 4 weeks for ~4000 seeds; use multiple independent RNG calls
+    weeks = 4
+    n_seeds = 4000
+    week_1_means = []
+    for seed in range(n_seeds):
+        gen = m.generate(weeks, np.random.default_rng(seed))
+        week_1_means.append(gen[k][0])
+
+    week_1_mean = np.mean(week_1_means)
+    expected_week_1 = fit.level * fit.season[0]  # growth=0, so trend = 1; season[260%52]=season[0]=1.0
+
+    # Mean should be within 3% of expected
+    assert week_1_mean == pytest.approx(expected_week_1, rel=0.03), \
+        f"week_1_mean={week_1_mean}, expected={expected_week_1}, diff={abs(week_1_mean - expected_week_1) / expected_week_1:.3%}"

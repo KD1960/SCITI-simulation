@@ -60,9 +60,10 @@ class DemandModel:
             f = self.fits[key]
             z = rng.standard_normal(weeks)
             e = np.empty(weeks)
-            prev = 0.0
             scale = np.sqrt(1 - f.phi ** 2) * f.resid_sd
-            for t in range(weeks):
+            e[0] = f.resid_sd * z[0]
+            prev = e[0]
+            for t in range(1, weeks):
                 prev = f.phi * prev + scale * z[t]
                 e[t] = prev
             mean = np.array([self.expected(*key, w) for w in range(1, weeks + 1)])
