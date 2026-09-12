@@ -69,6 +69,49 @@ def test_parse_demand_shapes():
     assert len(hist["Retail_8"]["C"]) == 104
 
 
+def test_prepare_missing_sentiment_score_column(tmp_path):
+    import openpyxl
+    # Build minimal workbook with all sheets but missing Sentiment Score
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    # Glossary sheet (minimal)
+    gs = wb.create_sheet("Glossary")
+    gs.append([None] * 5)
+    gs.append([None] * 5)
+    for i in range(10):
+        gs.append(["Component", None, f"SKU_{i}", "x", 10])
+
+    # Supplier Data sheet (missing Sentiment Score in columns A:L)
+    ss = wb.create_sheet("Supplier Data")
+    # Columns A:L with all required columns EXCEPT Sentiment Score
+    ss.append(["Supplier", "Lead Time", "Product Name", "x", "x", "x", "x", "x", "x", "x", "x", "x"])
+    ss.append(["Supplier 1", 10, "SR_MCU", "", "", "", "", "", "", "", "", ""])
+
+    # Shipment sheet (with proper header structure)
+    header = ["Shipment_ID", "Ship_Date", "a", "b", "c", "d", "e", "Mode", "Distance (Miles)",
+              "Lead Time (days)", "Quantity", "Shipping Cost/Unit", "Total_Cost", "CO2 Emissions (kg)"]
+    hs = wb.create_sheet("Shipment_CM_MFG_DC_Retailers")
+    hs.append(header + [None] + header + [None] + header)
+
+    # Demand sheet
+    ds = wb.create_sheet("Demand_Retailer")
+    ds.append([None] * 27)
+    ds.append([None] * 27)
+    ds.append([None] * 27)
+    ds.append([None] * 27)
+    ds.append([2020, 1, "Q1"] + [100.0] * 24)
+
+    xlsx_path = tmp_path / "missing_col.xlsx"
+    wb.save(xlsx_path)
+
+    with pytest.raises(ValueError) as exc_info:
+        loader.prepare(xlsx_path, tmp_path)
+    err_msg = str(exc_info.value)
+    assert "Supplier Data" in err_msg
+    assert "Sentiment Score" in err_msg
+
+
 @pytest.mark.realdata
 @pytest.mark.skipif(not XLSX.exists(), reason="workbook not on this machine")
 def test_prepare_real_workbook(tmp_path):

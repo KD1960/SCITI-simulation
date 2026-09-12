@@ -114,6 +114,39 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+def _check_columns(xlsx: Path) -> None:
+    """Validate that required columns exist. Stops before any parsing."""
+    missing = []
+
+    # Check Supplier Data transaction columns (A:L)
+    try:
+        tx_df = pd.read_excel(xlsx, sheet_name="Supplier Data", nrows=0)
+    except Exception:
+        return  # let parsing errors surface later
+    req_tx = ["Lead Time", "Supplier", "Product Name", "Sentiment Score"]
+    for col in req_tx:
+        if col not in tx_df.columns:
+            missing.append(("Supplier Data", col))
+
+    # Check shipment lane header columns
+    try:
+        ship_df = pd.read_excel(xlsx, sheet_name="Shipment_CM_MFG_DC_Retailers", header=None, nrows=1)
+    except Exception:
+        return
+    req_cols = ["Mode", "Distance (Miles)", "Lead Time (days)", "Shipping Cost/Unit"]
+    for start in [0, 15, 30]:
+        if start + 14 <= len(ship_df.columns):
+            lane_cols = [ship_df.iloc[0, start + i] for i in range(14)]
+            for col in req_cols:
+                if col not in lane_cols:
+                    missing.append(("Shipment_CM_MFG_DC_Retailers", col))
+                    break
+
+    if missing:
+        msg = "Workbook is missing columns: " + "; ".join(f"({sheet}, {col})" for sheet, col in missing)
+        raise ValueError(msg)
+
+
 def prepare(xlsx: Path, out_dir: Path) -> dict:
     xlsx, out_dir = Path(xlsx), Path(out_dir)
     required = ["Glossary", "Supplier Data", "Shipment_CM_MFG_DC_Retailers", "Demand_Retailer"]
@@ -121,6 +154,7 @@ def prepare(xlsx: Path, out_dir: Path) -> dict:
     missing = [s for s in required if s not in present]
     if missing:
         raise ValueError(f"Workbook is missing sheets: {missing}")
+    _check_columns(xlsx)
     report = ["# Validation report", "", f"Source: `{xlsx}`", ""]
     bom = parse_bom(pd.read_excel(xlsx, sheet_name="Glossary", header=None))
     if sorted(bom) != sorted(SKUS) or sum(v["units"] for v in bom.values()) != 160:
