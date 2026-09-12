@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-12 (Task 1 done)
+**Last updated:** 2026-09-12 (Part A done: Tasks 1–5)
 **Phase:** Building on branch `sciti-mvp` with subagent-driven development. Ledger: `.superpowers/sdd/2026-09-12-sciti-1-partA-data/progress.md` (git-ignored).
-**Next step:** Task 2 (workbook loader).
+**Next step:** Part B, Task 6 (engine core). Part B ledger will be `.superpowers/sdd/2026-09-12-sciti-1-partB-engine/progress.md`.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -88,11 +88,11 @@ Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development
 
 | Task | Part | Status |
 |---|---|---|
-| 1 Scaffold, config, RNG | A | done (ba198c7, branch sciti-mvp) |
-| 2 Workbook loader | A | not started |
-| 3 Demand model | A | not started |
-| 4 Network builder | A | not started |
-| 5 Tech catalog + effects | A | not started |
+| 1 Scaffold, config, RNG | A | done (ba198c7) |
+| 2 Workbook loader | A | done (99bdbc7..00801e8; added required-column check per Kevin) |
+| 3 Demand model | A | done (d1765e5..14e8677; fixed AR(1) start bias) |
+| 4 Network builder | A | done (9b2a1e8) |
+| 5 Tech catalog + effects | A | done (286def4) |
 | 6 Engine core | B | not started |
 | 7 Disruptions | B | not started |
 | 8 Invariant checks | B | not started |
@@ -109,6 +109,12 @@ Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development
 | 19 Dashboard + final verification | D | not started |
 
 Update this table and the "Last updated" line as each task lands.
+
+**Part A notes (2026-09-12):**
+- 31 tests pass. `data/baseline.json` and `data/validation_report.md` were built from the real workbook (git-ignored).
+- Real data: 20 of 30 suppliers use pooled lead-time spread and defect share; 9 of 24 store×product demand series have autocorrelated noise (so the Task 3 AR(1) fix matters).
+- Kevin's rulings on Task 2 review: add required-column check; keep report-on-success only; supplier/BOM mismatch stays a hard stop.
+- Deferred minor findings for the final review are in the Part A ledger. One to reconcile: spec §6 says ML forecasting cuts error SD ×0.7, but the catalog models it as `forecast_skill +0.3`.
 
 ## 8. Known risks to watch during the build
 
