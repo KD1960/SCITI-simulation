@@ -5,6 +5,7 @@ import math
 
 import numpy as np
 
+from sciti.disruptions import apply_disruptions
 from sciti.engine.economics import propagate, sell_price, unit_value
 from sciti.engine.state import Shipment, SimState, input_key, lane_type, output_items
 from sciti.network import PRODUCTS
@@ -55,6 +56,7 @@ def step_week(s: SimState, t: int) -> None:
         ns = s.nodes[n]
         ns.reset_week()
         ns.params = effective_params(n, t, s.holdings, s.catalog, s.net, s.base[n])
+    apply_disruptions(s, t)
     _arrivals(s, t)
     _retail_sales(s, t)
     _production(s)
