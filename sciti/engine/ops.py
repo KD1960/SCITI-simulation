@@ -1,0 +1,257 @@
+"""Weekly operations in the fixed order of spec §5.3."""
+from __future__ import annotations
+
+import math
+
+import numpy as np
+
+from sciti.engine.economics import propagate, sell_price, unit_value
+from sciti.engine.state import Shipment, SimState, input_key, lane_type, output_items
+from sciti.network import PRODUCTS
+from sciti.tech.effects import effective_params
+
+SHORT_HAUL_MILES = 2500
+
+
+def order_up_to(forecast: float, sigma: float, lead_weeks: float, z: float, position: float) -> float:
+    L = lead_weeks + 1
+    return max(0.0, forecast * L + z * sigma * math.sqrt(L) - position)
+
+
+def ration(available: float, owed: dict[str, float]) -> dict[str, float]:
+    total = sum(owed.values())
+    if total <= 0:
+        return {b: 0.0 for b in sorted(owed)}
+    f = min(1.0, available / total)
+    return {b: owed[b] * f for b in sorted(owed)}
+
+
+def build_qty(parts: dict[str, float], bom: dict[str, int], capacity: float, target: float) -> float:
+    feasible = min(parts.get(sku, 0.0) / u for sku, u in bom.items())
+    return max(0.0, min(feasible, capacity, target))
+
+
+def allowed_modes(mix: dict[str, float], miles: float) -> dict[str, float]:
+    ok = {m: w for m, w in mix.items() if m not in ("Road", "Rail") or miles < SHORT_HAUL_MILES}
+    if not ok:
+        return {"Air": 1.0}
+    total = sum(ok.values())
+    return {m: ok[m] / total for m in sorted(ok)}
+
+
+def sample_lane(stats: dict, miles: float, rng) -> tuple[str, float, float, float]:
+    mix = allowed_modes(stats["mode_mix"], miles)
+    names = sorted(mix)
+    mode = names[int(rng.choice(len(names), p=[mix[m] for m in names]))]
+    m = stats["modes"][mode]
+    quote = max(1.0, m["lead_a"] + m["lead_b"] * miles)
+    lead = max(1.0, quote + m["lead_resid_sd"] * float(rng.standard_normal()))
+    return mode, lead, quote, m["cost_per_unit"]
+
+
+def step_week(s: SimState, t: int) -> None:
+    s.week = t
+    for n in s.net.order:
+        ns = s.nodes[n]
+        ns.reset_week()
+        ns.params = effective_params(n, t, s.holdings, s.catalog, s.net, s.base[n])
+    _arrivals(s, t)
+    _retail_sales(s, t)
+    _production(s)
+    _forecast_and_order(s, t)
+    _shipping(s, t)
+    _close_week(s)
+
+
+def _arrivals(s: SimState, t: int) -> None:
+    catch = s.cfg.assumptions.inspection_catch
+    keep = []
+    for sh in s.in_transit:
+        if sh.arrive_week != t:
+            keep.append(sh)
+            continue
+        dst = s.nodes[sh.dst]
+        caught = sh.defective * catch
+        dst.add(input_key(dst.role, sh.item), sh.units - caught)
+        dst.counts["received"] += sh.units
+        dst.counts["defects_caught"] += caught
+        dst.counts["defects_escaped"] += sh.defective - caught
+        dst.ledger["purchases"] += sh.value
+        dst.ledger["shipping"] += sh.cost
+        dst.ledger["scrap"] += caught * (sh.value / sh.units if sh.units else 0.0)
+        s.arrived.append(sh)
+    s.in_transit = keep
+
+
+def _retail_sales(s: SimState, t: int) -> None:
+    A, pr = s.cfg.assumptions, s.prices
+    for r in s.net.by_role("Retail"):
+        ns = s.nodes[r]
+        for p in PRODUCTS:
+            d = float(s.demand[(r, p)][t - 1])
+            sold = min(ns.stock[p], d)
+            ns.remove(p, sold)
+            ns.orders_in[p] = d
+            ns.counts["demand"] += d
+            ns.counts["sales"] += sold
+            ns.counts["lost"] += d - sold
+            ns.ledger["revenue"] += sold * pr["retail"]
+            ns.ledger["stockout"] += (d - sold) * (pr["retail"] - pr["dc"] + A.goodwill_penalty_per_unit)
+
+
+def _fg_target(ns, item, cover) -> float:
+    return max(0.0, ns.forecast[item] * cover - (ns.stock[item] - ns.owed_total(item)))
+
+
+def _production(s: SimState) -> None:
+    A, net = s.cfg.assumptions, s.net
+    for n in net.order:
+        ns = s.nodes[n]
+        cf = ns.capacity_factor * ns.params["capacity_mult"]
+        if ns.role == "Supplier":
+            sku = net.nodes[n].skus[0]
+            q = min(ns.capacity[sku] * cf, _fg_target(ns, sku, A.fg_cover_weeks))
+            ns.add(sku, q)
+            ns.counts["built"] += q
+            ns.ledger["cogs"] += q * s.prices["supplier"][n] * A.supplier_cogs_share
+        elif ns.role == "CM":
+            for sku in net.nodes[n].skus:
+                q = min(ns.capacity[sku] * cf, ns.stock[f"RAW:{sku}"], _fg_target(ns, sku, A.fg_cover_weeks))
+                ns.remove(f"RAW:{sku}", q)
+                ns.add(sku, q)
+                ns.counts["built"] += q
+        elif ns.role == "MFG":
+            targets = {p: _fg_target(ns, p, A.fg_cover_weeks) for p in PRODUCTS}
+            tt = sum(targets.values())
+            total = build_qty({k: ns.stock[k] for k in net.bom}, net.bom, ns.capacity["BUILD"] * cf, tt)
+            for sku, u in net.bom.items():
+                ns.remove(sku, total * u)
+                ns.consumed[sku] = total * u
+            if total > 0:
+                for p in PRODUCTS:
+                    ns.add(p, total * targets[p] / tt)
+            ns.counts["built"] += total
+
+
+def _needs(s: SimState, n: str, exp_next: dict) -> list[tuple[str, list[tuple[str, float]], float, float]]:
+    """(item to order, [(source, share)], forecast, sigma) for one buyer."""
+    net, ns = s.net, s.nodes[n]
+    w = ns.params["forecast_skill"]
+    blend = lambda item: (1 - w) * ns.forecast[item] + w * exp_next[n][item]
+    sig = lambda e: 1.25 * e * (1 - w / 2)
+    if ns.role in ("Retail", "DC"):
+        srcs = sorted(net.source_share[n].items())
+        return [(p, srcs, blend(p), sig(ns.err[p])) for p in PRODUCTS]
+    if ns.role == "MFG":
+        f_prod = sum(blend(p) for p in PRODUCTS)
+        e_prod = math.sqrt(sum(ns.err[p] ** 2 for p in PRODUCTS))
+        return [(sku, [(net.cm_of[sku], 1.0)], f_prod * u, sig(e_prod) * u) for sku, u in net.bom.items()]
+    out = []
+    for sku in net.nodes[n].skus:
+        sups = net.suppliers_of[sku]
+        out.append((sku, [(x, 1.0 / len(sups)) for x in sups], blend(sku), sig(ns.err[sku])))
+    return out
+
+
+def _forecast_and_order(s: SimState, t: int) -> None:
+    net, A = s.net, s.cfg.assumptions
+    alpha = A.smoothing_alpha
+    actual = propagate(net, {k: float(s.demand[k][t - 1]) for k in sorted(s.demand)})
+    exp_next = s.flows[t]
+    rng = s.streams["ops"]
+    pipe: dict[tuple[str, str], float] = {}
+    for sh in s.in_transit:
+        pipe[(sh.dst, sh.item)] = pipe.get((sh.dst, sh.item), 0.0) + sh.units
+    for n in reversed(net.order):
+        ns = s.nodes[n]
+        v = 0.0 if ns.role == "Retail" else ns.params["visibility"]
+        for item in sorted(ns.forecast):
+            obs = (1 - v) * ns.orders_in[item] + v * actual[n][item]
+            prev = ns.forecast[item]
+            ns.err[item] = alpha * abs(obs - prev) + (1 - alpha) * ns.err[item]
+            ns.forecast[item] = alpha * obs + (1 - alpha) * prev
+        if ns.role == "Supplier":
+            continue
+        z = s.z + ns.z_boost
+        for item, srcs, fc, sigma in _needs(s, n, exp_next):
+            key = input_key(ns.role, item)
+            recorded = max(0.0, ns.stock.get(key, 0.0) * (1 + ns.params["record_error_sd"] * float(rng.standard_normal())))
+            owed_to_me = sum(s.nodes[src].owed.get(n, {}).get(item, 0.0) for src, _ in srcs)
+            owed_by_me = ns.owed_total(item) if ns.role == "DC" else 0.0
+            position = recorded + pipe.get((n, item), 0.0) + owed_to_me - owed_by_me
+            q = order_up_to(fc, sigma, s.lead_weeks[(n, item)], z, position)
+            if q <= 0:
+                continue
+            for src, share in srcs:
+                seller = s.nodes[src]
+                seller.owed.setdefault(n, {})
+                seller.owed[n][item] = seller.owed[n].get(item, 0.0) + q * share
+                seller.orders_in[item] += q * share
+            ns.counts["orders_placed"] += q
+
+
+def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int) -> Shipment:
+    sn = s.nodes[src]
+    P = sn.params
+    miles = s.net.miles(src, dst)
+    rng = s.streams["lead"]
+    defective = 0.0
+    if sn.role == "Supplier":
+        sup = s.baseline["suppliers"][src]
+        quote = sup["lead_days"]
+        lead = max(1.0, quote + sup["lead_sd_days"] * float(rng.standard_normal()))
+        mode, cpu, co2 = "Supplier", 0.0, 0.0
+        defective = q * min(1.0, sup["defect_share"] * P["defect_mult"])
+    else:
+        mode, lead, quote, cpu = sample_lane(s.baseline["lanes"][lane_type(sn.role)], miles, rng)
+        co2 = q * s.baseline["co2_ton_per_unit"] * miles * s.baseline["co2_factors"][mode] * P["co2_mult"]
+    lead += P["dispatch_delay_days"] + sn.extra_lead_days
+    quote += s.base[src]["dispatch_delay_days"]
+    sh = Shipment(id=s.next_id, src=src, dst=dst, item=item, units=q, mode=mode, ship_week=t,
+                  due_week=t + max(1, math.ceil(quote / 7)), arrive_week=t + max(1, math.ceil(lead / 7)),
+                  lead_days=lead, miles=miles, cost=q * cpu * P["ship_cost_mult"], co2=co2,
+                  value=q * sell_price(s.prices, s.net, src, item), defective=defective)
+    s.next_id += 1
+    return sh
+
+
+def _shipping(s: SimState, t: int) -> None:
+    for n in s.net.order:
+        ns = s.nodes[n]
+        if ns.role == "Retail":
+            continue
+        for item in output_items(s.net, n):
+            owed = {b: ns.owed[b].get(item, 0.0) for b in sorted(ns.owed) if ns.owed[b].get(item, 0.0) > 0}
+            if not owed:
+                continue
+            for b, q in ration(ns.stock[item], owed).items():
+                if q <= 1e-9:
+                    continue
+                ns.remove(item, q)
+                ns.owed[b][item] -= q
+                sh = make_shipment(s, n, b, item, q, t)
+                s.in_transit.append(sh)
+                ns.counts["shipped"] += q
+                ns.ledger["revenue"] += sh.value
+                ns.ledger["handling"] += q * ns.params["handling_cost_per_unit"]
+
+
+def _close_week(s: SimState) -> None:
+    rate = s.cfg.assumptions.holding_rate_annual / 52
+    received = escaped = 0.0
+    for n in s.net.order:
+        ns = s.nodes[n]
+        for item in sorted(ns.stock):
+            lost = ns.stock[item] * ns.params["shrink_rate"]
+            val = unit_value(s.prices, s.net, n, item)
+            ns.remove(item, lost)
+            ns.counts["shrink"] += lost
+            ns.ledger["scrap"] += lost * val
+            ns.ledger["holding"] += ns.stock[item] * val * rate
+        for tech_id in sorted(s.holdings.get(n, {})):
+            ns.ledger["tech"] += s.catalog[tech_id].cost_per_week[ns.role]
+        ns.cash += ns.profit()
+        if ns.role == "CM":
+            received += ns.counts["received"]
+            escaped += ns.counts["defects_escaped"]
+    s.quality.append(1 - escaped / received if received > 0 else s.quality[-1])

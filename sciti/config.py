@@ -71,6 +71,9 @@ class Assumptions(Strict):
         default_factory=lambda: {"fill_rate": 0.5, "on_time": 0.3, "quality": 0.2})
     persona_budget_share: tuple[float, float] = (0.02, 0.10)
     persona_horizon_weeks: tuple[int, int] = (26, 104)
+    supplier_cogs_share: float = 0.7
+    fg_cover_weeks: float = 2.0
+    initial_cash_weeks: float = 13.0
 
 
 class ChecksCfg(Strict):
