@@ -119,28 +119,22 @@ def _check_columns(xlsx: Path) -> None:
     missing = []
 
     # Check Supplier Data transaction columns (A:L)
-    try:
-        tx_df = pd.read_excel(xlsx, sheet_name="Supplier Data", nrows=0)
-    except Exception:
-        return  # let parsing errors surface later
+    tx_df = pd.read_excel(xlsx, sheet_name="Supplier Data", nrows=0)
     req_tx = ["Lead Time", "Supplier", "Product Name", "Sentiment Score"]
     for col in req_tx:
         if col not in tx_df.columns:
             missing.append(("Supplier Data", col))
 
-    # Check shipment lane header columns
-    try:
-        ship_df = pd.read_excel(xlsx, sheet_name="Shipment_CM_MFG_DC_Retailers", header=None, nrows=1)
-    except Exception:
-        return
+    # Check shipment lane header columns per block
+    ship_df = pd.read_excel(xlsx, sheet_name="Shipment_CM_MFG_DC_Retailers", header=None, nrows=1)
     req_cols = ["Mode", "Distance (Miles)", "Lead Time (days)", "Shipping Cost/Unit"]
-    for start in [0, 15, 30]:
+    block_names = ["cm_mfg", "mfg_dc", "dc_retail"]
+    for block_name, start in zip(block_names, [0, 15, 30]):
         if start + 14 <= len(ship_df.columns):
             lane_cols = [ship_df.iloc[0, start + i] for i in range(14)]
             for col in req_cols:
                 if col not in lane_cols:
-                    missing.append(("Shipment_CM_MFG_DC_Retailers", col))
-                    break
+                    missing.append((f"Shipment_CM_MFG_DC_Retailers[{block_name}]", col))
 
     if missing:
         msg = "Workbook is missing columns: " + "; ".join(f"({sheet}, {col})" for sheet, col in missing)

@@ -112,6 +112,53 @@ def test_prepare_missing_sentiment_score_column(tmp_path):
     assert "Sentiment Score" in err_msg
 
 
+def test_prepare_missing_shipment_block_columns(tmp_path):
+    import openpyxl
+    # Build workbook where all three shipment blocks lack Distance (Miles) and Shipping Cost/Unit
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+
+    # Glossary sheet (minimal)
+    gs = wb.create_sheet("Glossary")
+    gs.append([None] * 5)
+    gs.append([None] * 5)
+    for i in range(10):
+        gs.append(["Component", None, f"SKU_{i}", "x", 10])
+
+    # Supplier Data sheet (complete)
+    ss = wb.create_sheet("Supplier Data")
+    ss.append(["Supplier", "Lead Time", "Product Name", "Sentiment Score", "x", "x", "x", "x", "x", "x", "x", "x"])
+    ss.append(["Supplier 1", 10, "SR_MCU", 1, "", "", "", "", "", "", "", ""])
+
+    # Shipment sheet with blocks missing Distance (Miles) and Shipping Cost/Unit
+    # Each block needs 14 columns, with gaps between blocks
+    header_missing = ["Shipment_ID", "Ship_Date", "a", "b", "c", "d", "e", "Mode", "Lead Time (days)",
+                      "Quantity", "Total_Cost", "CO2 Emissions (kg)", "x", "x"]  # 14 cols
+    hs = wb.create_sheet("Shipment_CM_MFG_DC_Retailers")
+    hs.append(header_missing + [None] + header_missing + [None] + header_missing)
+
+    # Demand sheet
+    ds = wb.create_sheet("Demand_Retailer")
+    ds.append([None] * 27)
+    ds.append([None] * 27)
+    ds.append([None] * 27)
+    ds.append([None] * 27)
+    ds.append([2020, 1, "Q1"] + [100.0] * 24)
+
+    xlsx_path = tmp_path / "missing_shipment_cols.xlsx"
+    wb.save(xlsx_path)
+
+    with pytest.raises(ValueError) as exc_info:
+        loader.prepare(xlsx_path, tmp_path)
+    err_msg = str(exc_info.value)
+    # Verify all missing columns and all block labels are mentioned
+    assert "Distance (Miles)" in err_msg
+    assert "Shipping Cost/Unit" in err_msg
+    assert "cm_mfg" in err_msg
+    assert "mfg_dc" in err_msg
+    assert "dc_retail" in err_msg
+
+
 @pytest.mark.realdata
 @pytest.mark.skipif(not XLSX.exists(), reason="workbook not on this machine")
 def test_prepare_real_workbook(tmp_path):
