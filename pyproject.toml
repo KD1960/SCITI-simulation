@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sciti"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+  "numpy>=2.0",
+  "pandas>=2.2",
+  "openpyxl>=3.1",
+  "pyyaml>=6.0",
+  "pydantic>=2.7",
+  "anthropic>=0.40",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+sciti = "sciti.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sciti*"]
+
+[tool.setuptools.package-data]
+sciti = ["tech/catalog.yaml", "decide/prompts/*.md"]
+
+[tool.pytest.ini_options]
+markers = ["realdata: needs the Ridge Line workbook on disk"]
