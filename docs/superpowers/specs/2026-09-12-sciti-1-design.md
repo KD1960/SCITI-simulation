@@ -27,7 +27,7 @@ This spec covers a **minimum viable product (MVP)**. It is built from the start 
 Workbook sheets:
 
 - `Glossary` — BOM (product → component → sub-component → units).
-- `Supplier Data` — supplier transactions: sub-component, supplier, CM, lead time, unit price, order qty, feedback text, sentiment score (1–3). The sheet is 500,000 rows but mostly `#N/A`; the loader keeps only valid rows.
+- `Supplier Data` — columns A:L are supplier transactions (sub-component, supplier, CM, lead time, unit price, order qty, feedback, sentiment 1–3); the sheet is 250,000 rows but only 500 are valid, covering 10 of 30 suppliers. Columns Q:X rows 2–31 hold a parameter table for all 30 suppliers (nominal lead time, price/unit, BOM units). The loader uses the parameter table for lead time and price, and transactions for lead-time spread and defect share (pooled by sub-component where a supplier has no rows).
 - `Shipment_CM_MFG_DC_Retailers` — three side-by-side shipment tables (CM→MFG, MFG→DC, DC→Retailer): mode, distance, lead time, quantity, cost per unit, CO2.
 - `Demand_Retailer` — weekly demand for Products A, B, C at 8 retailers, 2020–2024 (5 × 52 weeks).
 
@@ -38,7 +38,7 @@ The loader writes every conflict it finds to a validation report (§9). Default 
 | Conflict | Rule |
 |---|---|
 | Doc says `MFG_US`, shipment data says `MFG_LA` | Treat as the same node, canonical id `MFG_US` |
-| Doc's retailer→DC assignment differs from DC→Retailer shipment rows (e.g., Shanghai → São Paulo in data) | Network links follow the **document**. Lane statistics (mode mix, lead time, cost/unit, CO2/unit-mile) come from the **data**, pooled by lane type and mode, scaled by great-circle distance |
+| Doc's retailer→DC assignment differs from DC→Retailer shipment rows (the data spreads all 4 DCs evenly across all 8 retailers) | Network links follow the **document**. Lane statistics (mode mix, lead time, cost/unit, CO2/unit-mile) come from the **data**, pooled by lane type and mode, scaled by great-circle distance |
 | Doc's supplier ranges per sub-component differ slightly from the BOM table (e.g., SR_MCU "Suppliers 1–6" vs "1–3") | Use the BOM table (Table 3): three suppliers per sub-component |
 | A supplier or lane has too few valid rows to estimate a parameter | Fall back to the pooled value for its material family / lane type; flag in the report |
 
@@ -211,7 +211,7 @@ MVP catalog (default effect sizes; all marked `assumption: true`):
 | `ml_forecast` | ML demand forecasting | Retailer, DC, MFG | Forecast error SD ×0.7 | solo |
 | `control_tower` | Supply chain control towers | All | Upstream sees downstream sales, not just orders; bullwhip damped | chain |
 | `rfid` | Item-level RFID | CM, MFG, DC, Retailer | Inventory record error 5% → 1%; shrink −50% | solo |
-| `aps` | Advanced planning and scheduling | CM, MFG | Effective capacity +8%; late builds −30% | solo |
+| `aps` | Advanced planning and scheduling | CM, MFG | Effective capacity +8% | solo |
 | `routing` | Vehicle routing and path optimization | CM, MFG, DC | Shipping cost −8%; CO2 −10% on its outbound lanes | solo |
 | `wh_robotics` | Warehouse robotics | DC | Handling cost −20%; dispatch delay −1 day | solo |
 | `blockchain` | Blockchain traceability | Supplier, CM, MFG | Defect escapes −40% | pair |
@@ -364,7 +364,7 @@ Static HTML/JS (D3 vendored into `view/vendor/`), served by `sciti view RUN_DIR`
 - **Golden run:** a small fixed config with `rules` policy and a fixed seed; `summary.json` must match a committed reference.
 - **Replay test:** run with `mock` policy logging decisions, then `replay`; outputs must match.
 - **Invariant test:** 156-week runs across 5 seeds with `checks.strict: true` must finish clean.
-- **Baseline calibration:** with policy `none`, simulated retailer demand over the first 52 weeks must match the fitted 2024 annual totals within ±5% (mean over 10 seeds), and simulated lane lead times must match the data's lane means within ±10%. Failures are reported, not hidden.
+- **Baseline calibration:** with policy `none`, simulated retailer demand over the first 52 weeks must match the demand model's expected first-year totals within ±5% (mean over 10 seeds), 2024 data projected one year by the fitted trend; and simulated lane lead times must match the data's per-mode means within ±15%. Failures are reported, not hidden.
 - **Adversarial LLM replies** (via mock): malformed JSON, ineligible tech, over-budget adopt, unknown partner, huge reason text — each must be rejected and fall back correctly.
 
 ## 12. MVP success criteria
