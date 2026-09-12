@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-12
-**Phase:** Spec and plan done. No code written yet.
-**Next step:** Start the build at Task 1 (Part A). First, pick how to run it (see §6).
+**Last updated:** 2026-09-12 (Task 1 done)
+**Phase:** Building on branch `sciti-mvp` with subagent-driven development. Ledger: `.superpowers/sdd/2026-09-12-sciti-1-partA-data/progress.md` (git-ignored).
+**Next step:** Task 2 (workbook loader).
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -35,6 +35,8 @@ Git log so far:
 - `94c12e6` Add SCITI 1 design spec
 - `a047d4f` Spec: align data notes, APS effect, calibration test with workbook profile
 - `2458d68` Add SCITI 1 implementation plan (19 tasks in 4 parts)
+- `33b64fa` Add STATUS.md for thread handoff (last commit on `main`)
+- `ba198c7` Task 1: scaffold, strict config schema, named RNG streams (branch `sciti-mvp`)
 
 ## 3. Decisions made (from brainstorming, 2026-09-12)
 
@@ -78,17 +80,15 @@ Later plan-level choices (made during planning; change them if you like):
   - Any paid LLM run. Confirm the model id, current prices, and that `ANTHROPIC_API_KEY` is set, and get approval for the estimated spend.
 - Don't loosen a failing test threshold (e.g., the calibration fill rate > 0.80) without Kevin's agreement.
 
-## 6. Open choice before building
+## 6. How we build
 
-How to run the plan:
-1. **Subagent-driven (recommended):** a fresh subagent per task, with a review between tasks. Uses `superpowers:subagent-driven-development`.
-2. **Inline:** build in one thread with checkpoints. Uses `superpowers:executing-plans`.
+Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development`). A fresh helper implements each task; a reviewer checks spec + quality; fixes loop until clean. Work happens on branch `sciti-mvp` (not `main`). Each part has its own git-ignored ledger under `.superpowers/sdd/<plan-part-name>/progress.md`; trust the ledger and `git log` when resuming.
 
 ## 7. Progress tracker
 
 | Task | Part | Status |
 |---|---|---|
-| 1 Scaffold, config, RNG | A | not started |
+| 1 Scaffold, config, RNG | A | done (ba198c7, branch sciti-mvp) |
 | 2 Workbook loader | A | not started |
 | 3 Demand model | A | not started |
 | 4 Network builder | A | not started |
