@@ -153,6 +153,20 @@ def _needs(s: SimState, n: str, exp_next: dict) -> list[tuple[str, list[tuple[st
     return out
 
 
+def _backlog_in_input_units(s: SimState, n: str, item: str) -> float:
+    """Net backlog a selling buyer (DC, MFG, CM) owes downstream, in units of its input `item`."""
+    ns = s.nodes[n]
+    if ns.role == "DC":
+        return ns.owed_total(item)  # input and output share the product key
+    if ns.role == "MFG":
+        owed = sum(ns.owed_total(p) for p in PRODUCTS)
+        stock = sum(ns.stock.get(p, 0.0) for p in PRODUCTS)
+        return max(0.0, owed - stock) * s.net.bom[item]
+    if ns.role == "CM":
+        return max(0.0, ns.owed_total(item) - ns.stock.get(item, 0.0))
+    return 0.0
+
+
 def _forecast_and_order(s: SimState, t: int) -> None:
     net, A = s.net, s.cfg.assumptions
     alpha = A.smoothing_alpha
@@ -177,7 +191,7 @@ def _forecast_and_order(s: SimState, t: int) -> None:
             key = input_key(ns.role, item)
             recorded = max(0.0, ns.stock.get(key, 0.0) * (1 + ns.params["record_error_sd"] * float(rng.standard_normal())))
             owed_to_me = sum(s.nodes[src].owed.get(n, {}).get(item, 0.0) for src, _ in srcs)
-            owed_by_me = ns.owed_total(item) if ns.role == "DC" else 0.0
+            owed_by_me = _backlog_in_input_units(s, n, item)
             position = recorded + pipe.get((n, item), 0.0) + owed_to_me - owed_by_me
             q = order_up_to(fc, sigma, s.lead_weeks[(n, item)], z, position)
             if q <= 0:

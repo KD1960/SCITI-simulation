@@ -59,3 +59,24 @@ def test_remove_more_than_stock_raises(baseline):
     ns = s.nodes["Retail_1"]
     with pytest.raises(StockError):
         ns.remove("A", ns.stock["A"] + 10)
+
+
+def test_fill_rate_holds_over_three_years(baseline):
+    from sciti.network import PRODUCTS
+
+    s = make_state(baseline, weeks=156, seed=1)
+    sales = lost = 0.0
+    for t in range(1, 157):
+        step_week(s, t)
+        if 105 <= t <= 156:
+            for r in s.net.by_role("Retail"):
+                c = s.nodes[r].counts
+                sales += c["sales"]
+                lost += c["lost"]
+    fill = sales / (sales + lost)
+    assert fill >= 0.95
+    for m in s.net.by_role("MFG"):
+        ns = s.nodes[m]
+        backlog = sum(ns.owed_total(p) for p in PRODUCTS)
+        mean_forecast = sum(ns.forecast[p] for p in PRODUCTS)
+        assert backlog < 4 * mean_forecast
