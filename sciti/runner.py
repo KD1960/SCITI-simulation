@@ -37,6 +37,9 @@ def make_policy(cfg, s, client=None):
         return fallback, fallback
     if kind == "mock":
         return MockPolicy(cfg.decision.mock_script), fallback
+    if kind == "llm":
+        from sciti.decide.llm import LLMPolicy
+        return LLMPolicy(cfg.decision, fallback, client=client), fallback
     raise ValueError(f"unsupported decision policy {kind!r}")
 
 

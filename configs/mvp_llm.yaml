@@ -1,0 +1,12 @@
+# LLM agents decide quarterly. Run `sciti estimate configs/mvp_llm.yaml` first.
+name: mvp_llm
+seed: 1
+weeks: 156
+decision:
+  policy: llm
+  model: claude-haiku-4-5-20251001
+  max_llm_calls: 1500
+  max_spend_usd: 10.0
+  price_per_mtok_in: 0.0    # set to the model's current input price per million tokens
+  price_per_mtok_out: 0.0   # set to the model's current output price per million tokens
+  visibility: partners
