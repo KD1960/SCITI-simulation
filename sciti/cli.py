@@ -58,16 +58,29 @@ def main(argv: list[str] | None = None) -> int:
         print(_json.dumps(estimate(load_config(args.config)), indent=1))
         return 0
     if args.cmd == "batch":
+        import csv
         from sciti.batch import SpendConfirmationRequired, parse_seeds, run_batch
         from sciti.config import load_config
         cfg = load_config(args.config)
         out = Path(args.out) if args.out else Path(cfg.output_dir) / f"batch_{cfg.name}"
         try:
-            print(run_batch(cfg, parse_seeds(args.seeds), out, args.with_baseline, args.confirm_spend) / "results.csv")
+            results_path = run_batch(cfg, parse_seeds(args.seeds), out, args.with_baseline, args.confirm_spend) / "results.csv"
+            print(results_path)
+            ok_count = 0
+            failed_count = 0
+            with open(results_path) as f:
+                for row in csv.DictReader(f):
+                    if row.get("status") == "ok":
+                        ok_count += 1
+                    elif row.get("status") == "failed":
+                        failed_count += 1
+            if failed_count > 0:
+                print(f"{ok_count} ok, {failed_count} failed")
+                return 1
+            return 0
         except SpendConfirmationRequired as e:
             print(e)
             return 2
-        return 0
     return 1
 
 

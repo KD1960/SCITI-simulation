@@ -35,13 +35,36 @@ def estimate(cfg) -> dict:
 
 
 def parse_seeds(text: str) -> list[int]:
+    if not text or not text.strip():
+        raise ValueError("seed input cannot be empty")
     seeds = []
+    seen = set()
     for part in text.split(","):
+        part = part.strip()
         if "-" in part:
-            a, b = part.split("-")
-            seeds.extend(range(int(a), int(b) + 1))
+            parts = part.split("-")
+            if len(parts) != 2:
+                raise ValueError(f"invalid range format: {part}")
+            try:
+                a, b = int(parts[0]), int(parts[1])
+            except ValueError:
+                raise ValueError(f"range bounds must be integers: {part}")
+            if a > b:
+                raise ValueError(f"reversed range: {a}-{b}")
+            for seed in range(a, b + 1):
+                if seed not in seen:
+                    seeds.append(seed)
+                    seen.add(seed)
         else:
-            seeds.append(int(part))
+            try:
+                seed = int(part)
+            except ValueError:
+                raise ValueError(f"seed must be an integer: {part}")
+            if seed not in seen:
+                seeds.append(seed)
+                seen.add(seed)
+    if not seeds:
+        raise ValueError("no valid seeds after parsing")
     return seeds
 
 
@@ -56,14 +79,55 @@ def flatten(summary: dict, prefix: str = "") -> dict:
     return out
 
 
+def _format_config_factors(cfg) -> dict:
+    """Extract readable config factors for CSV columns."""
+    D = cfg.decision
+
+    # Forced adoptions compact format: w1:control_tower:DC_Shanghai|Retail_5;w2:other_tech:Member1|Member2
+    forced = ""
+    if cfg.forced_adoptions:
+        forced_strs = []
+        for fa in cfg.forced_adoptions:
+            members_str = "|".join(fa.members)
+            forced_strs.append(f"w{fa.week}:{fa.tech}:{members_str}")
+        forced = ";".join(forced_strs)
+
+    # Disruptions compact format: CM_4@20+6x0.25+7d;Target@start+durationxcap+ld
+    disruptions = ""
+    if cfg.disruptions:
+        disrup_strs = []
+        for d in cfg.disruptions:
+            ld = int(d.extra_lead_days) if d.extra_lead_days == int(d.extra_lead_days) else d.extra_lead_days
+            disrup_strs.append(f"{d.target}@{d.start_week}+{d.weeks}x{d.capacity_mult}+{ld}d")
+        disruptions = ";".join(disrup_strs)
+
+    return {
+        "name": cfg.name,
+        "weeks": cfg.weeks,
+        "decision_model": D.policy or "",
+        "demand_growth_mult": cfg.demand.growth_mult,
+        "demand_trend_cap": cfg.demand.trend_cap,
+        "decision_visibility": D.visibility,
+        "decision_cost_split": D.cost_split,
+        "decision_chain_accept_share": D.chain_accept_share,
+        "decision_max_new_adoptions_per_quarter": D.max_new_adoptions_per_quarter,
+        "forced_adoptions": forced,
+        "disruptions": disruptions,
+    }
+
+
 def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=False, client=None) -> Path:
     out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
     if cfg.decision.policy == "llm":
         total = estimate(cfg)["usd_max"] * len(seeds)
         if total > cfg.decision.confirm_spend_threshold_usd and not confirm_spend:
             raise SpendConfirmationRequired(
                 f"worst-case spend ${total:.2f} exceeds ${cfg.decision.confirm_spend_threshold_usd}; pass --confirm-spend")
+
     rows = []
+    failed_count = 0
     for seed in seeds:
         variants = [cfg.model_copy(update={"seed": seed}, deep=True)]
         if with_baseline and cfg.decision.policy != "none":
@@ -71,13 +135,38 @@ def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=Fals
             base.decision.policy = "none"
             variants.append(base)
         for c in variants:
-            d = run(c, run_dir=out_dir / f"{c.decision.policy}_s{seed}", client=client)
-            summary = json.loads((d / "summary.json").read_text())
-            rows.append({"seed": seed, "policy": c.decision.policy, "config_hash": config_hash(c),
-                         "run_dir": str(d), **flatten(summary)})
+            try:
+                d = run(c, run_dir=out_dir / f"{c.decision.policy}_s{seed}", client=client)
+                summary = json.loads((d / "summary.json").read_text())
+                row = {
+                    "seed": seed,
+                    "policy": c.decision.policy,
+                    "config_hash": config_hash(c),
+                    "run_dir": str(d),
+                    "status": "ok",
+                    "error": "",
+                    **_format_config_factors(c),
+                    **flatten(summary),
+                }
+                rows.append(row)
+            except Exception as e:
+                failed_count += 1
+                err_msg = f"{type(e).__name__}: {str(e)[:200]}"
+                row = {
+                    "seed": seed,
+                    "policy": c.decision.policy,
+                    "config_hash": config_hash(c),
+                    "run_dir": "",
+                    "status": "failed",
+                    "error": err_msg,
+                    **_format_config_factors(c),
+                }
+                rows.append(row)
+
     columns = list(dict.fromkeys(k for r in rows for k in r))
     with open(out_dir / "results.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=columns)
         w.writeheader()
         w.writerows(rows)
+
     return out_dir

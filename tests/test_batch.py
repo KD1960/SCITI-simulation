@@ -1,4 +1,5 @@
 import csv
+from unittest.mock import patch
 
 import pytest
 
@@ -38,3 +39,55 @@ def test_batch_llm_requires_spend_confirmation(baseline_path, tmp_path):
                                     confirm_spend_threshold_usd=0.01))
     with pytest.raises(SpendConfirmationRequired):
         run_batch(c, [1], tmp_path / "batch")
+
+
+def test_parse_seeds_validation():
+    with pytest.raises(ValueError):
+        parse_seeds("3-1")
+    with pytest.raises(ValueError):
+        parse_seeds("")
+    with pytest.raises(ValueError):
+        parse_seeds("a")
+    with pytest.raises(ValueError):
+        parse_seeds("1-2,x")
+    assert parse_seeds(" 1 - 3 , 2 ") == [1, 2, 3]
+
+
+def test_batch_continues_after_run_failure(baseline_path, tmp_path, monkeypatch):
+    c = Config(name="b", seed=0, weeks=13, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+               decision=DecisionCfg(policy="rules"))
+    call_count = [0]
+    original_run = __import__("sciti.batch", fromlist=["run"]).run
+
+    def mock_run(*args, **kwargs):
+        call_count[0] += 1
+        if call_count[0] == 2:
+            raise RuntimeError("boom")
+        return original_run(*args, **kwargs)
+
+    monkeypatch.setattr("sciti.batch.run", mock_run)
+    out = run_batch(c, [1, 2, 3], tmp_path / "batch")
+    rows = list(csv.DictReader(open(out / "results.csv")))
+    assert len(rows) == 3
+    assert [r["status"] for r in rows] == ["ok", "failed", "ok"]
+    assert "RuntimeError: boom" in rows[1]["error"]
+
+
+def test_batch_config_factors(baseline_path, tmp_path):
+    from sciti.config import ForcedAdoption, Disruption
+    c = Config(name="b", seed=0, weeks=13, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+               decision=DecisionCfg(policy="rules", visibility="network", cost_split="by_size",
+                                    chain_accept_share=0.7, max_new_adoptions_per_quarter=2),
+               forced_adoptions=[ForcedAdoption(week=1, tech="control_tower", members=["DC_Shanghai", "Retail_5"])],
+               disruptions=[Disruption(target="CM_4", start_week=20, weeks=6, capacity_mult=0.25, extra_lead_days=7)])
+    out = run_batch(c, [1], tmp_path / "batch", with_baseline=False)
+    rows = list(csv.DictReader(open(out / "results.csv")))
+    assert rows[0]["name"] == "b"
+    assert rows[0]["weeks"] == "13"
+    assert rows[0]["decision_model"] == "rules"
+    assert rows[0]["decision_visibility"] == "network"
+    assert rows[0]["decision_cost_split"] == "by_size"
+    assert rows[0]["decision_chain_accept_share"] == "0.7"
+    assert rows[0]["decision_max_new_adoptions_per_quarter"] == "2"
+    assert rows[0]["forced_adoptions"] == "w1:control_tower:DC_Shanghai|Retail_5"
+    assert rows[0]["disruptions"] == "CM_4@20+6x0.25+7d"
