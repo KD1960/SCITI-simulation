@@ -40,6 +40,9 @@ def make_policy(cfg, s, client=None):
     if kind == "llm":
         from sciti.decide.llm import LLMPolicy
         return LLMPolicy(cfg.decision, fallback, client=client), fallback
+    if kind == "replay":
+        from sciti.decide.replay import ReplayPolicy
+        return ReplayPolicy(cfg.decision.replay_from), fallback
     raise ValueError(f"unsupported decision policy {kind!r}")
 
 
@@ -97,3 +100,14 @@ def run(cfg, run_dir: Path | None = None, client=None) -> Path:
     writer.finish(s, rows, summary, build_manifest(cfg, run_id, started, now(), manifest_extra(checks)))
     writer.close()
     return run_dir
+
+
+def replay_run(original: Path, out_dir: Path) -> list[str]:
+    from sciti.config import Config
+    from sciti.outputs import DETERMINISTIC_FILES
+    original = Path(original)
+    data = json.loads((original / "manifest.json").read_text())["config"]
+    data["decision"]["policy"] = "replay"
+    data["decision"]["replay_from"] = str(original / "decisions.jsonl")
+    out = run(Config.model_validate(data), run_dir=Path(out_dir))
+    return [f for f in DETERMINISTIC_FILES if (original / f).read_bytes() != (out / f).read_bytes()]
