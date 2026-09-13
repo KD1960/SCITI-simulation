@@ -25,6 +25,16 @@ def test_capacity_drops_during_window_only(baseline):
         [{"week": 3, "type": "disruption_start", "target": "CM_4", "until": 5}]
 
 
+def test_shipments_track_order_to_arrival_wait_during_shortage(baseline):
+    s = make_state(baseline, weeks=30)
+    s.cfg.disruptions = [Disruption(target="CM_4", start_week=2, weeks=9, capacity_mult=0.0)]
+    for t in range(1, 31):
+        step_week(s, t)
+    assert all(sh.order_week <= sh.ship_week + 1e-6 for sh in s.arrived)
+    downstream = [sh for sh in s.arrived if s.nodes[sh.dst].role in ("DC", "Retail")]
+    assert any(sh.ship_week - sh.order_week >= 1 for sh in downstream)
+
+
 def test_risk_intel_shortens_and_warns(baseline):
     s = make_state(baseline)
     s.cfg.disruptions = [Disruption(target="CM_4", start_week=5, weeks=5, capacity_mult=0.5)]

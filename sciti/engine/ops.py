@@ -202,11 +202,13 @@ def _forecast_and_order(s: SimState, t: int) -> None:
                 seller = s.nodes[src]
                 seller.owed.setdefault(n, {})
                 seller.owed[n][item] = seller.owed[n].get(item, 0.0) + q * share
+                seller.owed_fifo.setdefault(n, {}).setdefault(item, []).append([t, q * share])
                 seller.orders_in[item] += q * share
             ns.counts["orders_placed"] += q
 
 
-def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int) -> Shipment:
+def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int,
+                   order_week: float | None = None) -> Shipment:
     sn = s.nodes[src]
     P = sn.params
     miles = s.net.miles(src, dst)
@@ -226,9 +228,27 @@ def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int) 
     sh = Shipment(id=s.next_id, src=src, dst=dst, item=item, units=q, mode=mode, ship_week=t,
                   due_week=t + max(1, math.ceil(quote / 7)), arrive_week=t + max(1, math.ceil(lead / 7)),
                   lead_days=lead, miles=miles, cost=q * cpu * P["ship_cost_mult"], co2=co2,
-                  value=q * sell_price(s.prices, s.net, src, item), defective=defective)
+                  value=q * sell_price(s.prices, s.net, src, item), defective=defective,
+                  order_week=t if order_week is None else order_week)
     s.next_id += 1
     return sh
+
+
+def _consume_fifo(ns, b: str, item: str, q: float, t: int) -> float:
+    """Pop q units from the front of the buyer's order fifo; return the qty-weighted mean order week."""
+    fifo = ns.owed_fifo.get(b, {}).get(item, [])
+    remaining = q
+    weighted = 0.0
+    while remaining > 1e-9 and fifo:
+        entry = fifo[0]
+        take = min(entry[1], remaining)
+        weighted += take * entry[0]
+        entry[1] -= take
+        remaining -= take
+        if entry[1] <= 1e-9:
+            fifo.pop(0)
+    consumed = q - remaining
+    return weighted / consumed if consumed > 1e-9 else float(t)
 
 
 def _shipping(s: SimState, t: int) -> None:
@@ -245,7 +265,8 @@ def _shipping(s: SimState, t: int) -> None:
                     continue
                 ns.remove(item, q)
                 ns.owed[b][item] -= q
-                sh = make_shipment(s, n, b, item, q, t)
+                order_week = _consume_fifo(ns, b, item, q, t)
+                sh = make_shipment(s, n, b, item, q, t, order_week)
                 s.in_transit.append(sh)
                 ns.counts["shipped"] += q
                 ns.ledger["revenue"] += sh.value

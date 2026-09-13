@@ -1,5 +1,6 @@
 import csv
 import json
+import math
 
 from sciti.config import Config, Disruption, ForcedAdoption
 from sciti.outputs import DETERMINISTIC_FILES, scrub
@@ -47,3 +48,24 @@ def test_forced_tech_changes_outcome(baseline_path, tmp_path):
 
 def test_scrub_removes_keys():
     assert scrub("key sk-ant-api03-abcDEF123_xyz-987654 end") == "key [REDACTED] end"
+
+
+def test_bullwhip_units_are_comparable(baseline_path, tmp_path):
+    c = Config(name="t", seed=3, weeks=52, baseline_path=str(baseline_path),
+               output_dir=str(tmp_path / "runs"))
+    d = run(c)
+    bw = json.loads((d / "summary.json").read_text())["bullwhip"]
+    values = [v for v in bw.values() if v is not None]
+    assert values and all(math.isfinite(v) for v in values)
+    assert all(v < 1000 for v in values)
+    dc = bw["DC"]
+    for role in ("MFG", "CM"):
+        if bw[role] is not None and dc not in (None, 0):
+            assert bw[role] / dc < 1000
+
+
+def test_summary_has_transit_and_order_to_arrival_days(baseline_path, tmp_path):
+    d = run(cfg(baseline_path, tmp_path))
+    summary = json.loads((d / "summary.json").read_text())
+    assert math.isfinite(summary["mean_transit_days"]) and summary["mean_transit_days"] > 0
+    assert math.isfinite(summary["mean_lead_days"]) and summary["mean_lead_days"] > 0

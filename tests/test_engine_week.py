@@ -61,6 +61,17 @@ def test_remove_more_than_stock_raises(baseline):
         ns.remove("A", ns.stock["A"] + 10)
 
 
+def test_owed_fifo_matches_owed_totals(baseline):
+    s = make_state(baseline)
+    for t in range(1, 6):
+        step_week(s, t)
+        for ns in s.nodes.values():
+            for b, items in ns.owed.items():
+                for item, qty in items.items():
+                    fifo_total = sum(e[1] for e in ns.owed_fifo.get(b, {}).get(item, []))
+                    assert fifo_total == pytest.approx(qty, abs=1e-6)
+
+
 def test_fill_rate_holds_over_three_years(baseline):
     from sciti.network import PRODUCTS
 

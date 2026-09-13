@@ -42,14 +42,19 @@ def summarize(s, rows: list[dict]) -> dict:
     on_time = float(np.mean([sh.arrive_week <= sh.due_week for sh in arrived])) if arrived else 1.0
     r_in = [sh for sh in arrived if s.nodes[sh.dst].role == "Retail"]
     r_on_time = float(np.mean([sh.arrive_week <= sh.due_week for sh in r_in])) if r_in else 1.0
-    leads = np.array([sh.lead_days for sh in arrived]) if arrived else np.array([0.0])
+    transit = np.array([sh.lead_days for sh in arrived]) if arrived else np.array([0.0])
+    order_to_arrival = (np.array([(sh.ship_week - sh.order_week) * 7 + sh.lead_days for sh in r_in])
+                        if r_in else np.array([0.0]))
     quality = float(np.mean(s.quality[1:])) if len(s.quality) > 1 else s.quality[0]
     w = A.satisfaction_weights
     csi = w["fill_rate"] * fill + w["on_time"] * r_on_time + w["quality"] * quality
     dem = _series(rows, "Retail", "demand", weeks)[13:]
+    bom_units = sum(s.net.bom.values())
     bullwhip = {}
     for role in ("Retail", "DC", "MFG", "CM"):
         orders = _series(rows, role, "orders_placed", weeks)[13:]
+        if role in ("MFG", "CM"):
+            orders = orders / bom_units
         bullwhip[role] = float(np.var(orders) / np.var(dem)) if len(dem) > 1 and np.var(dem) > 0 else None
     adopt_ev = [e for e in s.events if e["type"] == "adopt"]
     profit_by_role = {}
@@ -64,8 +69,10 @@ def summarize(s, rows: list[dict]) -> dict:
         "fill_rate": fill,
         "on_time_rate": on_time,
         "retail_on_time_rate": r_on_time,
-        "mean_lead_days": float(leads.mean()),
-        "p95_lead_days": float(np.percentile(leads, 95)),
+        "mean_lead_days": float(order_to_arrival.mean()),
+        "p95_lead_days": float(np.percentile(order_to_arrival, 95)),
+        "mean_transit_days": float(transit.mean()),
+        "p95_transit_days": float(np.percentile(transit, 95)),
         "quality_mean": quality,
         "satisfaction_index": csi,
         "co2_kg": float(sum(sh.co2 for sh in arrived)),

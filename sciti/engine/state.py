@@ -52,6 +52,7 @@ class Shipment:
     co2: float
     value: float
     defective: float = 0.0
+    order_week: float = 0.0
 
 
 @dataclass
@@ -60,6 +61,7 @@ class NodeState:
     role: str
     stock: dict[str, float] = field(default_factory=dict)
     owed: dict[str, dict[str, float]] = field(default_factory=dict)
+    owed_fifo: dict[str, dict[str, list[list[float]]]] = field(default_factory=dict)
     forecast: dict[str, float] = field(default_factory=dict)
     err: dict[str, float] = field(default_factory=dict)
     orders_in: dict[str, float] = field(default_factory=dict)
