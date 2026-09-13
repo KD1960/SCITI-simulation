@@ -6,7 +6,11 @@ import json
 from pathlib import Path
 
 from sciti.checks import SimulationError, enforce
+from sciti.coalitions import DecisionContext, run_decision_round
 from sciti.data.demand import DemandModel
+from sciti.decide.briefs import make_personas
+from sciti.decide.interface import NonePolicy
+from sciti.decide.mock import MockPolicy
 from sciti.disruptions import validate_disruptions
 from sciti.engine.adoption import apply_forced
 from sciti.engine.ops import step_week
@@ -22,7 +26,18 @@ def quarter_start(t: int) -> bool:
     return (t - 1) % 13 == 0
 
 
-def run(cfg, run_dir: Path | None = None, policy=None) -> Path:
+def make_policy(cfg, s, client=None):
+    """Return (policy, fallback). Tasks 13-15 extend this."""
+    kind = cfg.decision.policy
+    fallback = NonePolicy()
+    if kind == "none":
+        return NonePolicy(), fallback
+    if kind == "mock":
+        return MockPolicy(cfg.decision.mock_script), fallback
+    raise ValueError(f"unsupported decision policy {kind!r}")
+
+
+def run(cfg, run_dir: Path | None = None, client=None) -> Path:
     started = now()
     baseline_file = Path(cfg.baseline_path)
     if not baseline_file.exists():
@@ -42,24 +57,37 @@ def run(cfg, run_dir: Path | None = None, policy=None) -> Path:
     run_id = f"{cfg.name}_s{cfg.seed}_{stamp}"
     run_dir = Path(run_dir) if run_dir else Path(cfg.output_dir) / run_id
     writer = RunWriter(run_dir)
+    policy, fallback = make_policy(cfg, s, client)
+    ctx = DecisionContext(policy=policy, fallback=fallback, writer=writer,
+                          personas=make_personas(net, cfg.assumptions, streams["personas"]), recent={})
+    decision_stats = {"calls": 0, "fallbacks": 0, "errors": 0}
     rows: list[dict] = []
     checks = "passed" if cfg.checks.strict else "warnings-allowed"
     extra = {"catalog_sha256": catalog_hash(cfg.catalog_path), "xlsx_sha256": baseline["source"]["xlsx_sha256"]}
+
+    def manifest_extra(checks_value):
+        return {**extra, "checks": checks_value, "decisions": decision_stats,
+                "policy_stats": getattr(policy, "stats", lambda: {})()}
+
     try:
         for t in range(1, cfg.weeks + 1):
             # Correction (2026-09-12, review): apply_forced must run every week -- it
             # already filters by fa.week == week internally. Gating it on quarter_start
             # would silently drop forced adoptions scheduled outside week 1/14/27/...
             apply_forced(s, t)
+            if quarter_start(t) and cfg.decision.policy != "none":
+                ctx.recent = {n: [r for r in rows[-13 * len(net.order):] if r["node"] == n] for n in net.order}
+                for k, v in run_decision_round(s, t, ctx).items():
+                    decision_stats[k] += v
             step_week(s, t)
             enforce(s, t, cfg.checks.strict)
             rows.extend(week_rows(s, t))
     except SimulationError as e:
         checks = f"failed: {e}"
-        writer.finish(s, rows, {"error": str(e)}, build_manifest(cfg, run_id, started, now(), {**extra, "checks": checks}))
+        writer.finish(s, rows, {"error": str(e)}, build_manifest(cfg, run_id, started, now(), manifest_extra(checks)))
         writer.close()
         raise
     summary = summarize(s, rows)
-    writer.finish(s, rows, summary, build_manifest(cfg, run_id, started, now(), {**extra, "checks": checks}))
+    writer.finish(s, rows, summary, build_manifest(cfg, run_id, started, now(), manifest_extra(checks)))
     writer.close()
     return run_dir
