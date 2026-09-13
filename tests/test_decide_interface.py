@@ -47,10 +47,20 @@ def test_valid_proposal_reply():
     ({"decisions": [{"tech": ["routing"], "action": "adopt", "partners": [], "reason": "x"}]}, "tech"),
     ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": {"dict": "bad"}}]}, "reason"),
     ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": "x", "group_id": ["bad"]}]}, "group"),
+    ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": None}]}, "reason"),
+    ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": 0}]}, "reason"),
+    ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": False}]}, "reason"),
+    ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": []}]}, "reason"),
 ])
 def test_invalid_replies_rejected(obj, msg):
     with pytest.raises(ReplyError, match=msg):
         validate_reply(obj, brief(), max_new=1)
+
+
+def test_decision_without_reason_key_is_valid():
+    obj = {"decisions": [{"tech": "routing", "action": "adopt", "partners": []}]}
+    ds = validate_reply(obj, brief(), max_new=1)
+    assert ds[0].reason == ""
 
 
 def test_response_pass_needs_known_group():

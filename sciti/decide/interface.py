@@ -88,7 +88,6 @@ def validate_reply(obj: dict, brief: Brief, max_new: int) -> list[Decision]:
         if not isinstance(d, dict):
             raise ReplyError(f"decision {i} must be an object")
         tech, action = d.get("tech"), d.get("action")
-        reason = d.get("reason", "")
         group_id = d.get("group_id")
         plist = d.get("partners", []) or []
 
@@ -97,11 +96,14 @@ def validate_reply(obj: dict, brief: Brief, max_new: int) -> list[Decision]:
             raise ReplyError(f"decision {i}: tech must be a string")
         if not isinstance(action, str):
             raise ReplyError(f"decision {i}: action must be a string")
-        if reason and not isinstance(reason, str):
-            raise ReplyError(f"decision {i}: reason must be a string")
+        if "reason" in d:
+            reason = d["reason"]
+            if not isinstance(reason, str):
+                raise ReplyError(f"decision {i}: reason must be a string")
+        else:
+            reason = ""
         if group_id is not None and not isinstance(group_id, str):
             raise ReplyError(f"decision {i}: group_id must be a string")
-        reason = str(reason)
 
         if action not in allowed:
             raise ReplyError(f"decision {i}: action {action!r} not allowed in {brief.pass_} pass; use one of {allowed}")
