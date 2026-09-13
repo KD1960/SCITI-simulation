@@ -35,6 +35,7 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
     node = net.nodes[node_id]
     held = sorted(s.holdings[node_id])
     ships = [sh for sh in s.arrived if sh.src == node_id and sh.ship_week > week - 14]
+    sent_ships = [sh for sh in s.arrived + s.in_transit if sh.src == node_id and sh.ship_week > week - 14]
     data = {
         "you": {"id": node_id, "role": node.role, "city": node.city, "persona": persona},
         "last_quarter": {
@@ -45,6 +46,7 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
             "lost_sales": round(sum(r["lost"] for r in recent), 2),
             "shipped_units": round(sum(r["shipped"] for r in recent), 2),
             "on_time_outbound": round(sum(sh.arrive_week <= sh.due_week for sh in ships) / len(ships), 4) if ships else None,
+            "co2_kg": round(sum(sh.co2 for sh in sent_ships), 2),
         },
         "budget_available": round(budget_available(s, node_id, persona, recent), 2),
         "your_technologies": [{"tech": t, "since_week": h.adopted_week, "active": week >= h.active_week,

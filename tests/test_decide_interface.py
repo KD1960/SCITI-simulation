@@ -16,7 +16,7 @@ def brief(pass_="proposal", eligible=("routing", "rfid", "control_tower"), held=
           proposals=()):
     return Brief("DC_Houston", "DC", 14, 2, pass_, {
         "eligible_technologies": [{"id": t} for t in eligible], "held": list(held),
-        "partners": [{"id": p} for p in partners], "proposals": [{"group_id": g} for g in proposals]})
+        "partners": [{"id": p} for p in partners], "proposals": [{"group_id": g, "tech": "routing"} for g in proposals]})
 
 
 def test_parse_reply_extracts_json_from_prose():
@@ -44,6 +44,9 @@ def test_valid_proposal_reply():
                     {"tech": "routing", "action": "skip", "partners": [], "reason": "b"}]}, "twice"),
     ({"decisions": [{"tech": "routing", "action": "drop", "partners": [], "reason": "a"}]}, "not held"),
     ({"decisions": [{"tech": "routing", "action": "accept_group", "partners": [], "reason": "a"}]}, "action"),
+    ({"decisions": [{"tech": ["routing"], "action": "adopt", "partners": [], "reason": "x"}]}, "tech"),
+    ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": {"dict": "bad"}}]}, "reason"),
+    ({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": "x", "group_id": ["bad"]}]}, "group"),
 ])
 def test_invalid_replies_rejected(obj, msg):
     with pytest.raises(ReplyError, match=msg):
@@ -59,6 +62,14 @@ def test_response_pass_needs_known_group():
                           "group_id": "q9_other"}]}
     with pytest.raises(ReplyError, match="group"):
         validate_reply(bad, b, max_new=1)
+
+
+def test_response_pass_tech_must_match_proposal():
+    b = brief(pass_="response", proposals=["q2_MFG_US_routing"])
+    mismatched = {"decisions": [{"tech": "rfid", "action": "accept_group", "partners": [], "reason": "y",
+                                 "group_id": "q2_MFG_US_routing"}]}
+    with pytest.raises(ReplyError, match="tech"):
+        validate_reply(mismatched, b, max_new=1)
 
 
 def test_personas_seeded(baseline):
@@ -81,6 +92,7 @@ def test_brief_contents(baseline):
     assert b.data["held"] == ["routing"]
     assert [p["id"] for p in b.data["partners"]] == ["MFG_China", "MFG_US", "Retail_1", "Retail_2"]
     assert "network_adoption_counts" not in b.data
+    assert "co2_kg" in b.data["last_quarter"] and b.data["last_quarter"]["co2_kg"] > 0
     json.dumps(b.data)  # must be JSON-serializable
 
 

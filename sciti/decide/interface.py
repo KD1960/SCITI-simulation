@@ -81,17 +81,31 @@ def validate_reply(obj: dict, brief: Brief, max_new: int) -> list[Decision]:
     held = set(data.get("held", []))
     partners = {p["id"] for p in data.get("partners", [])}
     groups = {p["group_id"] for p in data.get("proposals", [])}
+    proposals_by_id = {p["group_id"]: p for p in data.get("proposals", [])}
     allowed = PROPOSAL_ACTIONS if brief.pass_ == "proposal" else RESPONSE_ACTIONS
     out, seen, new = [], set(), 0
     for i, d in enumerate(items):
         if not isinstance(d, dict):
             raise ReplyError(f"decision {i} must be an object")
         tech, action = d.get("tech"), d.get("action")
-        reason = str(d.get("reason", ""))
+        reason = d.get("reason", "")
+        group_id = d.get("group_id")
         plist = d.get("partners", []) or []
+
+        # Type checks
+        if not isinstance(tech, str):
+            raise ReplyError(f"decision {i}: tech must be a string")
+        if not isinstance(action, str):
+            raise ReplyError(f"decision {i}: action must be a string")
+        if reason and not isinstance(reason, str):
+            raise ReplyError(f"decision {i}: reason must be a string")
+        if group_id is not None and not isinstance(group_id, str):
+            raise ReplyError(f"decision {i}: group_id must be a string")
+        reason = str(reason)
+
         if action not in allowed:
             raise ReplyError(f"decision {i}: action {action!r} not allowed in {brief.pass_} pass; use one of {allowed}")
-        key = d.get("group_id") if brief.pass_ == "response" else tech
+        key = group_id if brief.pass_ == "response" else tech
         if key in seen:
             raise ReplyError(f"decision {i}: {key!r} appears twice")
         seen.add(key)
@@ -100,8 +114,11 @@ def validate_reply(obj: dict, brief: Brief, max_new: int) -> list[Decision]:
         if not isinstance(plist, list) or not all(isinstance(p, str) for p in plist):
             raise ReplyError(f"decision {i}: partners must be a list of ids")
         if brief.pass_ == "response":
-            if d.get("group_id") not in groups:
-                raise ReplyError(f"decision {i}: unknown group_id {d.get('group_id')!r}")
+            if group_id not in groups:
+                raise ReplyError(f"decision {i}: unknown group_id {group_id!r}")
+            proposal = proposals_by_id[group_id]
+            if tech != proposal["tech"]:
+                raise ReplyError(f"decision {i}: tech {tech!r} does not match proposal tech {proposal['tech']!r}")
         elif action == "drop":
             if tech not in held:
                 raise ReplyError(f"decision {i}: cannot drop {tech!r}, not held")
@@ -116,7 +133,7 @@ def validate_reply(obj: dict, brief: Brief, max_new: int) -> list[Decision]:
             if new > max_new:
                 raise ReplyError(f"at most {max_new} new adoption(s) per quarter")
         out.append(Decision(tech=tech, action=action, partners=list(plist), reason=reason,
-                            group_id=d.get("group_id")))
+                            group_id=group_id))
     return out
 
 
