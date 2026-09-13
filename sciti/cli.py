@@ -20,6 +20,14 @@ def main(argv: list[str] | None = None) -> int:
     rp = sub.add_parser("replay", help="re-run from logged decisions and compare outputs")
     rp.add_argument("run_dir")
     rp.add_argument("--out", default=None)
+    es = sub.add_parser("estimate", help="estimated LLM calls and spend; makes no calls")
+    es.add_argument("config")
+    bt = sub.add_parser("batch", help="run many seeds and write results.csv")
+    bt.add_argument("config")
+    bt.add_argument("--seeds", required=True)
+    bt.add_argument("--with-baseline", action="store_true")
+    bt.add_argument("--confirm-spend", action="store_true")
+    bt.add_argument("--out", default=None)
     args = ap.parse_args(argv)
 
     if args.cmd == "prepare":
@@ -42,6 +50,23 @@ def main(argv: list[str] | None = None) -> int:
             print("replication: MISMATCH in " + ", ".join(diffs))
             return 1
         print(f"replication: exact ({out})")
+        return 0
+    if args.cmd == "estimate":
+        import json as _json
+        from sciti.batch import estimate
+        from sciti.config import load_config
+        print(_json.dumps(estimate(load_config(args.config)), indent=1))
+        return 0
+    if args.cmd == "batch":
+        from sciti.batch import SpendConfirmationRequired, parse_seeds, run_batch
+        from sciti.config import load_config
+        cfg = load_config(args.config)
+        out = Path(args.out) if args.out else Path(cfg.output_dir) / f"batch_{cfg.name}"
+        try:
+            print(run_batch(cfg, parse_seeds(args.seeds), out, args.with_baseline, args.confirm_spend) / "results.csv")
+        except SpendConfirmationRequired as e:
+            print(e)
+            return 2
         return 0
     return 1
 

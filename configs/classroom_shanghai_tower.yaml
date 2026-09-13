@@ -1,0 +1,17 @@
+# Classroom preset: the Shanghai chain adopts a control tower in week 1; glass supply is disrupted in
+# week 20; other firms decide with the payback rule. Compare with the same seed under configs/baseline.yaml.
+name: classroom_shanghai_tower
+seed: 11
+weeks: 104
+decision:
+  policy: rules
+forced_adoptions:
+  - week: 1
+    tech: control_tower
+    members: [DC_Shanghai, Retail_5, Retail_6, Retail_7, Retail_8]
+disruptions:
+  - target: CM_4
+    start_week: 20
+    weeks: 6
+    capacity_mult: 0.25
+    extra_lead_days: 7
