@@ -1,0 +1,6 @@
+# No-innovation baseline (spec §4.2 policy `none`).
+name: baseline
+seed: 1
+weeks: 156
+decision:
+  policy: none
