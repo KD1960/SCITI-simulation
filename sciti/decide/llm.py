@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -43,11 +44,22 @@ class LLMPolicy:
 
     def __init__(self, decision_cfg, fallback, client=None, sleep=time.sleep):
         import anthropic
-        self._transient = (anthropic.APIConnectionError, anthropic.RateLimitError, anthropic.InternalServerError)
+        if decision_cfg.price_per_mtok_in <= 0 or decision_cfg.price_per_mtok_out <= 0:
+            raise ValueError("set decision.price_per_mtok_in/out to the model's current prices before an LLM run")
+        transient = [anthropic.APIConnectionError, anthropic.RateLimitError, anthropic.InternalServerError]
+        overloaded = getattr(anthropic, "OverloadedError", None)
+        if overloaded is not None:
+            transient.append(overloaded)
+        self._transient = tuple(transient)
+        self._fatal = (anthropic.AuthenticationError, anthropic.PermissionDeniedError)
         self._api_error = anthropic.APIError
         self.cfg = decision_cfg
         self.fallback = fallback
-        self.client = client if client is not None else anthropic.Anthropic()
+        if client is None:
+            if not os.environ.get("ANTHROPIC_API_KEY"):
+                raise ValueError("ANTHROPIC_API_KEY is not set")
+            client = anthropic.Anthropic(timeout=decision_cfg.request_timeout_s, max_retries=0)
+        self.client = client
         self.sleep = sleep
         self.system = load_system_prompt()
         self.spend = SpendTracker(decision_cfg.max_llm_calls, decision_cfg.max_spend_usd,
@@ -79,14 +91,18 @@ class LLMPolicy:
             except self._transient as e:
                 last = e
                 self.sleep(2 ** attempt)
+            except self._fatal as e:
+                last = e
+                self.disabled_reason = f"authentication failed: {type(e).__name__}"
+                break
             except self._api_error as e:
                 last = e
                 break
         if resp is None:
             self.failures += 1
-            if self.failures >= self.cfg.max_consecutive_failures:
+            if self.disabled_reason is None and self.failures >= self.cfg.max_consecutive_failures:
                 self.disabled_reason = f"{self.failures} consecutive API failures; last: {type(last).__name__}"
-            return self._fallback(brief, f"API error: {type(last).__name__}")
+            return self._fallback(brief, self.disabled_reason or f"API error: {type(last).__name__}")
         self.failures = 0
         tin, tout = resp.usage.input_tokens, resp.usage.output_tokens
         self.spend.record(tin, tout)

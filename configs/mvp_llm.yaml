@@ -7,6 +7,6 @@ decision:
   model: claude-haiku-4-5-20251001
   max_llm_calls: 1500
   max_spend_usd: 10.0
-  price_per_mtok_in: 0.0    # set to the model's current input price per million tokens
-  price_per_mtok_out: 0.0   # set to the model's current output price per million tokens
+  price_per_mtok_in: 0.0    # 0.0 refuses to run (LLMPolicy rejects it) -- set to the model's current input price per million tokens before an LLM run
+  price_per_mtok_out: 0.0   # 0.0 refuses to run (LLMPolicy rejects it) -- set to the model's current output price per million tokens before an LLM run
   visibility: partners

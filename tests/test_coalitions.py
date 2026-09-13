@@ -197,3 +197,39 @@ def test_invalid_fallback_reply_does_not_crash(baseline):
     assert rec["fallback"] is True
     assert rec["fallback_error"]
     assert rec["parsed"] == []
+
+
+def test_retry_fallback_reply_is_logged_as_fallback(baseline):
+    """When the retry itself comes from the fallback policy (e.g. spend cap hit mid-round),
+    the record must show fallback=True and carry the fallback's error -- not look like a
+    normal LLM answer (review finding #3, 2026-09-13)."""
+    class StubWriter:
+        def __init__(self):
+            self.records = []
+
+        def log_decision(self, record):
+            self.records.append(record)
+
+    class RetryFallbackPolicy:
+        name = "retryfallback"
+
+        def decide(self, brief, feedback=None):
+            if feedback is None:
+                return Reply(brief.agent, "not json at all")
+            return Reply(brief.agent, '{"decisions": []}', fallback=True, error="spend cap reached")
+
+    class UnusedFallback:
+        name = "unused"
+
+        def decide(self, brief, feedback=None):
+            raise AssertionError("ctx.fallback must not be called when the retry already validated")
+
+    s = make_state(baseline)
+    personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
+    writer = StubWriter()
+    ctx = DecisionContext(policy=RetryFallbackPolicy(), fallback=UnusedFallback(), writer=writer,
+                          personas=personas, recent={})
+    run_decision_round(s, 14, ctx)
+    rec = next(r for r in writer.records if r["pass"] == "proposal")
+    assert rec["fallback"] is True
+    assert rec["retry_error"] == "spend cap reached"

@@ -30,6 +30,7 @@ class DecisionCfg(Strict):
     price_per_mtok_out: float = 0.0
     max_tokens: int = 600
     max_consecutive_failures: int = 5
+    request_timeout_s: float = 60.0
     confirm_spend_threshold_usd: float = 10.0
     max_new_adoptions_per_quarter: int = 1
     visibility: Literal["partners", "network"] = "partners"

@@ -60,6 +60,9 @@ def _ask(s, t, ctx, brief, max_new):
         retry = ctx.policy.decide(brief, feedback=str(e))
         rec.update(retry_raw=retry.raw, tokens_in=rec["tokens_in"] + retry.tokens_in,
                    tokens_out=rec["tokens_out"] + retry.tokens_out)
+        if retry.fallback:
+            rec["fallback"] = True
+            rec["retry_error"] = retry.error
         try:
             decisions = validate_reply(parse_reply(retry.raw), brief, max_new)
         except ReplyError as e2:

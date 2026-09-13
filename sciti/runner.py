@@ -62,8 +62,8 @@ def run(cfg, run_dir: Path | None = None, client=None) -> Path:
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_id = f"{cfg.name}_s{cfg.seed}_{stamp}"
     run_dir = Path(run_dir) if run_dir else Path(cfg.output_dir) / run_id
-    writer = RunWriter(run_dir)
     policy, fallback = make_policy(cfg, s, client)
+    writer = RunWriter(run_dir)
     ctx = DecisionContext(policy=policy, fallback=fallback, writer=writer,
                           personas=make_personas(net, cfg.assumptions, streams["personas"]), recent={})
     decision_stats = {"calls": 0, "fallbacks": 0, "errors": 0}

@@ -6,7 +6,7 @@ import httpx2 as httpx  # installed anthropic 1.5.0 depends on httpx2, not httpx
 import numpy as np
 import pytest
 
-from sciti.config import Config, DecisionCfg
+from sciti.config import Config, DecisionCfg, load_config
 from sciti.decide.interface import Brief
 from sciti.decide.llm import LLMPolicy, SpendTracker, render_brief
 from sciti.decide.rules import RulesPolicy
@@ -28,6 +28,26 @@ class FakeClient:
         text = self.texts.pop(0) if self.texts else '{"decisions": []}'
         return SimpleNamespace(content=[SimpleNamespace(type="text", text=text)],
                                usage=SimpleNamespace(input_tokens=1000, output_tokens=100))
+
+
+class FakeStatusClient:
+    """Raises a queued list of exceptions (e.g. SDK status errors) before succeeding."""
+
+    def __init__(self, errors):
+        self.errors, self.calls = list(errors), []
+        self.messages = self
+
+    def create(self, **kw):
+        self.calls.append(kw)
+        if self.errors:
+            raise self.errors.pop(0)
+        return SimpleNamespace(content=[SimpleNamespace(type="text", text='{"decisions": []}')],
+                               usage=SimpleNamespace(input_tokens=1000, output_tokens=100))
+
+
+def _status_error(cls, status_code):
+    req = httpx.Request("POST", "https://example.invalid")
+    return cls(cls.__name__, response=httpx.Response(status_code, request=req), body=None)
 
 
 def cfg(**kw):
@@ -91,3 +111,65 @@ def test_llm_run_logs_and_never_writes_key(baseline_path, tmp_path, monkeypatch)
         assert FAKE_KEY not in f.read_text(), f.name
     man = json.loads((out / "manifest.json").read_text())
     assert man["policy_stats"]["calls"] > 0 and man["policy_stats"]["prompt_version"] == "v1"
+
+
+def test_zero_price_refuses_construction():
+    zero_cfg = DecisionCfg(policy="llm", model="test-model", price_per_mtok_in=0.0, price_per_mtok_out=0.0)
+    with pytest.raises(ValueError, match="price"):
+        LLMPolicy(zero_cfg, RulesPolicy(np.random.default_rng(0)), client=FakeClient())
+
+
+def test_mvp_llm_config_still_loads_with_zero_prices():
+    c = load_config("configs/mvp_llm.yaml")
+    assert c.decision.price_per_mtok_in == 0.0 and c.decision.price_per_mtok_out == 0.0
+
+
+def test_missing_api_key_raises(monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
+        LLMPolicy(cfg(), RulesPolicy(np.random.default_rng(0)))
+
+
+def test_missing_api_key_run_creates_no_run_dir(baseline_path, tmp_path, monkeypatch):
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    c = Config(name="llm", seed=1, weeks=14, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+               decision=cfg())
+    run_dir = tmp_path / "r"
+    with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
+        run(c, run_dir=run_dir)
+    assert not run_dir.exists()
+
+
+def test_real_client_gets_timeout_and_no_sdk_retries(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", FAKE_KEY)
+    captured = {}
+
+    class StubAnthropic:
+        def __init__(self, **kw):
+            captured.update(kw)
+
+    monkeypatch.setattr(anthropic, "Anthropic", StubAnthropic)
+    LLMPolicy(cfg(request_timeout_s=12.5), RulesPolicy(np.random.default_rng(0)))
+    assert captured["timeout"] == 12.5
+    assert captured["max_retries"] == 0
+
+
+def test_overloaded_529_is_transient_then_succeeds():
+    c = FakeStatusClient([_status_error(anthropic.OverloadedError, 529), _status_error(anthropic.OverloadedError, 529)])
+    slept = []
+    p = LLMPolicy(cfg(), RulesPolicy(np.random.default_rng(0)), client=c, sleep=lambda s: slept.append(s))
+    r = p.decide(b())
+    assert r.fallback is False
+    assert len(c.calls) == 3 and slept
+
+
+def test_authentication_error_disables_immediately_without_retrying():
+    c = FakeStatusClient([_status_error(anthropic.AuthenticationError, 401)])
+    p = LLMPolicy(cfg(), RulesPolicy(np.random.default_rng(0)), client=c, sleep=lambda s: None)
+    r1 = p.decide(b())
+    assert r1.fallback is True
+    assert "authentication" in p.stats()["disabled_reason"]
+    calls_after_first = len(c.calls)
+    r2 = p.decide(b())
+    assert r2.fallback is True
+    assert len(c.calls) == calls_after_first
