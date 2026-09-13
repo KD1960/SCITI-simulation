@@ -1,7 +1,9 @@
 import json
 
 from sciti.config import Config, DecisionCfg
-from sciti.coalitions import group_members
+from sciti.coalitions import DecisionContext, group_members, run_decision_round
+from sciti.decide.briefs import make_personas
+from sciti.decide.interface import Reply
 from sciti.runner import run
 from tests.helpers import make_state
 
@@ -93,3 +95,81 @@ def test_over_budget_rejected(baseline_path, tmp_path):
     ev = events(out)
     assert {"week": 14, "type": "rejected", "node": "DC_Sofia", "tech": "wh_robotics", "reason": "budget"} in ev
     assert not [e for e in ev if e["type"] == "adopt"]
+
+
+def test_proposer_limited_to_one_new_adoption_per_quarter(baseline_path, tmp_path):
+    gid1 = "q2_CM_1_blockchain"
+    gid2 = "q2_Supplier_1_control_tower"
+    script = [
+        {"agent": "CM_1", "week": 14, "pass": "proposal", "replies": [reply(d("blockchain", "propose_group", ["Supplier_1"]))]},
+        {"agent": "Supplier_1", "week": 14, "pass": "proposal", "replies": [reply(d("control_tower", "propose_group", ["CM_1"]))]},
+        {"agent": "CM_1", "week": 14, "pass": "response", "replies": [reply(d("control_tower", "accept_group", group_id=gid2))]},
+        {"agent": "Supplier_1", "week": 14, "pass": "response", "replies": [reply(d("blockchain", "accept_group", group_id=gid1))]},
+    ]
+    out = run(mock_cfg(baseline_path, tmp_path, script), run_dir=tmp_path / "r")
+    ev = events(out)
+    adopts = [e for e in ev if e["type"] == "adopt" and e["week"] == 14]
+    assert len([e for e in adopts if e["node"] == "CM_1"]) <= 1
+    assert len([e for e in adopts if e["node"] == "Supplier_1"]) <= 1
+
+
+def test_formation_never_exceeds_budget(baseline, baseline_path, tmp_path, monkeypatch):
+    import sciti.coalitions as coalitions
+    s = make_state(baseline)
+    tech = s.catalog["control_tower"]
+    members = s.net.order
+    total = sum(tech.cost_one_time[s.net.nodes[m].role] for m in members)
+    unfiltered_share = total / len(members)
+    zero_budget_nodes = {"Supplier_1", "Supplier_2", "Supplier_3"}
+    big_budget = unfiltered_share + 1.0
+
+    def fake_budget(state, node_id, persona, recent):
+        return 0.0 if node_id in zero_budget_nodes else big_budget
+
+    monkeypatch.setattr(coalitions, "budget_available", fake_budget)
+
+    gid = "q2_MFG_US_control_tower"
+    script = [{"agent": "MFG_US", "week": 14, "pass": "proposal",
+               "replies": [reply(d("control_tower", "propose_group", ["network"]))]}]
+    for n in members:
+        if n == "MFG_US":
+            continue
+        script.append({"agent": n, "week": 14, "pass": "response",
+                       "replies": [reply(d("control_tower", "accept_group", group_id=gid))]})
+    out = run(mock_cfg(baseline_path, tmp_path, script), run_dir=tmp_path / "r")
+    ev = events(out)
+    for e in [e for e in ev if e["type"] == "adopt"]:
+        assert e["one_time"] <= big_budget + 1e-6
+    rejected_zero = [e for e in ev if e["type"] == "rejected" and e["node"] in zero_budget_nodes]
+    assert len(rejected_zero) == len(zero_budget_nodes)
+
+
+def test_invalid_fallback_reply_does_not_crash(baseline):
+    class StubWriter:
+        def __init__(self):
+            self.records = []
+
+        def log_decision(self, record):
+            self.records.append(record)
+
+    class BadPolicy:
+        name = "bad"
+
+        def decide(self, brief, feedback=None):
+            return Reply(brief.agent, "not json at all")
+
+    class BadFallback:
+        name = "badfallback"
+
+        def decide(self, brief, feedback=None):
+            return Reply(brief.agent, "still not json")
+
+    s = make_state(baseline)
+    personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
+    writer = StubWriter()
+    ctx = DecisionContext(policy=BadPolicy(), fallback=BadFallback(), writer=writer, personas=personas, recent={})
+    run_decision_round(s, 14, ctx)
+    rec = next(r for r in writer.records if r["pass"] == "proposal")
+    assert rec["fallback"] is True
+    assert rec["fallback_error"]
+    assert rec["parsed"] == []

@@ -46,6 +46,7 @@ def _ask(s, t, ctx, brief, max_new):
     rec = {"week": t, "quarter": brief.quarter, "pass": brief.pass_, "agent": brief.agent,
            "policy": ctx.policy.name, "brief": brief.data, "brief_hash": brief_hash(brief),
            "raw": None, "error": None, "retry_raw": None, "retry_error": None, "fallback": False,
+           "fallback_raw": None, "fallback_error": None,
            "tokens_in": 0, "tokens_out": 0, "latency_s": 0.0}
     reply = ctx.policy.decide(brief)
     rec.update(raw=reply.raw, fallback=reply.fallback, tokens_in=reply.tokens_in,
@@ -64,7 +65,13 @@ def _ask(s, t, ctx, brief, max_new):
         except ReplyError as e2:
             rec["retry_error"] = str(e2)
             rec["fallback"] = True
-            decisions = validate_reply(parse_reply(ctx.fallback.decide(brief).raw), brief, max_new)
+            fb = ctx.fallback.decide(brief)
+            rec["fallback_raw"] = fb.raw
+            try:
+                decisions = validate_reply(parse_reply(fb.raw), brief, max_new)
+            except ReplyError as e3:
+                rec["fallback_error"] = str(e3)
+                decisions = []
     rec["parsed"] = [dataclasses.asdict(d) for d in decisions]
     ctx.writer.log_decision(rec)
     return decisions, rec
@@ -111,6 +118,7 @@ def run_decision_round(s, t: int, ctx: DecisionContext) -> dict:
                 strict = dcs.partners not in (["chain"], ["network"]) or s.catalog[dcs.tech].network_requirement == "pair"
                 groups[gid] = {"id": gid, "tech": dcs.tech, "proposer": n, "invited": invited,
                                "members": members, "strict": strict, "accepted": []}
+                new_count[n] += 1
 
     inbox: dict[str, list[dict]] = {}
     for g in groups.values():
@@ -138,19 +146,21 @@ def run_decision_round(s, t: int, ctx: DecisionContext) -> dict:
         g = groups[gid]
         # a member may have joined an earlier group for the same tech this round
         accepted = sorted(m for m in g["accepted"] if g["tech"] not in s.holdings[m])
-        ok = len(accepted) == len(g["invited"]) if g["strict"] else \
-            len(accepted) / len(g["invited"]) >= D.chain_accept_share
         final = sorted([g["proposer"]] + accepted)
-        if ok:
-            affordable = [m for m in final if _share(s, g["tech"], final, m) <= budget[m] + 1e-9]
-            if len(affordable) < len(final):
-                for m in sorted(set(final) - set(affordable)):
+        rejected_once: set[str] = set()
+        while len(final) >= 2:
+            over = [m for m in final if _share(s, g["tech"], final, m) > budget[m] + 1e-9]
+            if not over:
+                break
+            for m in over:
+                if m not in rejected_once:
                     s.events.append({"week": t, "type": "rejected", "node": m, "tech": g["tech"], "reason": "budget"})
-                accepted = [m for m in accepted if m in affordable]
-                ok = g["proposer"] in affordable and (
-                    len(accepted) == len(g["invited"]) if g["strict"] else len(accepted) / len(g["invited"]) >= D.chain_accept_share)
-                final = sorted([g["proposer"]] + accepted)
-        if not ok or len(final) < 2 or g["tech"] in s.holdings[g["proposer"]]:
+                    rejected_once.add(m)
+            final = sorted(set(final) - set(over))
+            accepted = [m for m in accepted if m in final]
+        ok = g["proposer"] in final and len(final) >= 2 and (
+            len(accepted) == len(g["invited"]) if g["strict"] else len(accepted) / len(g["invited"]) >= D.chain_accept_share)
+        if not ok or g["tech"] in s.holdings[g["proposer"]]:
             s.events.append({"week": t, "type": "coalition_failed", "id": gid, "tech": g["tech"],
                              "proposer": g["proposer"], "accepted": accepted})
             continue
