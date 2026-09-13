@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-12 (Part A done: Tasks 1–5)
+**Last updated:** 2026-09-13 (Part B done: Tasks 6–10)
 **Phase:** Building on branch `sciti-mvp` with subagent-driven development. Ledger: `.superpowers/sdd/2026-09-12-sciti-1-partA-data/progress.md` (git-ignored).
-**Next step:** Part B, Task 6 (engine core). Part B ledger will be `.superpowers/sdd/2026-09-12-sciti-1-partB-engine/progress.md`.
+**Next step:** Part C, Task 11 (decision interface). Ledgers: `.superpowers/sdd/<plan-part-name>/progress.md`.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -93,11 +93,11 @@ Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development
 | 3 Demand model | A | done (d1765e5..14e8677; fixed AR(1) start bias) |
 | 4 Network builder | A | done (9b2a1e8) |
 | 5 Tech catalog + effects | A | done (286def4) |
-| 6 Engine core | B | not started |
-| 7 Disruptions | B | not started |
-| 8 Invariant checks | B | not started |
-| 9 Adoption, outputs, runner, CLI | B | not started |
-| 10 Golden + calibration tests | B | not started |
+| 6 Engine core | B | done (9f0d8d0..bb01d03; backlog counted in MFG/CM orders) |
+| 7 Disruptions | B | done (3e852f8) |
+| 8 Invariant checks | B | done (68dcaa9..303da12; added flow-balance + NaN checks) |
+| 9 Adoption, outputs, runner, CLI | B | done (89fba42..38f2823; bullwhip in product units, order-to-arrival lead time) |
+| 10 Golden + calibration tests | B | done (2aaf156..7c34936; real-data per-mode transit check, flat lane model for thin data) |
 | 11 Decision interface, briefs, mock | C | not started |
 | 12 Coalitions + decision round | C | not started |
 | 13 Rules policy | C | not started |
@@ -115,6 +115,21 @@ Update this table and the "Last updated" line as each task lands.
 - Real data: 20 of 30 suppliers use pooled lead-time spread and defect share; 9 of 24 store×product demand series have autocorrelated noise (so the Task 3 AR(1) fix matters).
 - Kevin's rulings on Task 2 review: add required-column check; keep report-on-success only; supplier/BOM mismatch stays a hard stop.
 - Deferred minor findings for the final review are in the Part A ledger. One to reconcile: spec §6 says ML forecasting cuts error SD ×0.7, but the catalog models it as `forecast_skill +0.3`.
+
+**Part B notes (2026-09-13):**
+- 78 tests pass (including realdata). `sciti prepare` and `sciti run CONFIG` work.
+- Real baseline run (seed 1, 156 weeks, no tech): fill rate 0.984; bullwhip Retail 2.5, DC 8.9, MFG 27, CM 116; order-to-arrival lead time into stores 8.0 days; transit 8.7 days.
+- Calibration on real data: demand sim/expected 1.000; fill 0.989; transit per mode vs workbook: Air 0.99, Rail 1.04, Road 1.00, Ship 0.76 (inside the ±25% band, near its floor).
+- Kevin's rulings from reviews (all approved changes from the plan):
+  1. MFG and CM count net backlog owed downstream in their order position (plan's DC-only rule made fill fall to 67% by year 3).
+  2. Invariants add a per-node flow-balance check from weekly counts, plus a non-finite-stock check.
+  3. Bullwhip for MFG/CM is converted to product units (÷160).
+  4. `mean_lead_days`/`p95_lead_days` = order-to-arrival for shipments into stores (FIFO order-week tracking); new `mean_transit_days`/`p95_transit_days`.
+  5. Lead-time calibration relabeled as an engine/lane-model check; new real-data per-mode test (±25%).
+  6. Loader uses a flat lead model (data mean, no distance slope) when a lane mode has < 50 rows or a negative fitted slope.
+- `run()` applies forced adoptions every week, not only at quarter starts (controller fix). Part C Task 12 edits the same block: keep that.
+- Spec wording to update at the end: §5.3 ordering rule (backlog), §5.5 lead time and bullwhip units, §9.4 checks, §11 calibration.
+- Deferred minors for the final review are in the Part B ledger. The most important: forced adoptions aren't validated up front (an ineligible member crashes mid-run).
 
 ## 8. Known risks to watch during the build
 
