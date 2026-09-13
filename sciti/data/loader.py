@@ -17,6 +17,7 @@ CO2_FACTORS = {"Air": 2.1, "Road": 0.163, "Rail": 0.028, "Ship": 0.037}
 CO2_TON_PER_UNIT = 0.05
 LANE_BLOCKS = {"cm_mfg": 0, "mfg_dc": 15, "dc_retail": 30}
 MIN_ROWS = 5
+MIN_FIT_ROWS = 50
 
 
 def parse_bom(glossary: pd.DataFrame) -> dict[str, dict]:
@@ -59,18 +60,22 @@ def parse_transactions(df: pd.DataFrame, suppliers: dict, report: list[str]) -> 
         s["pooled"] = bool(pooled)
 
 
-def _fit_mode(g: pd.DataFrame) -> dict:
+def _fit_mode(g: pd.DataFrame, name: str, m: str, report: list[str]) -> dict:
     miles = g["Distance (Miles)"].astype(float).to_numpy()
     lead = g["Lead Time (days)"].astype(float).to_numpy()
     if len(g) >= 2 and np.ptp(miles) > 0:
         b, a = np.polyfit(miles, lead, 1)
     else:
         b, a = 0.0, float(lead.mean())
+    flat = bool(len(g) < MIN_FIT_ROWS or b < 0)
+    if flat:
+        report.append(f"- Lane {name}/{m}: flat lead model (n={len(g)}, fitted slope {b:.4f})")
+        a, b = float(lead.mean()), 0.0
     resid = lead - (a + b * miles)
     return {"lead_a": float(a), "lead_b": float(b),
             "lead_resid_sd": float(resid.std(ddof=1)) if len(g) > 2 else 1.0,
             "cost_per_unit": float(g["Shipping Cost/Unit"].astype(float).mean()),
-            "mean_lead_days": float(lead.mean()), "n": int(len(g))}
+            "mean_lead_days": float(lead.mean()), "n": int(len(g)), "flat": flat}
 
 
 def parse_lanes(ship: pd.DataFrame, report: list[str]) -> dict[str, dict]:
@@ -90,7 +95,7 @@ def parse_lanes(ship: pd.DataFrame, report: list[str]) -> dict[str, dict]:
             if len(g) < MIN_ROWS:
                 report.append(f"- Lane {name}/{m}: {len(g)} rows; lead model pooled across lane types")
                 g = allrows[allrows["Mode"] == m]
-            modes[m] = _fit_mode(g)
+            modes[m] = _fit_mode(g, name, m, report)
         lanes[name] = {"mode_mix": mix, "modes": modes}
     return lanes
 

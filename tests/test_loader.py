@@ -37,25 +37,74 @@ def test_parse_transactions_pools_missing_suppliers():
     assert any("Supplier_2" in line for line in report)
 
 
-def test_parse_lanes_mode_mix_and_regression():
-    header = ["Shipment_ID", "Ship_Date", "a", "b", "c", "d", "e", "Mode", "Distance (Miles)",
-              "Lead Time (days)", "Quantity", "Shipping Cost/Unit", "Total_Cost", "CO2 Emissions (kg)"]
-    rows = []
-    for i in range(10):
-        miles = 1000 + 500 * i
-        rows.append(["x", "d", "", "", "", "", "", "Air", miles, 1 + miles / 1000, 100, 10.0, 0, 0])
-    for i in range(10):
-        rows.append(["x", "d", "", "", "", "", "", "Ship", 5000, 20, 100, 2.0, 0, 0])
-    block = pd.DataFrame([header] + rows)
+LANE_HEADER = ["Shipment_ID", "Ship_Date", "a", "b", "c", "d", "e", "Mode", "Distance (Miles)",
+               "Lead Time (days)", "Quantity", "Shipping Cost/Unit", "Total_Cost", "CO2 Emissions (kg)"]
+
+
+def _make_ship(rows: list) -> pd.DataFrame:
+    """Repeat one lane block across all three lane-type blocks (cm_mfg/mfg_dc/dc_retail)."""
+    block = pd.DataFrame([LANE_HEADER] + rows)
     gap = pd.DataFrame([[None]] * len(block))
-    ship = pd.concat([block, gap, block, gap, block], axis=1, ignore_index=True)
+    return pd.concat([block, gap, block, gap, block], axis=1, ignore_index=True)
+
+
+def test_parse_lanes_mode_mix_and_regression():
+    rows = []
+    for i in range(60):
+        miles = 1000 + 100 * i
+        rows.append(["x", "d", "", "", "", "", "", "Air", miles, 1 + miles / 1000, 100, 10.0, 0, 0])
+    for i in range(60):
+        rows.append(["x", "d", "", "", "", "", "", "Ship", 5000, 20, 100, 2.0, 0, 0])
+    ship = _make_ship(rows)
     lanes = loader.parse_lanes(ship, [])
     air = lanes["mfg_dc"]["modes"]["Air"]
     assert lanes["cm_mfg"]["mode_mix"] == {"Air": 0.5, "Ship": 0.5}
     assert air["lead_b"] == pytest.approx(0.001)
     assert air["lead_a"] == pytest.approx(1.0)
     assert air["cost_per_unit"] == pytest.approx(10.0)
+    assert air["flat"] is False
     assert lanes["dc_retail"]["modes"]["Ship"]["lead_b"] == 0.0  # constant distance → flat
+
+
+def test_fit_mode_few_rows_forces_flat():
+    rows = []
+    for i in range(10):
+        miles = 1000 + 100 * i
+        rows.append(["x", "d", "", "", "", "", "", "Air", miles, 5 + 0.01 * miles, 100, 10.0, 0, 0])
+    ship = _make_ship(rows)
+    report = []
+    lanes = loader.parse_lanes(ship, report)
+    air = lanes["mfg_dc"]["modes"]["Air"]
+    lead = 5 + 0.01 * (1000 + 100 * np.arange(10))
+    assert air["flat"] is True
+    assert air["lead_b"] == 0.0
+    assert air["lead_a"] == pytest.approx(lead.mean())
+    assert any("mfg_dc/Air" in line and "flat" in line for line in report)
+
+
+def test_fit_mode_negative_slope_forces_flat_even_with_enough_rows():
+    rows = []
+    for i in range(60):
+        miles = 1000 + 100 * i
+        rows.append(["x", "d", "", "", "", "", "", "Road", miles, 20 - 0.001 * miles, 100, 5.0, 0, 0])
+    ship = _make_ship(rows)
+    lanes = loader.parse_lanes(ship, [])
+    road = lanes["mfg_dc"]["modes"]["Road"]
+    assert road["flat"] is True
+    assert road["lead_b"] == 0.0
+
+
+def test_fit_mode_enough_rows_and_positive_slope_stays_fitted():
+    rows = []
+    for i in range(60):
+        miles = 1000 + 100 * i
+        rows.append(["x", "d", "", "", "", "", "", "Road", miles, 1 + 0.001 * miles, 100, 5.0, 0, 0])
+    ship = _make_ship(rows)
+    lanes = loader.parse_lanes(ship, [])
+    road = lanes["mfg_dc"]["modes"]["Road"]
+    assert road["flat"] is False
+    assert road["lead_b"] == pytest.approx(0.001)
+    assert road["lead_a"] == pytest.approx(1.0)
 
 
 def test_parse_demand_shapes():
