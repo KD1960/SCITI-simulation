@@ -1,0 +1,6 @@
+# Agents decide with the transparent payback rule (no API calls).
+name: rules
+seed: 1
+weeks: 156
+decision:
+  policy: rules

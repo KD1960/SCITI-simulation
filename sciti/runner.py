@@ -11,6 +11,7 @@ from sciti.data.demand import DemandModel
 from sciti.decide.briefs import make_personas
 from sciti.decide.interface import NonePolicy
 from sciti.decide.mock import MockPolicy
+from sciti.decide.rules import RulesPolicy
 from sciti.disruptions import validate_disruptions
 from sciti.engine.adoption import apply_forced
 from sciti.engine.ops import step_week
@@ -27,11 +28,13 @@ def quarter_start(t: int) -> bool:
 
 
 def make_policy(cfg, s, client=None):
-    """Return (policy, fallback). Tasks 13-15 extend this."""
+    """Return (policy, fallback). Tasks 14–15 extend this."""
     kind = cfg.decision.policy
-    fallback = NonePolicy()
+    fallback = RulesPolicy(s.streams["rules"])
     if kind == "none":
-        return NonePolicy(), fallback
+        return NonePolicy(), NonePolicy()
+    if kind == "rules":
+        return fallback, fallback
     if kind == "mock":
         return MockPolicy(cfg.decision.mock_script), fallback
     raise ValueError(f"unsupported decision policy {kind!r}")
