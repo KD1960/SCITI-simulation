@@ -113,6 +113,30 @@ def test_proposer_limited_to_one_new_adoption_per_quarter(baseline_path, tmp_pat
     assert len([e for e in adopts if e["node"] == "Supplier_1"]) <= 1
 
 
+def test_proposer_can_join_another_group(baseline_path, tmp_path):
+    gid_a = "q2_Supplier_1_blockchain"  # Supplier_1 -> CM_1
+    gid_b = "q2_CM_1_blockchain"        # CM_1 -> Supplier_1, Supplier_2
+    script = [
+        {"agent": "Supplier_1", "week": 14, "pass": "proposal", "replies": [reply(d("blockchain", "propose_group", ["CM_1"]))]},
+        {"agent": "CM_1", "week": 14, "pass": "proposal",
+         "replies": [reply(d("blockchain", "propose_group", ["Supplier_1", "Supplier_2"]))]},
+        {"agent": "CM_1", "week": 14, "pass": "response", "replies": [reply(d("blockchain", "accept_group", group_id=gid_a))]},
+        {"agent": "Supplier_1", "week": 14, "pass": "response", "replies": [reply(d("blockchain", "accept_group", group_id=gid_b))]},
+        {"agent": "Supplier_2", "week": 14, "pass": "response", "replies": [reply(d("blockchain", "decline_group", group_id=gid_b))]},
+    ]
+    out = run(mock_cfg(baseline_path, tmp_path, script), run_dir=tmp_path / "r")
+    ev = events(out)
+    co = [e for e in ev if e["type"] == "coalition" and e["tech"] == "blockchain"]
+    assert len(co) == 1
+    assert sorted(co[0]["members"]) == ["CM_1", "Supplier_1"]
+    adopts = [e for e in ev if e["type"] == "adopt" and e["week"] == 14]
+    assert len([e for e in adopts if e["node"] == "CM_1"]) == 1
+    assert len([e for e in adopts if e["node"] == "Supplier_1"]) == 1
+    failed = [e for e in ev if e["type"] == "coalition_failed"]
+    assert len(failed) == 1
+    assert failed[0]["reason"] in ("quota", "held", "acceptance")
+
+
 def test_formation_never_exceeds_budget(baseline, baseline_path, tmp_path, monkeypatch):
     import sciti.coalitions as coalitions
     s = make_state(baseline)

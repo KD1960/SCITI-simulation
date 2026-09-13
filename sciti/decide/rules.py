@@ -61,6 +61,10 @@ class RulesPolicy:
                         out.append({"tech": e["id"], "action": "propose_group", "partners": ps, "reason": reason})
         else:
             for p in sorted(data.get("proposals", []), key=lambda p: p["group_id"]):
+                if p["tech"] not in TECH_WEEKLY:
+                    out.append({"tech": p["tech"], "action": "decline_group", "partners": [],
+                                "reason": "unknown tech", "group_id": p["group_id"]})
+                    continue
                 noise = float(self.rng.lognormal(0, 0.3))
                 weekly = TECH_WEEKLY[p["tech"]].get(brief.role, 0.0)
                 net = self._saving(data, p["tech"], noise, TECH_BONUS[p["tech"]]) - weekly

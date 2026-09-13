@@ -46,3 +46,19 @@ def test_rules_run_is_deterministic_and_adopts(baseline_path, tmp_path):
     assert (a / "events.jsonl").read_bytes() == (b / "events.jsonl").read_bytes()
     summary = json.loads((a / "summary.json").read_text())
     assert summary["adoptions"] > 0
+
+
+def test_rules_run_forms_coalitions(baseline_path, tmp_path):
+    c = Config(name="r", seed=5, weeks=52, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+               decision=DecisionCfg(policy="rules"))
+    out = run(c, run_dir=tmp_path / "a")
+    summary = json.loads((out / "summary.json").read_text())
+    assert summary["coalitions"] > 0
+
+
+def test_response_declines_unknown_tech_without_raising():
+    prop = {"group_id": "g1", "tech": "custom_x", "from": "MFG_US", "members": ["DC_Houston", "MFG_US"],
+            "your_cost_share": 350000}
+    b = brief({"shipping": 13 * 200000}, pass_="response", proposals=[prop])
+    ds = validate_reply(parse_reply(RulesPolicy(np.random.default_rng(1)).decide(b).raw), b, 1)
+    assert ds[0].action == "decline_group" and ds[0].group_id == "g1"

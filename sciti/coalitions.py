@@ -112,13 +112,12 @@ def run_decision_round(s, t: int, ctx: DecisionContext) -> dict:
                 invited = [m for m in members if m != n]
                 if not invited:
                     s.events.append({"week": t, "type": "coalition_failed", "id": None, "tech": dcs.tech,
-                                     "proposer": n, "reason": "no eligible partners"})
+                                     "proposer": n, "accepted": [], "reason": "no eligible partners"})
                     continue
                 gid = f"q{brief.quarter}_{n}_{dcs.tech}"
                 strict = dcs.partners not in (["chain"], ["network"]) or s.catalog[dcs.tech].network_requirement == "pair"
                 groups[gid] = {"id": gid, "tech": dcs.tech, "proposer": n, "invited": invited,
                                "members": members, "strict": strict, "accepted": []}
-                new_count[n] += 1
 
     inbox: dict[str, list[dict]] = {}
     for g in groups.values():
@@ -140,36 +139,54 @@ def run_decision_round(s, t: int, ctx: DecisionContext) -> dict:
                 g = groups[dcs.group_id]
                 if g["tech"] not in s.holdings[n]:
                     g["accepted"].append(n)
-                    new_count[n] += 1
 
+    # The one-new-adoption cap counts only what actually happens: solo adopts (above) and
+    # groups that form (below). Proposing and accepting don't consume it on their own.
+    joined = dict(new_count)
     for gid in sorted(groups):
         g = groups[gid]
-        # a member may have joined an earlier group for the same tech this round
-        accepted = sorted(m for m in g["accepted"] if g["tech"] not in s.holdings[m])
-        final = sorted([g["proposer"]] + accepted)
+        tech, proposer = g["tech"], g["proposer"]
+        if tech in s.holdings[proposer]:
+            s.events.append({"week": t, "type": "coalition_failed", "id": gid, "tech": tech,
+                             "proposer": proposer, "accepted": [], "reason": "held"})
+            continue
+        if joined[proposer] >= D.max_new_adoptions_per_quarter:
+            s.events.append({"week": t, "type": "coalition_failed", "id": gid, "tech": tech,
+                             "proposer": proposer, "accepted": [], "reason": "quota"})
+            continue
+        accepted = sorted(m for m in g["accepted"] if tech not in s.holdings[m]
+                          and joined[m] < D.max_new_adoptions_per_quarter)
+        final = sorted([proposer] + accepted)
+        ok = len(final) >= 2 and (
+            len(accepted) == len(g["invited"]) if g["strict"] else len(accepted) / len(g["invited"]) >= D.chain_accept_share)
+        if not ok:
+            s.events.append({"week": t, "type": "coalition_failed", "id": gid, "tech": tech,
+                             "proposer": proposer, "accepted": accepted, "reason": "acceptance"})
+            continue
         rejected_once: set[str] = set()
         while len(final) >= 2:
-            over = [m for m in final if _share(s, g["tech"], final, m) > budget[m] + 1e-9]
+            over = [m for m in final if _share(s, tech, final, m) > budget[m] + 1e-9]
             if not over:
                 break
             for m in over:
                 if m not in rejected_once:
-                    s.events.append({"week": t, "type": "rejected", "node": m, "tech": g["tech"], "reason": "budget"})
+                    s.events.append({"week": t, "type": "rejected", "node": m, "tech": tech, "reason": "budget"})
                     rejected_once.add(m)
             final = sorted(set(final) - set(over))
             accepted = [m for m in accepted if m in final]
-        ok = g["proposer"] in final and len(final) >= 2 and (
+        ok = proposer in final and len(final) >= 2 and (
             len(accepted) == len(g["invited"]) if g["strict"] else len(accepted) / len(g["invited"]) >= D.chain_accept_share)
-        if not ok or g["tech"] in s.holdings[g["proposer"]]:
-            s.events.append({"week": t, "type": "coalition_failed", "id": gid, "tech": g["tech"],
-                             "proposer": g["proposer"], "accepted": accepted})
+        if not ok:
+            s.events.append({"week": t, "type": "coalition_failed", "id": gid, "tech": tech,
+                             "proposer": proposer, "accepted": accepted, "reason": "budget"})
             continue
-        s.events.append({"week": t, "type": "coalition", "id": gid, "tech": g["tech"], "members": final,
+        s.events.append({"week": t, "type": "coalition", "id": gid, "tech": tech, "members": final,
                          "kind": coalition_kind(net, final)})
         for m in final:
-            cost = _share(s, g["tech"], final, m)
+            cost = _share(s, tech, final, m)
             budget[m] -= cost
-            adopt(s, m, g["tech"], t, gid, cost)
+            adopt(s, m, tech, t, gid, cost)
+            joined[m] += 1
     return stats
 
 
