@@ -3,7 +3,7 @@ const LAT_TOP = 75;
 const LAT_BOTTOM = -60;
 const ROLE_R = { Supplier: 3, CM: 6, MFG: 8, DC: 7, Retail: 6 };
 const MODE_COLOR = { Air: "#e4572e", Ship: "#1b998b", Road: "#f3a712", Rail: "#8e5572", Supplier: "#7a869a" };
-const TECH_COLORS = ["#4e79a7", "#f28e2b", "#e15759", "#76b7b2", "#59a14f", "#edc948", "#b07aa1", "#ff9da7"];
+const TECH_COLORS = ["#4e79a7", "#76b7b2", "#59a14f", "#b07aa1", "#9c755f", "#bab0ac", "#edc948", "#17becf"];
 
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
@@ -105,20 +105,26 @@ export function createMap(canvas, run, land) {
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     }
 
+    const held = holdingsAt(week);
+    const pulse = 1 - (t % 1);
+
     ctx.setLineDash([5, 4]);
-    ctx.lineWidth = 1.5;
     for (const e of run.events) {
       if (e.week > week) break;
       if (e.type !== "coalition" || (st.tech && e.tech !== st.tech)) continue;
-      const members = e.members.filter(show);
+      const members = e.members.filter((m) => show(m) && held[m]?.[e.tech]?.coalition === e.id);
       if (members.length < 2) continue;
+      const current = e.week === week;
       ctx.strokeStyle = techColor[e.tech];
+      ctx.lineWidth = current ? 3 : 1.5;
+      ctx.globalAlpha = current ? pulse : 1;
       const [x0, y0] = px(byId[members[0]].lon, byId[members[0]].lat);
       for (const m of members.slice(1)) {
         const [x, y] = px(byId[m].lon, byId[m].lat);
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x, y); ctx.stroke();
       }
     }
+    ctx.globalAlpha = 1;
     ctx.setLineDash([]);
 
     for (const s of run.ships) {
@@ -134,9 +140,7 @@ export function createMap(canvas, run, land) {
     }
     ctx.globalAlpha = 1;
 
-    const held = holdingsAt(week);
     const row = run.byWeek[week] ?? {};
-    const pulse = 1 - (t % 1);
     ctx.font = "11px system-ui, sans-serif";
     for (const n of nodes) {
       if (!st.roles.has(n.role)) continue;
@@ -144,8 +148,26 @@ export function createMap(canvas, run, land) {
       const r = ROLE_R[n.role];
       const wr = row[n.id];
       if (wr && wr.capacity_factor < 1) {
-        ctx.strokeStyle = css("--danger"); ctx.lineWidth = 2; ctx.setLineDash([2, 2]);
-        circle(x, y, r + 7); ctx.stroke(); ctx.setLineDash([]);
+        for (const [a, b] of run.network.links) {
+          if (a !== n.id || !show(a) || !show(b)) continue;
+          const [x2, y2] = px(byId[b].lon, byId[b].lat);
+          ctx.strokeStyle = css("--danger"); ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke(); ctx.setLineDash([]);
+        }
+        const R = r + 7;
+        ctx.save();
+        circle(x, y, R); ctx.clip();
+        ctx.strokeStyle = css("--danger"); ctx.globalAlpha = 0.7; ctx.lineWidth = 1;
+        for (let d = -2 * R; d <= 2 * R; d += 3) {
+          ctx.beginPath();
+          ctx.moveTo(x - R + d, y - R);
+          ctx.lineTo(x - R + d + 2 * R, y - R + 2 * R);
+          ctx.stroke();
+        }
+        ctx.restore();
+        ctx.globalAlpha = 1; ctx.lineWidth = 1;
+        ctx.strokeStyle = css("--danger");
+        circle(x, y, R); ctx.stroke();
       }
       if (wr && n.role === "Retail" && wr.lost > 0) {
         ctx.strokeStyle = css("--danger"); ctx.globalAlpha = pulse; ctx.lineWidth = 2;
@@ -166,6 +188,16 @@ export function createMap(canvas, run, land) {
         ctx.fillText(n.id.replace("Retail_", "R").replace("DC_", "").replace("MFG_", ""), x + r + 4, y + 4);
       }
     }
+
+    for (const e of run.events) {
+      if (e.week > week) break;
+      if (e.week < week || e.type !== "adopt" || (st.tech && e.tech !== st.tech) || !show(e.node)) continue;
+      const [x, y] = px(byId[e.node].lon, byId[e.node].lat);
+      const r = ROLE_R[byId[e.node].role];
+      ctx.strokeStyle = techColor[e.tech]; ctx.globalAlpha = pulse; ctx.lineWidth = 2;
+      circle(x, y, r + 4 + 12 * (1 - pulse)); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   }
 
   function pick(mx, my) {
