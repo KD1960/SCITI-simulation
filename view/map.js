@@ -40,7 +40,7 @@ function lonLerp(a, b, f) {
   return v;
 }
 
-export function createMap(canvas, run, land) {
+export function createMap(canvas, run, land, onResize) {
   const ctx = canvas.getContext("2d");
   const nodes = run.network.nodes;
   const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
@@ -223,11 +223,34 @@ export function createMap(canvas, run, land) {
     ctx.globalAlpha = 1;
   }
 
+  // Reads the canvas's live size at click time (not the closed-over W/H, which is only as fresh
+  // as the last resize()) so a click can never be projected in a stale frame.
   function pick(mx, my, roles) {
-    return pickNode(nodes, (n) => px(n.lon, n.lat), roles, mx, my);
+    const w = canvas.clientWidth;
+    const h = (w * (LAT_TOP - LAT_BOTTOM)) / 360;
+    const project = (n) => [((n.lon + 180) / 360) * w, ((LAT_TOP - n.lat) / (LAT_TOP - LAT_BOTTOM)) * h];
+    return pickNode(nodes, project, roles, mx, my);
   }
 
   window.addEventListener("resize", resize);
   resize();
+
+  // The canvas's CSS width can change when the page layout settles (e.g. the dashboard grid
+  // below it reflows) with no `window` resize event at all; W/H would then stay stale even
+  // though clientWidth already moved. Watch the canvas's own container and re-run resize()
+  // whenever its width actually changes (guarded so ResizeObserver's own layout changes to the
+  // canvas, via resize()'s `canvas.style.height`, don't retrigger themselves).
+  let lastW = canvas.clientWidth;
+  if (typeof ResizeObserver !== "undefined" && canvas.parentElement) {
+    const ro = new ResizeObserver(() => {
+      const w = canvas.clientWidth;
+      if (w === lastW) return;
+      lastW = w;
+      resize();
+      onResize?.();
+    });
+    ro.observe(canvas.parentElement);
+  }
+
   return { draw, pick, techColor, modeColor: MODE_COLOR };
 }

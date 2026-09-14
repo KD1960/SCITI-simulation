@@ -64,15 +64,21 @@ async function main() {
     setWeek(Number(e.target.value));
   };
   $("tech").onchange = (e) => { state.tech = e.target.value; setWeek(state.t); };
+  // Hoisted above map creation: both the window resize handler and the map's own ResizeObserver
+  // callback (fired when the canvas's container reflows with no `window` resize event, e.g. the
+  // page layout settling after load) need to force a full redraw through the same path.
+  let shownWeek = null;
+  let shownNode = null;
+  const forceRedraw = () => { shownWeek = null; setWeek(state.t); };
   const land = await fetch("ne_110m_land.geojson").then((r) => (r.ok ? r.json() : null)).catch(() => null);
-  const map = createMap($("map"), run, land);
+  const map = createMap($("map"), run, land, forceRedraw);
   renderers.push((s) => map.draw(s.t, s));
   $("map").onclick = (e) => {
     const rect = $("map").getBoundingClientRect();
     const id = map.pick(e.clientX - rect.left, e.clientY - rect.top, state.roles);
     if (id) { state.node = id; setWeek(state.t); }
   };
-  window.addEventListener("resize", () => setWeek(state.t));
+  window.addEventListener("resize", forceRedraw);
   const legend = $("legend");
   const swatch = (color, text) => {
     const span = document.createElement("span");
@@ -85,8 +91,6 @@ async function main() {
   for (const [mode, color] of Object.entries(map.modeColor)) swatch(color, `${mode} shipment`);
   for (const [tech, color] of Object.entries(map.techColor)) swatch(color, run.network.techs[tech]);
   const dash = createDashboard($("dashboard"), run, base);
-  let shownWeek = null;
-  let shownNode = null;
   renderers.push((s) => {
     const w = Math.floor(s.t);
     if (w === shownWeek && s.node === shownNode) return;
@@ -96,7 +100,6 @@ async function main() {
     renderFeed($("feed"), run, w);
     renderNodePanel($("node-panel"), run, s.node, w, map.techColor);
   });
-  window.addEventListener("resize", () => { shownWeek = null; setWeek(state.t); });
   setWeek(1);
   requestAnimationFrame(tick);
 }
