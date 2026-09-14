@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** Kevin decides the fixes from the anomaly check (§7 notes), then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Next step:** Kevin decides how to redesign the control-tower visibility effect (§7 notes); then rerun the E1 technology screen on the fixed engine, tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -174,7 +174,12 @@ Update this table and the "Last updated" line as each task lands.
   2. *Control tower's remaining −$62M and −0.23 pt fill are a safety-stock design effect.* With visibility, a node's forecast error `err` is measured against smooth end-customer demand, not the lumpy orders it must fill, so DC stock falls ~20% and store lost sales rise ~15%. Scratch test measuring `err` against `orders_in`: control tower fill +0.31 pt, stockout −$51M, but adjusted profit −$147M (not yet explained).
   3. *Risk intelligence is not a bug.* ~90% of its gain is CM_3's own shorter disruption (8 → 5 weeks; MFG early warning adds ~$9M). Losses are steeply convex in length (no tech, CM_3 at 20%: 4 wk −$14M, 5 wk −$84M, 6 wk −$213M, 8 wk −$641M). Forced adoption with >1 member forms a coalition, so screens also get the +25% group bonus (8 → 4 weeks).
   4. *CO2 is a data assumption.* 99.3% comes from CM→MFG shipments: 0.05 t per part × 160 parts = 8 t of parts per product, 53% by air. Needs a per-part weight.
-  - Decisions pending with Kevin: accounting timing fix; control-tower safety-stock rule; per-part weight; whether forced multi-member adoptions should get the group bonus.
+  - **Kevin's rulings and fixes (2026-09-14):**
+    1. Purchases now book in the week the seller ships (`3d08bab`); money fields only change. New test: internal sales = purchases every week.
+    2. Parts weigh 0.05 t ÷ 160 (`assumptions.part_weight_tons`, `e143284`); baseline CO2 ≈ 2.9 Mt over 3 yrs, ~0.68 t per product sold.
+    3. Forced multi-member adoptions keep the group bonus; README says so.
+    4. Control tower: dig into profit before changing the rule. Finding (10 seeds, corrected code): measuring `err` against demand gives too little safety stock (fill −0.23 pt, profit −$62M); against orders gives too much (fill +0.31 pt but holding +$143M, scrap +$74M, supplier cogs +$185M; profit −$147M). Root cause is the visibility effect itself: a node swaps downstream orders for end-customer demand and loses sight of downstream replenishment needs. Needs a redesign decision (e.g., upstream forecasts downstream orders from end demand plus downstream inventory positions). Not changed.
+  - 171 tests pass. Pilot/screen numbers in `docs/sciti2/experiments-recommendation.md` predate these fixes; rerun E1 before using them.
 
 ## 8. Known risks to watch during the build
 
