@@ -209,7 +209,7 @@ Unit prices for sub-components come from `Supplier Data`. Transfer prices up the
 | | Delivery lead time | `mean_lead_days`/`p95_lead_days`: order-to-arrival into stores, tracked per order week (FIFO) — mean and 95th percentile; `mean_transit_days`/`p95_transit_days` report transit time alone, separately |
 | | Quality | Share of good units (maps to sentiment score) |
 | | Customer satisfaction index | Weighted mean of fill rate, on-time, quality (default weights 0.5, 0.3, 0.2; config) |
-| Other | CO2 | kg by lane and mode |
+| Other | CO2 | kg by lane and mode: units × weight × miles × mode factor; a product weighs 0.05 t (Glossary), a part 0.05 t ÷ 160 (`assumptions.part_weight_tons`, an assumption) |
 | | Bullwhip ratio | Variance of orders ÷ variance of demand, per tier; MFG and CM orders are converted to product units (÷160, the BOM units per product) before computing the ratio so all tiers are comparable |
 | Innovation | Adoption | Who adopted what, when, alone or in which coalition |
 
