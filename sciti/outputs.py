@@ -88,6 +88,7 @@ class RunWriter:
                             for k, v in dataclasses.asdict(sh).items()})
         (self.run_dir / "events.jsonl").write_text("".join(_dumps(e) + "\n" for e in s.events))
         (self.run_dir / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
+        (self.run_dir / "quality.json").write_text(json.dumps([round(q, 6) for q in s.quality]))
         net = {"nodes": [{"id": n, "role": s.net.nodes[n].role, "city": s.net.nodes[n].city,
                           "lat": s.net.nodes[n].lat, "lon": s.net.nodes[n].lon} for n in s.net.order],
                "links": [[a, b] for a in s.net.order for b in s.net.downstream[a]],

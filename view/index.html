@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCITI 1 replay</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>SCITI 1 <span id="run-name"></span></h1>
+    <span class="badge">Simulation — illustrative parameters</span>
+  </header>
+  <section id="controls">
+    <button id="play" type="button">Play</button>
+    <label>Speed
+      <select id="speed">
+        <option value="1">1 wk/s</option>
+        <option value="4" selected>4 wk/s</option>
+        <option value="10">10 wk/s</option>
+        <option value="20">20 wk/s</option>
+      </select>
+    </label>
+    <input id="week" type="range" min="1" max="156" value="1" aria-label="Week">
+    <output id="week-label">Week 1</output>
+    <label>Tech <select id="tech"><option value="">All</option></select></label>
+    <fieldset id="tiers"><legend>Tiers</legend></fieldset>
+  </section>
+  <main>
+    <div id="map-wrap"><canvas id="map"></canvas><div id="legend"></div></div>
+    <aside id="side">
+      <div id="node-panel"><p class="hint">Click a node on the map to see its details.</p></div>
+      <div id="feed"></div>
+    </aside>
+  </main>
+  <section id="dashboard"></section>
+  <p id="error" hidden></p>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

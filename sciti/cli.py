@@ -28,6 +28,11 @@ def main(argv: list[str] | None = None) -> int:
     bt.add_argument("--with-baseline", action="store_true")
     bt.add_argument("--confirm-spend", action="store_true")
     bt.add_argument("--out", default=None)
+    vw = sub.add_parser("view", help="serve the replay web view for a run on 127.0.0.1")
+    vw.add_argument("run_dir")
+    vw.add_argument("--baseline", default=None)
+    vw.add_argument("--port", type=int, default=8765)
+    vw.add_argument("--no-open", action="store_true")
     args = ap.parse_args(argv)
 
     if args.cmd == "prepare":
@@ -81,6 +86,19 @@ def main(argv: list[str] | None = None) -> int:
         except SpendConfirmationRequired as e:
             print(e)
             return 2
+    if args.cmd == "view":
+        import webbrowser
+        from sciti.viewserver import make_server
+        srv = make_server(Path(args.run_dir), Path(args.baseline) if args.baseline else None, args.port)
+        url = f"http://127.0.0.1:{srv.server_address[1]}/"
+        print(f"serving {args.run_dir} at {url} (Ctrl+C to stop)")
+        if not args.no_open:
+            webbrowser.open(url)
+        try:
+            srv.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        return 0
     return 1
 
 
