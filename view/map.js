@@ -7,27 +7,29 @@ const TECH_COLORS = ["#4e79a7", "#76b7b2", "#59a14f", "#b07aa1", "#9c755f", "#ba
 
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-// Pure hit-test: among nodes within reach of (mx, my) — distance <= that node's own radius + 6px —
-// pick the one with the largest radius (so a DC wins over an overlapping cluster of tiny supplier
-// dots even if a supplier is nominally closer), breaking ties by the smallest distance. Nodes whose
-// role isn't in `roles` (the tier filter) are skipped. `project(node)` returns that node's [x, y].
+// Pure hit-test. Clicking a node selects that node; overlap ties go to the larger node:
+//   1. Direct hits (distance d <= that node's own radius r) win outright over any near miss,
+//      however big — largest r first, then smallest d. This is what makes a click squarely on a
+//      small CM or DC dot select it even when a bigger MFG dot's reach circle also covers the click.
+//   2. With no direct hit, fall back to near misses (d <= r + 6px): the closest edge (smallest
+//      d - r) wins, then the larger radius on a tie.
+// Nodes whose role isn't in `roles` (the tier filter) are skipped. `project(node)` -> [x, y].
 export function pickNode(nodes, project, roles, mx, my) {
-  let best = null;
-  let bestR = -1;
-  let bestD = Infinity;
+  let hit = null, hitR = -1, hitD = Infinity;
+  let near = null, nearEdge = Infinity, nearR = -1;
   for (const n of nodes) {
     if (roles && !roles.has(n.role)) continue;
     const r = ROLE_R[n.role];
     const [x, y] = project(n);
     const d = Math.hypot(x - mx, y - my);
-    if (d > r + 6) continue;
-    if (r > bestR || (r === bestR && d < bestD)) {
-      best = n.id;
-      bestR = r;
-      bestD = d;
+    if (d <= r) {
+      if (r > hitR || (r === hitR && d < hitD)) { hit = n.id; hitR = r; hitD = d; }
+    } else if (d <= r + 6) {
+      const edge = d - r;
+      if (edge < nearEdge || (edge === nearEdge && r > nearR)) { near = n.id; nearEdge = edge; nearR = r; }
     }
   }
-  return best;
+  return hit ?? near;
 }
 
 function lonLerp(a, b, f) {
