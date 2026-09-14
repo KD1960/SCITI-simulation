@@ -221,7 +221,7 @@ Technologies are rows in `tech/catalog.yaml`. Each entry has:
 - `eligible_roles`
 - `cost_one_time`, `cost_per_week` (scaled by node size)
 - `setup_weeks` (delay before effects start)
-- `effects`: list of `{parameter, change}` (e.g., `forecast_error_sd: ×0.7`)
+- `effects`: list of `{parameter, change}` (e.g., `forecast_skill +0.3`)
 - `network_requirement`: `solo` (works alone), `pair` (needs the linked partner to adopt), or `chain` (grows with the share of the connected chain that adopts)
 - `group_bonus`: extra effect when adopted in a coalition
 - `evidence`: source note, and `assumption: true` until backed by a citation
@@ -309,14 +309,14 @@ Formation re-checks members' budgets after acceptance, iteratively: a member who
 `runs/<run_id>/`:
 
 - `manifest.json` — run id, timestamp, config (full, resolved), config hash, seed, git commit and dirty flag, Python and package versions, Excel file SHA-256, baseline.json hash, catalog hash, prompt version, model id, decision policy, fallbacks used, LLM calls and spend, check results.
-- `decisions.jsonl` — one line per agent decision: quarter, pass, agent, brief hash, full prompt, raw reply, parsed reply, validation result, fallback flag, tokens, latency.
+- `decisions.jsonl` — one line per agent decision: quarter, pass, agent, brief data, brief hash, raw reply, parsed reply, validation result, fallback flag, tokens, latency. The prompt itself is not stored; it is rebuildable from the brief data plus the `prompt_version` recorded in the manifest.
 - `weekly_nodes.csv` — node × week: stock, orders, shipments in/out, sales, lost sales, costs by type, revenue, profit, cash, techs active.
 - `shipments.csv` — every shipment: from, to, mode, units, ship week, due week, arrival week, cost, CO2.
 - `events.jsonl` — adoptions, coalitions formed/failed, disruptions, check warnings.
 - `summary.json` — outcome measures (§5.5) for the run.
 - `validation_report.md` — copy of the data validation report used.
 
-Batch: `runs/batch_<id>/results.csv` — one row per run, with `status` (`ok`/`failed`) and `error` (blank unless failed — a failed seed is recorded and the batch continues), `baseline_for` (the run id it is the paired no-tech baseline for, blank otherwise), readable config-factor columns (e.g. `policy`, `seed`, `weeks`, not a single opaque config hash), and all summary measures, ready for R/Stata/pandas.
+Batch: `runs/batch_<id>/results.csv` — one row per run, with `status` (`ok`/`failed`) and `error` (blank unless failed — a failed seed is recorded and the batch continues), `baseline_for` (the primary run's decision policy name, e.g. `rules`, on the paired no-tech baseline row; blank on the primary row and on any run with no baseline), readable config-factor columns (e.g. `policy`, `seed`, `weeks`, not a single opaque config hash), and all summary measures, ready for R/Stata/pandas.
 
 CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 
@@ -328,6 +328,7 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 - Manifest (§8) captures everything needed to rerun.
 - `sciti replay` re-runs a finished LLM run from `decisions.jsonl` with no API calls; outputs must match byte-for-byte except timestamps. This is the replication path for published results, since LLM output is not exactly repeatable.
 - Every `llm` or `rules` run can be paired with a same-seed `none` baseline for comparison (§5.5 Tech ROI, §12 criterion 4). `sciti batch --with-baseline` builds that baseline with no technology at all — including any config `forced_adoptions` — so the pairing isolates the effect of the agents' own decisions.
+- Caveat: the paired baseline shares the same demand draws but not the same lead-time/mode draws — `make_shipment` draws from one sequential `lead` stream per lane, so once the two runs' shipment counts diverge (because one run adopted tech and the other did not), later draws in that stream line up differently between them. Paired profit and cost differences therefore include some lane noise on top of the technology effect being measured.
 
 ### 9.2 LLM guardrails
 
@@ -360,7 +361,7 @@ A broken invariant stops the run with the node, week, and values in the error. `
 
 - Config validated against a schema at load; unknown keys are errors.
 - `sciti prepare` stops if a required sheet or column is missing, and writes `validation_report.md` listing row counts, dropped rows, conflicts (§2.1), and fallbacks.
-- The Excel file is read-only; the engine uses `baseline.json` thereafter and checks its hash matches the Excel file.
+- The Excel file is read-only; the engine uses `baseline.json` thereafter. The Excel file's SHA-256 is recorded (by `sciti prepare`, into `baseline.json`, and from there into every run's manifest) but not re-checked against the Excel file at run time.
 
 ### 9.6 Security and privacy
 
