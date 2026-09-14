@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** check the pilot anomalies (experiments report §3), then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Next step:** Kevin decides the fixes from the anomaly check (§7 notes), then then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -169,6 +169,12 @@ Update this table and the "Last updated" line as each task lands.
 - **Screen (5 seeds, each tech forced on all eligible firms):** routing +$403M, blockchain +$571M; ML forecasting −$358M and control tower −$199M despite large bullwhip cuts; risk intel recovers ~all of a CM_3 disruption loss. CO2 ≈ 50 t per product sold. All three flagged for checking.
 
 - **Per-shipment random draws (2026-09-14):** `make_shipment` now uses `shipment_rng(seed, src, dst, item, week)` instead of the sequential `lead` stream (removed from `STREAMS`; other streams unchanged). New test: a lane-week's draws don't depend on earlier shipments. Golden summary regenerated (seed-level changes only). 169 tests pass incl. realdata; a 156-week run still ~2 s. 10-seed rules-vs-none batch, old → new code: paired profit SD / baseline SD 1.55 → 0.35; satisfaction 1.51 → 0.19; fill 1.05 → 0.27. With the new code, rules adoption costs −$107M profit (SE ≈ $24M) vs baseline.
+- **Three odd results checked (2026-09-14, 10 seeds each, no code changed):**
+  1. *ML forecasting's profit loss is an accounting artifact.* Sellers book revenue at ship week (`ops.py` `_shipping`); buyers book purchases at arrival (`_arrivals`). Goods still in transit at the horizon end count as network profit (~$1.8B in a baseline run). ML forecasting's −$293M equals its drop in end-of-run in-transit value; excluding it, the effect is −$0.6M ± $18M. Control tower: −$48M of its −$109M is the same artifact.
+  2. *Control tower's remaining −$62M and −0.23 pt fill are a safety-stock design effect.* With visibility, a node's forecast error `err` is measured against smooth end-customer demand, not the lumpy orders it must fill, so DC stock falls ~20% and store lost sales rise ~15%. Scratch test measuring `err` against `orders_in`: control tower fill +0.31 pt, stockout −$51M, but adjusted profit −$147M (not yet explained).
+  3. *Risk intelligence is not a bug.* ~90% of its gain is CM_3's own shorter disruption (8 → 5 weeks; MFG early warning adds ~$9M). Losses are steeply convex in length (no tech, CM_3 at 20%: 4 wk −$14M, 5 wk −$84M, 6 wk −$213M, 8 wk −$641M). Forced adoption with >1 member forms a coalition, so screens also get the +25% group bonus (8 → 4 weeks).
+  4. *CO2 is a data assumption.* 99.3% comes from CM→MFG shipments: 0.05 t per part × 160 parts = 8 t of parts per product, 53% by air. Needs a per-part weight.
+  - Decisions pending with Kevin: accounting timing fix; control-tower safety-stock rule; per-part weight; whether forced multi-member adoptions should get the group bonus.
 
 ## 8. Known risks to watch during the build
 
