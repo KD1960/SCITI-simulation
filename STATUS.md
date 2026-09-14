@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-13 (Part C done: Tasks 11–16)
-**Phase:** Building on branch `sciti-mvp` with subagent-driven development. Ledger: `.superpowers/sdd/2026-09-12-sciti-1-partA-data/progress.md` (git-ignored).
-**Next step:** Part D, Task 17 (view server + page shell). Ledgers: `.superpowers/sdd/<plan-part-name>/progress.md`.
+**Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
+**Phase:** MVP built and reviewed on branch `sciti-mvp` (not yet merged to `main`). See README.md for how to use it.
+**Next step:** Kevin decides how to finish the branch (merge to `main`, keep the branch, or open a PR). After that: tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -104,9 +104,9 @@ Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development
 | 14 LLM policy | C | done (4ab14ea..a27c616; price floor, timeout, key check) |
 | 15 Replay | C | done (3ac74a2; real replay exact) |
 | 16 Batch + estimate | C | done (847d9e6..b61e562; failure-tolerant, factor columns, tech-free baseline) |
-| 17 View server + page shell | D | not started |
-| 18 Map animation | D | not started |
-| 19 Dashboard + final verification | D | not started |
+| 17 View server + page shell | D | done (0a7b505..bd1a63f; HEAD allow-list, /config.json) |
+| 18 Map animation | D | done (9b5f8d9..1541ccc; coastlines, no-red tech palette, pulses, hatched disruptions) |
+| 19 Dashboard + final verification | D | done (67fc9eb..11e1472; grouped feed, Groups in node panel, click picking, spec revised) |
 
 Update this table and the "Last updated" line as each task lands.
 
@@ -143,6 +143,24 @@ Update this table and the "Last updated" line as each task lands.
   4. LLM safety: refuses zero prices and missing key before creating a run folder; 60 s request timeout, no stacked SDK retries; 529 retried; auth errors stop the AI at once; rules fallbacks on retry are logged as fallbacks.
   5. Batch: a failed seed is recorded and the batch continues; bad seed ranges rejected; results.csv has readable settings columns and `baseline_for`; the paired baseline has no technology at all (forced adoptions removed).
 - `configs/mvp_llm.yaml` has prices 0.0 on purpose: it refuses to run until Kevin sets the model's current prices. `anthropic` SDK is 1.5.0 (uses `httpx2`).
+
+**Part D notes (2026-09-14):**
+- `sciti view RUN_DIR [--baseline BASE_RUN_DIR]` serves a local-only replay page: world map (Natural Earth coastlines, Kevin approved the 138 KB download), moving shipments, tech rings, group lines, pulses, hatched disruptions; 6 dashboard charts with dashed baseline; node panel (stats, Groups, decisions with reasons); event feed (failed group proposals grouped per week).
+- Browser checks were done by the controller in the in-app browser after each view task (subagents had no browser). Notes live in the Part D ledger folder.
+- Kevin's rulings: fix all map encoding issues (no red tech colors, drop-aware group lines, pulses, hatched disruptions + red outgoing lanes) and all dashboard issues (grouped feed, Groups section, click picks the node under the cursor, -$ formatting).
+
+**Final whole-branch review (2026-09-14):** "Ready with fixes", no critical issues. The reviewer confirmed replay stays exact even through AI fallbacks and spend-cap switching. One fix wave (cdcb9ee..9de465d), re-reviewed clean:
+1. Forced adoptions are validated before a run starts; an already-held tech is skipped with a `forced_skipped` event.
+2. Any crash mid-run still writes the manifest (with spend and fallback stats) and closes files.
+3. `sciti replay` works on `none` runs.
+4. Manifest lists assumed parameters; the view header tooltip shows them.
+5. Documented: paired baselines share demand draws but not lane (lead/mode) draws, so paired differences include some lane noise.
+6. End-to-end test: an LLM run (fake client with failures and a spend cap) replays exactly.
+7. README.md added. Spec reconciled with the build.
+- 167 tests pass (including realdata). A 156-week run takes ~1.5 s; a 30-seed batch with baselines ~90 s.
+- §12 success criteria: 1, 2, 4, 5, 6, 7 met. 3 (a paid LLM run replayed exactly) is ready but not run — needs Kevin's approval, current prices set in `configs/mvp_llm.yaml`, and `ANTHROPIC_API_KEY`.
+- Before presenting results as research (reviewer recommendation): per-shipment lane random draws for cleaner paired comparisons; 30-seed rules-vs-baseline batch with confidence intervals; replace placeholder tech costs/effects with cited values.
+- The SDD ledgers under `.superpowers/sdd/` (git-ignored) were deleted after the final review; this file and git history are the record.
 
 ## 8. Known risks to watch during the build
 
