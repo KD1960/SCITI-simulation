@@ -1,0 +1,46 @@
+              n  mean_dev     sd  late_share  late2  price_dev      t
+Supplier                                                             
+Supplier 1   45    -0.422  2.221       0.267  0.111      0.378 -1.275
+Supplier 10  50     0.080  2.337       0.460  0.160     -0.100  0.242
+Supplier 13  44    -0.295  1.995       0.318  0.068     -0.091 -0.982
+Supplier 16  38     0.158  2.433       0.500  0.132      0.789  0.400
+Supplier 19  45     0.333  2.067       0.467  0.156      0.289  1.082
+Supplier 22  61    -0.180  2.102       0.426  0.082      0.393 -0.670
+Supplier 25  59    -0.610  1.948       0.305  0.034      0.085 -2.406
+Supplier 28  45    -0.067  2.280       0.422  0.133     -0.133 -0.196
+Supplier 4   74    -0.324  2.347       0.311  0.122      0.514 -1.189
+Supplier 7   39     0.205  2.002       0.410  0.128     -0.077  0.640
+perm ANOVA lead deviation across suppliers (F,p)= (np.float64(0.9586011533286714), np.float64(0.46926536731634183))
+Sentiment Score  1   2   3
+Supplier                  
+Supplier 1       6   5  34
+Supplier 10      5   7  38
+Supplier 13      8   5  31
+Supplier 16      3   6  29
+Supplier 19      8  12  25
+Supplier 22      1  14  46
+Supplier 25      4   9  46
+Supplier 28      4   7  34
+Supplier 4       9   8  57
+Supplier 7       3   7  29
+perm chi2 supplier x sentiment (chi2,p)= (np.float64(21.830683086268802), np.float64(0.24975024975024976))
+perm chi2 supplier x geography (chi2,p)= (np.float64(39.080569857207365), np.float64(0.34565434565434566))
+Lead time <=0 rows: [{'Sales Order': 'SA_0_49', 'Supplier': 'Supplier 28', 'Lead Time': 0, 'row': 50}, {'Sales Order': 'SA_0_191', 'Supplier': 'Supplier 25', 'Lead Time': 0, 'row': 192}, {'Sales Order': 'SA_0_242', 'Supplier': 'Supplier 10', 'Lead Time': 0, 'row': 243}, {'Sales Order': 'SA_0_273', 'Supplier': 'Supplier 25', 'Lead Time': -1, 'row': 274}]
+              size       sum    need2024  ratio
+Product Name                                   
+AL_Sheet        39   6006000   6426862.0  0.935
+EPDM            45  55530000  51414896.0  1.080
+HSS_Coil        50   7700000   6426862.0  1.198
+LGS_4_W         59  18172000  12853724.0  1.414
+NR_201          61  75274000  51414896.0  1.464
+PP_Resin        44  20372000  19280586.0  1.057
+Poly_F_EU       38  17594000  19280586.0  0.913
+SR_MCU          45  13860000  12853724.0  1.078
+SR_MOS_KIT      74  22792000  12853724.0  1.773
+TGP_5_Q         45  13860000  12853724.0  1.078
+cm_mfg Ship data mean lead 20.73 pred at gc 19.07 ratio 0.92 mean dist/gc 1.164
+cm_mfg Air data mean lead 2.66 pred at gc 2.68 ratio 1.005 mean dist/gc 1.006
+mfg_dc Ship data mean lead 23.43 pred at gc 19.41 ratio 0.828 mean dist/gc 1.25
+mfg_dc Air data mean lead 2.61 pred at gc 2.63 ratio 1.006 mean dist/gc 0.996
+dc_retail Ship data mean lead 24.38 pred at gc 20.44 ratio 0.839 mean dist/gc 1.308
+dc_retail Air data mean lead 2.94 pred at gc 2.9 ratio 0.987 mean dist/gc 1.047

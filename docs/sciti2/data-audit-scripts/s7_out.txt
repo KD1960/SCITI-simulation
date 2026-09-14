@@ -1,0 +1,60 @@
+same product type row-by-row: 1.0
+qty ratio mfg_dc/dc_retail by row: {'count': 500.0, 'mean': 3.213, 'std': 5.575, 'min': 0.065, '25%': 0.666, '50%': 1.3, '75%': 3.232, 'max': 53.711}
+corr qty 0.07898414781814643
+MFG/DC total ratio 1.1107007507181308
+Product A 1.117505263533526
+Product B 1.1179710595156205
+Product C 1.089447681544757
+cm_mfg doc range 1.2 16.0 data 0.74 14.94 below 27 above 0 outside share 0.054
+   below by mode {'Ship': 12, 'Rail': 12, 'Road': 3} above by mode {}
+   lead range 1 38
+   Ship: rows with distance < 0.95*greatcircle: 37 of 173; > 1.4*gc: 42
+   Air: rows with distance < 0.95*greatcircle: 42 of 267; > 1.4*gc: 0
+   Road: rows with distance < 0.95*greatcircle: 0 of 23; > 1.4*gc: 0
+   Rail: rows with distance < 0.95*greatcircle: 0 of 37; > 1.4*gc: 0
+mfg_dc doc range 1.8 18.0 data 0.81 17.97 below 69 above 0 outside share 0.138
+   below by mode {'Ship': 37, 'Rail': 20, 'Road': 12} above by mode {}
+   lead range 1 41
+   Ship: rows with distance < 0.95*greatcircle: 0 of 181; > 1.4*gc: 45
+   Air: rows with distance < 0.95*greatcircle: 63 of 257; > 1.4*gc: 0
+   Road: rows with distance < 0.95*greatcircle: 0 of 25; > 1.4*gc: 0
+   Rail: rows with distance < 0.95*greatcircle: 0 of 37; > 1.4*gc: 0
+dc_retail doc range 1.89 14.87 data 0.8 18.88 below 32 above 31 outside share 0.126
+   below by mode {'Ship': 27, 'Rail': 5} above by mode {'Air': 31}
+   lead range 1 44
+   Ship: rows with distance < 0.95*greatcircle: 4 of 165; > 1.4*gc: 45
+   Air: rows with distance < 0.95*greatcircle: 50 of 326; > 1.4*gc: 20
+   Road: rows with distance < 0.95*greatcircle: 0 of 2; > 1.4*gc: 0
+   Rail: rows with distance < 0.95*greatcircle: 0 of 7; > 1.4*gc: 3
+cm_mfg {'CM_M': 500} ['CM_M_001', 'CM_M_002', 'CM_M_003']
+mfg_dc {'S001': 10, 'S002': 10, 'S003': 10, 'S004': 10, 'S005': 10, 'S006': 10, 'S007': 10, 'S008': 10, 'S009': 10, 'S010': 10, 'S011': 10, 'S012': 10, 'S013': 10, 'S014': 10, 'S015': 10, 'S016': 10, 'S017': 10, 'S018': 10, 'S019': 10, 'S020': 10, 'S021': 10, 'S022': 10, 'S023': 10, 'S024': 10, 'S025': 10, 'S026': 10, 'S027': 10, 'S028': 10, 'S029': 10, 'S030': 10, 'S031': 10, 'S032': 10, 'S033': 10, 'S034': 10, 'S035': 10, 'S036': 10, 'S037': 10, 'S038': 10, 'S039': 10, 'S040': 10, 'S041': 10, 'S042': 10, 'S043': 10, 'S044': 10, 'S045': 10, 'S046': 10, 'S047': 10, 'S048': 10, 'S049': 10, 'S000': 9, 'S050': 1} ['S0001', 'S0002', 'S0003']
+dc_retail {'DR_1': 100, 'DR_2': 100, 'DR_3': 100, 'DR_4': 100, 'DR_0': 99, 'DR_5': 1} ['DR_001', 'DR_002', 'DR_003']
+MFG->DC products 1426403 needs sub-component units 228224480 CM->MFG units 674464 ratio 338.37903876263226
+                                      size     sum         mean
+Component Manufacturer Product_Type                            
+CM_1                   Semiconductor   125  168325  1346.600000
+CM_2                   Steel           125  168596  1348.768000
+CM_3                   Elastomer        59   80570  1365.593220
+                       Plastic          65   88252  1357.723077
+CM_4                   Glass           126  168721  1339.055556
+Elastomer/Plastic needed per product 110 vs steel 10; data ratio CM3/CM2 qty: 1.0013404825737264
+DC outbound air share: {'Dubai, UAE': 0.688, 'Houston, TX': 0.621, 'Shanghai, China': 0.648, 'Sofia, Bulgaria': 0.651}
+Retailer inbound air share: {'Barcelona, Spain': 0.677, 'Columbus, OH': 0.726, 'Melbourne, Australia': 0.635, 'Mumbai, India': 0.571, 'Nairobi, Kenya': 0.619, 'Sao Paulo, Brazil': 0.557, 'Singapore': 0.762, 'Tokyo, Japan': 0.667}
+DC->Retail rows on doc-assigned pairs: 155 of 500 qty share 0.33795709047473327
+Retailer 1 (Columbus) inbound by DC: {'size': {'Dubai, UAE': 16, 'Houston, TX': 15, 'Shanghai, China': 15, 'Sofia, Bulgaria': 16}, 'sum': {'Dubai, UAE': 82296, 'Houston, TX': 67564, 'Shanghai, China': 57881, 'Sofia, Bulgaria': 76987}}
+Retail_Location
+Singapore                28620
+Nairobi, Kenya           56467
+Tokyo, Japan            109029
+Sao Paulo, Brazil       141172
+Barcelona, Spain        197585
+Mumbai, India           213822
+Melbourne, Australia    252814
+Columbus, OH            284728
+Name: Quantity, dtype: int64
+MFG->DC qty by DC: {'Dubai, UAE': 344506, 'Houston, TX': 376892, 'Shanghai, China': 341296, 'Sofia, Bulgaria': 363709} DC->Retail qty by DC: {'Dubai, UAE': 324520, 'Houston, TX': 323887, 'Shanghai, China': 295852, 'Sofia, Bulgaria': 339978}
+MFG_US inbound Houston modes: {'Road': 25, 'Air': 20, 'Rail': 18}
+CM_1 mode by dest {'Air': {'Los Angeles, CA': 37, 'Shenzhen, China': 34}, 'Ship': {'Los Angeles, CA': 25, 'Shenzhen, China': 29}}
+CM_1 lead range {'min': 1, 'max': 28}
+CM_2 mode by dest {'Air': {'Los Angeles, CA': 37, 'Shenzhen, China': 39}, 'Ship': {'Los Angeles, CA': 26, 'Shenzhen, China': 23}}
+CO2 per shipment range {'cm_mfg': (np.float64(1217.5), np.float64(1420788.6)), 'mfg_dc': (np.float64(710.6), np.float64(5735357.7)), 'dc_retail': (np.float64(344.3), np.float64(9789448.6))}

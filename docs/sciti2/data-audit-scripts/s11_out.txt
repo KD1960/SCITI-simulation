@@ -1,0 +1,19 @@
+R1C/R1A within-year ratio mean/sd:         mean     std     min     max
+Year                                
+2020  1.0000  0.0000  1.0000  1.0000
+2021  0.9091  0.0002  0.9085  0.9095
+2022  0.7438  0.0002  0.7434  0.7442
+2023  0.6086  0.0001  0.6082  0.6089
+2024  0.4979  0.0001  0.4977  0.4983
+corr R1A,R1B 0.492 corr R1A,R1C -0.004
+CV 2024: {'R1A': np.float64(0.1218), 'R2A': np.float64(0.1218), 'R6A': np.float64(0.1218), 'R8A': np.float64(0.1218), 'R1B': np.float64(0.0785), 'R5A': np.float64(0.0785), 'R7A': np.float64(0.1217)}
+R5 A==B==C all rows: True  R7A/R7C const: [2.]
+Ship_Date cell types: <class 'str'> s <class 'str'> <class 'str'>
+cm_mfg lead=38 rows: [{'Shipment_ID': 'CM_M_001', 'Ship_Date': '2024-11-13', 'Component Manufacturer': 'CM_4', 'Location': 'Munich, Germany', 'Manufacturer': 'MFG_China', 'MFG_Location': 'Shenzhen, China', 'Product_Type': 'Glass', 'Mode': 'Ship', 'Distance (Miles)': 8564, 'Lead Time (days)': 38}, {'Shipment_ID': 'CM_M_102', 'Ship_Date': '2024-07-15', 'Component Manufacturer': 'CM_4', 'Location': 'Munich, Germany', 'Manufacturer': 'MFG_China', 'MFG_Location': 'Shenzhen, China', 'Product_Type': 'Glass', 'Mode': 'Ship', 'Distance (Miles)': 8833, 'Lead Time (days)': 38}, {'Shipment_ID': 'CM_M_116', 'Ship_Date': '2024-06-29', 'Component Manufacturer': 'CM_4', 'Location': 'Munich, Germany', 'Manufacturer': 'MFG_China', 'MFG_Location': 'Shenzhen, China', 'Product_Type': 'Glass', 'Mode': 'Ship', 'Distance (Miles)': 8566, 'Lead Time (days)': 38}, {'Shipment_ID': 'CM_M_457', 'Ship_Date': '2024-03-07', 'Component Manufacturer': 'CM_4', 'Location': 'Munich, Germany', 'Manufacturer': 'MFG_China', 'MFG_Location': 'Shenzhen, China', 'Product_Type': 'Glass', 'Mode': 'Ship', 'Distance (Miles)': 8674, 'Lead Time (days)': 38}]
+exact doc rows: 6893/4: [{'Shipment_ID': 'CM_M_003', 'Component Manufacturer': 'CM_1', 'Manufacturer': 'MFG_US', 'Mode': 'Air', 'Distance (Miles)': 6893, 'Lead Time (days)': 4}] 501: [{'Shipment_ID': 'CM_M_007', 'Component Manufacturer': 'CM_1', 'Manufacturer': 'MFG_China', 'Mode': 'Air', 'Distance (Miles)': 501, 'Lead Time (days)': 1}, {'Shipment_ID': 'CM_M_064', 'Component Manufacturer': 'CM_1', 'Manufacturer': 'MFG_China', 'Mode': 'Air', 'Distance (Miles)': 501, 'Lead Time (days)': 1}, {'Shipment_ID': 'CM_M_199', 'Component Manufacturer': 'CM_1', 'Manufacturer': 'MFG_China', 'Mode': 'Air', 'Distance (Miles)': 501, 'Lead Time (days)': 1}]
+max lead by block: 38 41 44
+MFG_US ids in cm_mfg: <StringArray>
+['MFG_China', 'MFG_US']
+Length: 2, dtype: str  mfg_dc MFG ids: <StringArray>
+['MFG_LA', 'MFG_China']
+Length: 2, dtype: str

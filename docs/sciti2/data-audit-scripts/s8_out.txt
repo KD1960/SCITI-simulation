@@ -1,0 +1,46 @@
+/Users/kevindooley/Claude/Projects/SCITI simulation/.venv/lib/python3.13/site-packages/openpyxl/worksheet/_reader.py:329: UserWarning: Sparkline Group extension is not supported and will be removed
+  warn(msg)
+A {'int': 260}
+B {'int': 260}
+C {'str': 260}
+D {'int': 260}
+E {'int': 260}
+F {'int': 260}
+G {'=G$2*Dn': 260}
+H {'=H$2*En': 260}
+I {'=I$2*Fn': 260}
+J {'=J$2*Dn': 260}
+K {'=K$2*En': 260}
+L {'=L$2*Fn': 260}
+M {'=M$2*Dn': 260}
+N {'=N$2*En': 260}
+O {'=O$2*Fn': 260}
+P {'=P$2*En': 260}
+Q {'=Q$2*En': 260}
+R {'=R$2*En': 260}
+S {'=S$2*Dn': 260}
+T {'=T$2*En': 260}
+U {'=U$2*Fn': 260}
+V {'=V$2*Fn': 260}
+W {'=W$2*Fn': 260}
+X {'=X$2*Fn': 260}
+Y {'=Y$2*Dn': 260}
+Z {'=Z$2*En': 260}
+AA {'=AA$2*Fn': 260}
+rows 265-268 and summary area AD:BB rows 1-30:
+[]
+[]
+[]
+[]
+[('AE3', 'Retailer 1'), ('AH3', 'Retailer 2'), ('AK3', 'Retailer 3'), ('AN3', 'Retailer 4'), ('AQ3', 'Retailer 5'), ('AT3', 'Retailer 6'), ('AW3', 'Retailer 7'), ('AZ3', 'Retailer 8')]
+[('AD4', 2024), ('AE4', 'A'), ('AF4', 'B'), ('AG4', 'C'), ('AH4', 'A'), ('AI4', 'B'), ('AJ4', 'C'), ('AK4', 'A'), ('AL4', 'B'), ('AM4', 'C'), ('AN4', 'A'), ('AO4', 'B'), ('AP4', 'C'), ('AQ4', 'A'), ('AR4', 'B'), ('AS4', 'C'), ('AT4', 'A'), ('AU4', 'B'), ('AV4', 'C'), ('AW4', 'A'), ('AX4', 'B'), ('AY4', 'C'), ('AZ4', 'A'), ('BA4', 'B'), ('BB4', 'C')]
+[('AD5', 'Demand'), ('AE5', '=SUM(D213:D264)'), ('AF5', '=SUM(E213:E264)'), ('AG5', '=SUM(F213:F264)'), ('AH5', '=SUM(G213:G264)'), ('AI5', '=SUM(H213:H264)'), ('AJ5', '=SUM(I213:I264)'), ('AK5', '=SUM(J213:J264)'), ('AL5', '=SUM(K213:K264)'), ('AM5', '=SUM(L213:L264)'), ('AN5', '=SUM(M213:M264)'), ('AO5', '=SUM(N213:N264)'), ('AP5', '=SUM(O213:O264)'), ('AQ5', '=SUM(P213:P264)'), ('AR5', '=SUM(Q213:Q264)'), ('AS5', '=SUM(R213:R264)'), ('AT5', '=SUM(S213:S264)'), ('AU5', '=SUM(T213:T264)'), ('AV5', '=SUM(U213:U264)'), ('AW5', '=SUM(V213:V264)'), ('AX5', '=SUM(W213:W264)'), ('AY5', '=SUM(X213:X264)'), ('AZ5', '=SUM(Y213:Y264)'), ('BA5', '=SUM(Z213:Z264)'), ('BB5', '=SUM(AA213:AA264)')]
+[('AD6', 'std'), ('AE6', '=_xlfn.STDEV.S(D213:D264)'), ('AF6', '=_xlfn.STDEV.S(E213:E264)'), ('AG6', '=_xlfn.STDEV.S(F213:F264)'), ('AH6', '=_xlfn.STDEV.S(G213:G264)'), ('AI6', '=_xlfn.STDEV.S(H213:H264)'), ('AJ6', '=_xlfn.STDEV.S(I213:I264)'), ('AK6', '=_xlfn.STDEV.S(J213:J264)'), ('AL6', '=_xlfn.STDEV.S(K213:K264)'), ('AM6', '=_xlfn.STDEV.S(L213:L264)'), ('AN6', '=_xlfn.STDEV.S(M213:M264)'), ('AO6', '=_xlfn.STDEV.S(N213:N264)'), ('AP6', '=_xlfn.STDEV.S(O213:O264)'), ('AQ6', '=_xlfn.STDEV.S(P213:P264)'), ('AR6', '=_xlfn.STDEV.S(Q213:Q264)'), ('AS6', '=_xlfn.STDEV.S(R213:R264)'), ('AT6', '=_xlfn.STDEV.S(S213:S264)'), ('AU6', '=_xlfn.STDEV.S(T213:T264)'), ('AV6', '=_xlfn.STDEV.S(U213:U264)'), ('AW6', '=_xlfn.STDEV.S(V213:V264)'), ('AX6', '=_xlfn.STDEV.S(W213:W264)'), ('AY6', '=_xlfn.STDEV.S(X213:X264)'), ('AZ6', '=_xlfn.STDEV.S(Y213:Y264)'), ('BA6', '=_xlfn.STDEV.S(Z213:Z264)'), ('BB6', '=_xlfn.STDEV.S(AA213:AA264)')]
+[('AD8', 'A'), ('AE8', '=AE$5+AH$5+AK$5+AN$5+AQ$5+AT$5+AW$5+AZ$5')]
+[('AD9', 'B'), ('AE9', '=AF$5+AI$5+AL$5+AO$5+AR$5+AU$5+AX$5+BA$5')]
+[('AD10', 'C'), ('AE10', '=AG$5+AJ$5+AM$5+AP$5+AS$5+AV$5+AY$5+BB$5')]
+[('AD11', 'Total (2024)'), ('AE11', '=SUM(AE8:AE10)')]
+RAND formulas in first 600 rows of Glossary 0 None
+RAND formulas in first 600 rows of Supplier Data 3000 ('B2', '=WORKDAY(DATE(2024,1,1), RANDBETWEEN(0, 260))')
+RAND formulas in first 600 rows of Shipment_CM_MFG_DC_Retailers 0 None
+RAND formulas in first 600 rows of Demand_Retailer 0 None

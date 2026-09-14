@@ -162,6 +162,11 @@ Update this table and the "Last updated" line as each task lands.
 - Before presenting results as research (reviewer recommendation): per-shipment lane random draws for cleaner paired comparisons; 30-seed rules-vs-baseline batch with confidence intervals; replace placeholder tech costs/effects with cited values.
 - The SDD ledgers under `.superpowers/sdd/` (git-ignored) were deleted after the final review; this file and git history are the record.
 
+**Thread "SCITI sim 2" (2026-09-14):** no code changed. New files in `docs/sciti2/`: infographic (PNG + HTML), Ridge Line data corrections report (for the case authors), experiments recommendation, project plan, and the data-audit scripts.
+- **Data bug not yet fixed in the model:** workbook demand formulas for Retailer 5 (P, R columns) and Retailer 7 (V, W columns) point at the wrong Retailer 1 column. Mumbai A = B = C; Tokyo A shrinks ~7%/yr. Verified in the cells. Fix in `sciti prepare` before research runs.
+- **Pilot (10 seeds, rules vs none):** paired profit-difference SD ($220M) is larger than baseline seed SD ($162M), so lane noise defeats pairing. Satisfaction index 0.963 baseline (ceiling).
+- **Screen (5 seeds, each tech forced on all eligible firms):** routing +$403M, blockchain +$571M; ML forecasting −$358M and control tower −$199M despite large bullwhip cuts; risk intel recovers ~all of a CM_3 disruption loss. CO2 ≈ 50 t per product sold. All three flagged for checking.
+
 ## 8. Known risks to watch during the build
 
 - **Engine tuning:** the baseline inventory policy may give a low fill rate on real data (Task 10 calibration). If so, debug the policy; don't lower the bar.
