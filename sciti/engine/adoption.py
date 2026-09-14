@@ -8,6 +8,32 @@ class AdoptionError(Exception):
     pass
 
 
+def validate_forced_adoptions(forced_adoptions, net, catalog, weeks: int) -> None:
+    """Fail early on a bad forced-adoption config (spec §9.5), before any run dir exists."""
+    seen_pairs = set()
+    for i, fa in enumerate(forced_adoptions):
+        if fa.tech not in catalog:
+            raise ValueError(f"forced adoption {i}: unknown tech {fa.tech!r}")
+        tech = catalog[fa.tech]
+        if not fa.members:
+            raise ValueError(f"forced adoption {i}: members must be non-empty")
+        if len(set(fa.members)) != len(fa.members):
+            raise ValueError(f"forced adoption {i}: duplicate members {fa.members}")
+        for m in fa.members:
+            if m not in net.nodes:
+                raise ValueError(f"forced adoption {i}: unknown node {m!r}")
+            role = net.nodes[m].role
+            if role not in tech.eligible_roles:
+                raise ValueError(f"forced adoption {i}: {m} ({role}) is not eligible for {fa.tech}")
+        if not (1 <= fa.week <= weeks):
+            raise ValueError(f"forced adoption {i}: week {fa.week} is outside 1..{weeks}")
+        for m in fa.members:
+            pair = (m, fa.tech)
+            if pair in seen_pairs:
+                raise ValueError(f"forced adoption {i}: {m} already assigned {fa.tech} in another entry")
+            seen_pairs.add(pair)
+
+
 def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = None,
           one_time: float | None = None) -> dict:
     if tech_id not in s.catalog:
@@ -41,12 +67,21 @@ def apply_forced(s, week: int) -> None:
         if fa.week != week:
             continue
         tech = s.catalog[fa.tech]
-        coalition = f"forced_{i}" if len(fa.members) > 1 else None
-        share = sum(tech.cost_one_time[s.nodes[m].role] for m in fa.members) / len(fa.members)
+        members = []
+        for m in sorted(fa.members):
+            if fa.tech in s.holdings[m]:
+                s.events.append({"week": week, "type": "forced_skipped", "node": m, "tech": fa.tech,
+                                 "reason": "already held"})
+            else:
+                members.append(m)
+        if not members:
+            continue
+        coalition = f"forced_{i}" if len(members) > 1 else None
+        share = sum(tech.cost_one_time[s.nodes[m].role] for m in members) / len(members)
         if coalition:
             s.events.append({"week": week, "type": "coalition", "id": coalition, "tech": fa.tech,
-                             "members": sorted(fa.members), "kind": coalition_kind(s.net, fa.members)})
-        for m in sorted(fa.members):
+                             "members": members, "kind": coalition_kind(s.net, members)})
+        for m in members:
             adopt(s, m, fa.tech, week, coalition, share)
 
 

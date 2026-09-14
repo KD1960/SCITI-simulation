@@ -5,7 +5,7 @@ import datetime as dt
 import json
 from pathlib import Path
 
-from sciti.checks import SimulationError, enforce
+from sciti.checks import enforce
 from sciti.coalitions import DecisionContext, run_decision_round
 from sciti.data.demand import DemandModel
 from sciti.decide.briefs import make_personas
@@ -13,7 +13,7 @@ from sciti.decide.interface import NonePolicy
 from sciti.decide.mock import MockPolicy
 from sciti.decide.rules import RulesPolicy
 from sciti.disruptions import validate_disruptions
-from sciti.engine.adoption import apply_forced
+from sciti.engine.adoption import apply_forced, validate_forced_adoptions
 from sciti.engine.ops import step_week
 from sciti.engine.state import init_state
 from sciti.metrics import summarize, week_rows
@@ -55,9 +55,7 @@ def run(cfg, run_dir: Path | None = None, client=None) -> Path:
     net = build_network(baseline, cfg.assumptions)
     validate_disruptions(cfg.disruptions, net)
     catalog = load_catalog(cfg.catalog_path)
-    for fa in cfg.forced_adoptions:
-        if fa.tech not in catalog or any(m not in net.nodes for m in fa.members):
-            raise ValueError(f"forced adoption refers to unknown tech or node: {fa}")
+    validate_forced_adoptions(cfg.forced_adoptions, net, catalog, cfg.weeks)
     dm = DemandModel.from_baseline(baseline, cfg.demand.trend_cap, cfg.demand.growth_mult)
     streams = make_streams(cfg.seed)
     demand = dm.generate(cfg.weeks, streams["demand"])
@@ -72,7 +70,10 @@ def run(cfg, run_dir: Path | None = None, client=None) -> Path:
     decision_stats = {"calls": 0, "fallbacks": 0, "errors": 0}
     rows: list[dict] = []
     checks = "passed" if cfg.checks.strict else "warnings-allowed"
-    extra = {"catalog_sha256": catalog_hash(cfg.catalog_path), "xlsx_sha256": baseline["source"]["xlsx_sha256"]}
+    assumptions = {"config": sorted(type(cfg.assumptions).model_fields),
+                   "catalog_assumed_techs": sorted(t.id for t in catalog.values() if t.assumption)}
+    extra = {"catalog_sha256": catalog_hash(cfg.catalog_path), "xlsx_sha256": baseline["source"]["xlsx_sha256"],
+             "assumptions": assumptions}
 
     def manifest_extra(checks_value):
         return {**extra, "checks": checks_value, "decisions": decision_stats,
@@ -91,9 +92,10 @@ def run(cfg, run_dir: Path | None = None, client=None) -> Path:
             step_week(s, t)
             enforce(s, t, cfg.checks.strict)
             rows.extend(week_rows(s, t))
-    except SimulationError as e:
-        checks = f"failed: {e}"
-        writer.finish(s, rows, {"error": str(e)}, build_manifest(cfg, run_id, started, now(), manifest_extra(checks)))
+    except Exception as e:
+        label = f"{type(e).__name__}: {e}"
+        checks = f"failed: {label}"
+        writer.finish(s, rows, {"error": label}, build_manifest(cfg, run_id, started, now(), manifest_extra(checks)))
         writer.close()
         raise
     summary = summarize(s, rows)
@@ -107,7 +109,8 @@ def replay_run(original: Path, out_dir: Path) -> list[str]:
     from sciti.outputs import DETERMINISTIC_FILES
     original = Path(original)
     data = json.loads((original / "manifest.json").read_text())["config"]
-    data["decision"]["policy"] = "replay"
-    data["decision"]["replay_from"] = str(original / "decisions.jsonl")
+    if data["decision"]["policy"] != "none":
+        data["decision"]["policy"] = "replay"
+        data["decision"]["replay_from"] = str(original / "decisions.jsonl")
     out = run(Config.model_validate(data), run_dir=Path(out_dir))
     return [f for f in DETERMINISTIC_FILES if (original / f).read_bytes() != (out / f).read_bytes()]

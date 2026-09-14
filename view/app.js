@@ -41,6 +41,11 @@ async function main() {
   const config = await fetch("config.json").then((r) => r.json());
   base = config.has_baseline ? await loadRun("base") : null;
   $("run-name").textContent = run.manifest?.run_id ?? "";
+  const assumed = run.manifest?.assumptions?.catalog_assumed_techs ?? [];
+  if (assumed.length) {
+    $("assumptions-badge").title =
+      `Assumed technologies: ${assumed.join(", ")}. Markups, costs, and effect sizes are placeholders.`;
+  }
   $("week").max = run.weeks;
   for (const [id, name] of Object.entries(run.network.techs).sort()) $("tech").append(new Option(name, id));
   for (const role of ROLES) {

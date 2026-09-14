@@ -2,6 +2,8 @@ import csv
 import json
 import math
 
+import pytest
+
 from sciti.config import Config, Disruption, ForcedAdoption
 from sciti.outputs import DETERMINISTIC_FILES, scrub
 from sciti.runner import run
@@ -25,6 +27,8 @@ def test_run_writes_all_outputs(baseline_path, tmp_path):
     assert man["seed"] == 3 and man["decision_policy"] == "none"
     assert len(man["config_hash"]) == 64 and "git_commit" in man
     assert man["checks"] == "passed"
+    assert man["assumptions"]["config"] == sorted(man["assumptions"]["config"])
+    assert len(man["assumptions"]["catalog_assumed_techs"]) == 8
 
 
 def test_same_seed_outputs_identical(baseline_path, tmp_path):
@@ -69,3 +73,38 @@ def test_summary_has_transit_and_order_to_arrival_days(baseline_path, tmp_path):
     summary = json.loads((d / "summary.json").read_text())
     assert math.isfinite(summary["mean_transit_days"]) and summary["mean_transit_days"] > 0
     assert math.isfinite(summary["mean_lead_days"]) and summary["mean_lead_days"] > 0
+
+
+def test_invalid_forced_adoption_raises_and_creates_no_run_dir(baseline_path, tmp_path):
+    run_dir = tmp_path / "runs" / "bad"
+    c = cfg(baseline_path, tmp_path, forced_adoptions=[
+        ForcedAdoption(week=20, tech="wh_robotics", members=["Retail_1"])])
+    with pytest.raises(ValueError, match="not eligible"):
+        run(c, run_dir=run_dir)
+    assert not run_dir.exists()
+
+
+def test_forced_adoption_on_non_quarter_week_is_applied(baseline_path, tmp_path):
+    c = cfg(baseline_path, tmp_path, forced_adoptions=[
+        ForcedAdoption(week=2, tech="routing", members=["MFG_US"])])
+    d = run(c, run_dir=tmp_path / "nq")
+    events = [json.loads(line) for line in (d / "events.jsonl").read_text().splitlines()]
+    assert any(e["type"] == "adopt" and e["week"] == 2 and e["node"] == "MFG_US" for e in events)
+
+
+def test_mid_run_exception_still_writes_outputs(baseline_path, tmp_path, monkeypatch):
+    import sciti.runner as runner_mod
+
+    def boom(s, t):
+        if t == 5:
+            raise RuntimeError("kaboom")
+
+    monkeypatch.setattr(runner_mod, "step_week", boom)
+    run_dir = tmp_path / "runs" / "boom"
+    c = cfg(baseline_path, tmp_path)
+    with pytest.raises(RuntimeError, match="kaboom"):
+        run(c, run_dir=run_dir)
+    man = json.loads((run_dir / "manifest.json").read_text())
+    assert man["checks"].startswith("failed: RuntimeError")
+    decisions = (run_dir / "decisions.jsonl").read_text()  # writer was closed cleanly
+    assert decisions is not None

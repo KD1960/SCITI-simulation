@@ -86,6 +86,7 @@ export function describe(e, techs) {
   switch (e.type) {
     case "adopt": return `${e.node} adopted ${t}${e.coalition ? ` (group ${e.coalition})` : " (alone)"}`;
     case "drop": return `${e.node} dropped ${t}`;
+    case "forced_skipped": return `${e.node} already held ${t}; skipped in the forced adoption`;
     case "coalition": return `${e.kind} formed for ${t}: ${e.members.join(", ")}`;
     case "coalition_failed": {
       const why = FAILED_REASON[e.reason] ?? e.reason;
