@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** Kevin decides the fixes from the anomaly check (§7 notes), then then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Next step:** Kevin decides the fixes from the anomaly check (§7 notes), then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
