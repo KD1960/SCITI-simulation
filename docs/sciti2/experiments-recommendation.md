@@ -10,7 +10,7 @@
 
 Run experiments in this order:
 
-1. **E0 — Make the comparisons trustworthy** (fix lane noise, fix the Mumbai/Tokyo demand bug, check three odd results). Small job, and everything later depends on it.
+1. **E0 — Make the comparisons trustworthy** (fix lane noise, check three odd results; the Mumbai/Tokyo demand bug is already fixed). Small job, and everything later depends on it.
 2. **E1 — One-technology screen** at 30 seeds. Gives a clean effect table for each technology.
 3. **E2 — Stress scenarios.** The baseline chain is almost too healthy to improve, so service effects need disruptions and demand shocks to show up.
 4. **E3 — "Who with whom."** The core research question: same technology, same number of adopters, different group structures.
@@ -70,7 +70,7 @@ These are not proven bugs. They are results that look too strong or point the wr
 
 - **Change:** give each shipment its own random draws (for example, seeded from lane + ship week + order index) so a tech run and its baseline see the same lead times and modes. This was the final reviewer's first research recommendation.
 - **Check:** rerun the 10-seed rules batch. Success = paired profit SD falls well below the $162M baseline SD (aim for under a third of it).
-- **Fix demand data:** the workbook has formula bugs for Mumbai (Retailer 5) and Tokyo (Retailer 7). The model uses the buggy series today (Mumbai A = B = C; Tokyo Product A shrinks 7% a year). Correct them in `sciti prepare` (see the data corrections report, §2.4), rebuild `baseline.json`, and rerun the golden and calibration tests. The pilot numbers above will shift a little.
+- **Demand data fixed (2026-09-14):** the Mumbai (Retailer 5) and Tokyo (Retailer 7) formula bugs are now corrected in `sciti prepare`. The pilot numbers above were run before the fix; seed 1 no-tech now gives fill 0.978 and profit $34.1B (was 0.984 and about $31.4B). Rerun the pilot after the lane-draw fix.
 - **Also:** the three checks in §3. Record each answer in STATUS.md.
 - **Then:** pick the seed count. Use the new paired SD to size batches (for example, n ≈ (2.8 × SD / smallest effect you care about)²).
 

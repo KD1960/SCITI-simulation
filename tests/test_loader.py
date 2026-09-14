@@ -118,6 +118,27 @@ def test_parse_demand_shapes():
     assert len(hist["Retail_8"]["C"]) == 104
 
 
+def test_parse_demand_corrects_store_column_copied_from_wrong_product():
+    # Workbook bug: Retailer 5 (cols 15-17) all multiply Retailer 1 Product B.
+    rows = [[None] * 27 for _ in range(4)]
+    rows[1] = [None] * 3 + [None] * 3 + [0.5] * 21
+    for w in range(1, 53):
+        a, b, c = 100.0 + w, 200.0 + 2 * w, 50.0 - 0.5 * w
+        row = [2020, w, "Q1", a, b, c]
+        for r in range(2, 9):
+            row += [0.5 * a, 0.5 * b, 0.5 * c]
+        row[15:18] = [0.5 * b, 0.5 * b, 0.5 * b]
+        rows.append(row)
+    report = []
+    years, hist = loader.parse_demand(pd.DataFrame(rows), report)
+    r1 = hist["Retail_1"]
+    assert hist["Retail_5"]["A"] == pytest.approx([0.5 * v for v in r1["A"]])
+    assert hist["Retail_5"]["B"] == pytest.approx([0.5 * v for v in r1["B"]])
+    assert hist["Retail_5"]["C"] == pytest.approx([0.5 * v for v in r1["C"]])
+    assert hist["Retail_2"]["A"] == pytest.approx([0.5 * v for v in r1["A"]])
+    assert len([line for line in report if "Retail_5" in line]) == 2
+
+
 def test_prepare_missing_sentiment_score_column(tmp_path):
     import openpyxl
     # Build minimal workbook with all sheets but missing Sentiment Score
@@ -215,6 +236,9 @@ def test_prepare_real_workbook(tmp_path):
     assert len(base["suppliers"]) == 30
     assert base["history_years"] == [2020, 2021, 2022, 2023, 2024]
     assert sum(base["demand_history"]["Retail_1"]["A"][-52:]) == pytest.approx(129239, rel=0.01)
+    hist = base["demand_history"]
+    assert [round(sum(hist["Retail_5"][p][-52:])) for p in "ABC"] == [103391, 71414, 51483]
+    assert [round(sum(hist["Retail_7"][p][-52:])) for p in "ABC"] == [103391, 44634, 25742]
     assert set(base["lanes"]) == {"cm_mfg", "mfg_dc", "dc_retail"}
     assert json.loads((tmp_path / "baseline.json").read_text())["source"]["xlsx_sha256"]
     assert (tmp_path / "validation_report.md").read_text().startswith("# Validation report")

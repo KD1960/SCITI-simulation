@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
-**Phase:** MVP built and reviewed on branch `sciti-mvp` (not yet merged to `main`). See README.md for how to use it.
-**Next step:** Kevin decides how to finish the branch (merge to `main`, keep the branch, or open a PR). After that: tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
+**Next step:** per-shipment lane random draws (experiments report E0), then check the pilot anomalies, then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -163,7 +163,8 @@ Update this table and the "Last updated" line as each task lands.
 - The SDD ledgers under `.superpowers/sdd/` (git-ignored) were deleted after the final review; this file and git history are the record.
 
 **Thread "SCITI sim 2" (2026-09-14):** no code changed. New files in `docs/sciti2/`: infographic (PNG + HTML), Ridge Line data corrections report (for the case authors), experiments recommendation, project plan, and the data-audit scripts.
-- **Data bug not yet fixed in the model:** workbook demand formulas for Retailer 5 (P, R columns) and Retailer 7 (V, W columns) point at the wrong Retailer 1 column. Mumbai A = B = C; Tokyo A shrinks ~7%/yr. Verified in the cells. Fix in `sciti prepare` before research runs.
+- **Merged `sciti-mvp` into `main`** (fast-forward), per Kevin.
+- **Demand bug fixed:** workbook formulas for Retailer 5 (P, R) and Retailer 7 (V, W) scale the wrong Retailer 1 product (Mumbai A = B = C; Tokyo A shrank ~7%/yr). `parse_demand` now detects a store column matching scale × a different Retailer 1 product, rebuilds it from the intended product, and logs it (4 columns fixed). 168 tests pass incl. realdata. Seed-1 no-tech run after the fix: fill 0.978, profit $34.1B (was 0.984, ~$31.4B). The pilot/screen numbers below predate the fix.
 - **Pilot (10 seeds, rules vs none):** paired profit-difference SD ($220M) is larger than baseline seed SD ($162M), so lane noise defeats pairing. Satisfaction index 0.963 baseline (ceiling).
 - **Screen (5 seeds, each tech forced on all eligible firms):** routing +$403M, blockchain +$571M; ML forecasting −$358M and control tower −$199M despite large bullwhip cuts; risk intel recovers ~all of a CM_3 disruption loss. CO2 ≈ 50 t per product sold. All three flagged for checking.
 

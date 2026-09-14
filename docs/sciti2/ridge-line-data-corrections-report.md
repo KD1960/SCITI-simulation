@@ -29,7 +29,7 @@ Cell addresses are Excel addresses. The scripts used for every number here are a
 | 1 | Supplier lookup formula only ever picks the first of three suppliers, so 20 of 30 suppliers have no transactions | High | Used the parameter table for all 30; borrowed spread and quality from the one supplier per part that has data |
 | 2 | Supplier transactions re-randomize every time Excel recalculates | High | Read the saved values once and recorded the file's fingerprint |
 | 3 | No supplier is actually slipping: the case question has no answer in the data | High | Nothing (it does not affect the simulation) |
-| 4 | Demand formula bugs for Retailer 5 (Mumbai) and Retailer 7 (Tokyo), repeated in the document's Table 5 | High | **Not yet corrected in our model** — fix planned |
+| 4 | Demand formula bugs for Retailer 5 (Mumbai) and Retailer 7 (Tokyo), repeated in the document's Table 5 | High | Corrected: rebuilt each wrong column from its intended Retailer 1 product (logged) |
 | 5 | Every store's demand is a multiple of Retailer 1; Retailer 1 Product C is a copy of Product A | High | Fitted each store and product separately |
 | 6 | DC→store shipment rows ignore the document's DC–store assignments | High | Network links follow the document; lane statistics taken from the data by mode |
 | 7 | CM→plant shipment quantities are about 338× too small for the bill of materials, and split 25% per CM | High | Ignored shipment quantities; flows come from demand × bill of materials |
@@ -100,7 +100,7 @@ Cell addresses are Excel addresses. The scripts used for every number here are a
 - Corrected 2024 totals would be about: Mumbai 103,391 / 71,414 / 51,483; Tokyo 103,391 / 44,634 / 25,742.
 - The bug also flows into supplier order quantities, because `AE11` (total demand) feeds `Supplier Data!Y2`.
 
-**What we did.** Our model used the series as given. **We have not yet corrected this** and will do so in the next data update.
+**What we did.** Our loader now detects a store column that scales the wrong Retailer 1 product and rebuilds it as scale × the intended product. It fixed exactly four columns (Mumbai A and C, Tokyo A and B) and lists each in the validation report.
 
 **Suggested fix.** Correct columns P, R, V, W. Regenerate Table 5. Either rewrite the Mumbai and Tokyo text, or build the intended patterns on purpose.
 

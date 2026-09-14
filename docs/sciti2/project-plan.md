@@ -2,7 +2,7 @@
 
 **Owner:** Kevin Dooley, W. P. Carey School of Business, ASU
 **Date:** 2026-09-14
-**Starting point:** SCITI 1 MVP is built and reviewed on branch `sciti-mvp` (167 tests pass; not merged). Technology parameters are placeholders. No paid LLM run yet.
+**Starting point:** SCITI 1 MVP is built, reviewed, and merged to `main` (168 tests pass). Mumbai/Tokyo demand bug fixed. Technology parameters are placeholders. No paid LLM run yet.
 **Horizon:** 2026-09-14 to 2027-05-28 (about 37 weeks)
 
 ---
@@ -15,7 +15,7 @@ Turn SCITI 1 from a working prototype into a **trusted, reusable SCITI asset** t
 
 | # | Objective | Measure of success | Due |
 |---|---|---|---|
-| O1 | **Stable, trusted engine** | Branch merged; per-shipment random draws in place; paired profit-difference SD under one third of baseline SD; the three pilot anomalies explained and closed | 2026-10-09 |
+| O1 | **Stable, trusted engine** | Per-shipment random draws in place; paired profit-difference SD under one third of baseline SD; the three pilot anomalies explained and closed | 2026-10-09 |
 | O2 | **Correct case data** | Data corrections report sent to the Ridge Line case authors; their answers folded into `sciti prepare`; revised validation report with zero unexplained fallbacks | 2026-10-30 |
 | O3 | **Teaching-ready** | 3 classroom presets, a 1-page instructor guide, the infographic, and one live demo in the Oct 2026 SCM & AI workshop (date to confirm) | Workshop date |
 | O4 | **Evidence-based technology catalog** | All 8 technologies have a cited cost and effect range (source + `assumption: false` or a stated range); catalog version 2 committed | 2026-12-11 |
@@ -35,8 +35,8 @@ Turn SCITI 1 from a working prototype into a **trusted, reusable SCITI asset** t
 
 | Week of | Work |
 |---|---|
-| Sep 14 | Decide how to finish `sciti-mvp` (merge recommended). Send data corrections report to case authors. |
-| Sep 21 | Per-shipment random draws (test first). Correct the Mumbai/Tokyo demand formula bugs in `sciti prepare`. Rerun 10-seed paired check. |
+| Sep 14 | ✓ Branch merged; ✓ Mumbai/Tokyo demand fix. Send data corrections report to case authors. |
+| Sep 21 | Per-shipment random draws (test first). Rerun 10-seed paired check. |
 | Sep 28 | Investigate the pilot anomalies: ML forecasting and control tower lower profit; risk intelligence recovers ~100% of a disruption; CO2 about 50 t per product. |
 | Oct 5 | Fixes reviewed; STATUS.md updated. **Milestone M1: engine trusted.** |
 
@@ -114,6 +114,5 @@ These are proposed links, not commitments. Each needs its own check that the dat
 
 ## 9. Decisions needed from Kevin now
 
-1. Merge `sciti-mvp` into `main`?
-2. Confirm the October workshop date for the demo.
-3. Approve sending the data corrections report to the case authors (and who they are).
+1. Confirm the October workshop date for the demo.
+2. Approve sending the data corrections report to the case authors (and who they are).

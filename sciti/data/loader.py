@@ -100,14 +100,32 @@ def parse_lanes(ship: pd.DataFrame, report: list[str]) -> dict[str, dict]:
     return lanes
 
 
-def parse_demand(df: pd.DataFrame) -> tuple[list[int], dict[str, dict[str, list[float]]]]:
+def parse_demand(df: pd.DataFrame, report: list[str] | None = None
+                 ) -> tuple[list[int], dict[str, dict[str, list[float]]]]:
     d = df.iloc[4:].copy()
     d = d[pd.to_numeric(d[0], errors="coerce").notna()]
     years = sorted(int(y) for y in d[0].unique())
+    r1 = [d[3 + i].astype(float).to_numpy() for i in range(3)]
     hist = {}
     for r in range(1, 9):
         c = 3 + 3 * (r - 1)
         hist[f"Retail_{r}"] = {p: [float(v) for v in d[c + i]] for i, p in enumerate("ABC")}
+        if r == 1:
+            continue
+        # Workbook bug (Retailers 5, 7): a store column scales the wrong Retailer 1 product.
+        for i, p in enumerate("ABC"):
+            scale = pd.to_numeric(df.iloc[1, c + i], errors="coerce")
+            if pd.isna(scale):
+                continue
+            own = np.array(hist[f"Retail_{r}"][p])
+            if np.allclose(own, scale * r1[i]):
+                continue
+            wrong = [q for j, q in enumerate("ABC") if j != i and np.allclose(own, scale * r1[j])]
+            if wrong:
+                hist[f"Retail_{r}"][p] = [float(v) for v in scale * r1[i]]
+                if report is not None:
+                    report.append(f"- Retail_{r}/{p}: workbook column scales Retailer 1 Product {wrong[0]}; "
+                                  f"corrected to {scale:g} × Retailer 1 Product {p}")
     return years, hist
 
 
@@ -164,7 +182,7 @@ def prepare(xlsx: Path, out_dir: Path) -> dict:
         if bom[s["sku"]]["cm"] != s["cm"]:
             raise ValueError(f"{sid} ships {s['sku']} to {s['cm']} but BOM says {bom[s['sku']]['cm']}")
     lanes = parse_lanes(pd.read_excel(xlsx, sheet_name="Shipment_CM_MFG_DC_Retailers", header=None), report)
-    years, hist = parse_demand(pd.read_excel(xlsx, sheet_name="Demand_Retailer", header=None))
+    years, hist = parse_demand(pd.read_excel(xlsx, sheet_name="Demand_Retailer", header=None), report)
     for rid, prods in hist.items():
         for p, series in prods.items():
             if len(series) != 52 * len(years):
