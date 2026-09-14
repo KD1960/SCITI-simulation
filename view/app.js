@@ -1,6 +1,6 @@
 import { loadRun } from "./data.js";
 import { createMap } from "./map.js";
-// [imports]
+import { createDashboard, renderFeed, renderNodePanel } from "./dash.js";
 
 const ROLES = ["Supplier", "CM", "MFG", "DC", "Retail"];
 const $ = (id) => document.getElementById(id);
@@ -84,7 +84,19 @@ async function main() {
   };
   for (const [mode, color] of Object.entries(map.modeColor)) swatch(color, `${mode} shipment`);
   for (const [tech, color] of Object.entries(map.techColor)) swatch(color, run.network.techs[tech]);
-  // [setup]
+  const dash = createDashboard($("dashboard"), run, base);
+  let shownWeek = null;
+  let shownNode = null;
+  renderers.push((s) => {
+    const w = Math.floor(s.t);
+    if (w === shownWeek && s.node === shownNode) return;
+    shownWeek = w;
+    shownNode = s.node;
+    dash.update(w);
+    renderFeed($("feed"), run, w);
+    renderNodePanel($("node-panel"), run, s.node, w, map.techColor);
+  });
+  window.addEventListener("resize", () => { shownWeek = null; setWeek(state.t); });
   setWeek(1);
   requestAnimationFrame(tick);
 }

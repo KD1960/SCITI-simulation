@@ -3,6 +3,7 @@
 **Project:** SCITI 1 (Supply Chain Innovation — Technology & Interaction simulator, version 1)
 **Date:** 2026-09-12
 **Status:** Design approved in brainstorming; awaiting spec review
+**Revised 2026-09-14 to match the built MVP.**
 **Location:** `~/Claude/Projects/SCITI simulation/`
 
 ---
@@ -42,6 +43,8 @@ The loader writes every conflict it finds to a validation report (§9). Default 
 | Doc's supplier ranges per sub-component differ slightly from the BOM table (e.g., SR_MCU "Suppliers 1–6" vs "1–3") | Use the BOM table (Table 3): three suppliers per sub-component |
 | A supplier or lane has too few valid rows to estimate a parameter | Fall back to the pooled value for its material family / lane type; flag in the report |
 
+The loader stops with an error if a required column is missing from a sheet (rather than silently dropping rows), and it reports success only when it completes; a supplier/BOM mismatch is a hard stop, not a fallback. For the lane lead-time model, a lane mode with fewer than 50 valid rows, or a fitted distance slope that is negative, falls back to a flat model (the data's mean lead time for that mode, no distance term).
+
 ## 3. Scope
 
 ### In the MVP
@@ -69,34 +72,53 @@ The loader writes every conflict it finds to a validation report (§9). Default 
 Python 3.13 engine plus a static browser view. No simulation framework (e.g., Mesa): a small custom loop with a fixed, documented update order is easier to replicate and audit.
 
 ```
-sciti/
-  data/loader.py        # Excel → baseline.json (+ validation report)
-  data/demand.py        # baseline → future demand paths
-  network.py            # nodes, links, BOM, lanes
-  agents/base.py        # weekly ops: receive, sell/build, order, ship
-  agents/roles.py       # Supplier, CM, Manufacturer, DC, Retailer
-  tech/catalog.yaml     # technology definitions (data, not code)
-  tech/effects.py       # apply adopted-tech effects to agent parameters
-  decide/interface.py   # DecisionPolicy protocol
-  decide/llm.py         # Claude-backed policy
-  decide/rules.py       # rule-based fallback policy
-  decide/replay.py      # replays logged decisions
-  decide/mock.py        # deterministic fake for tests
-  coalitions.py         # proposal/response rounds, cost sharing
-  disruptions.py        # scheduled capacity / lane shocks
-  checks.py             # invariants and sanity checks
-  runner.py             # one run: loop, logging, manifest
-  batch.py              # many runs → results.csv
-  cli.py                # `sciti` command
-view/
-  index.html, app.js, style.css
-  world-110m.json       # bundled Natural Earth outline (public domain), no network needed
-configs/
-  baseline.yaml         # no innovation
-  mvp_llm.yaml          # LLM agents decide
-  classroom_*.yaml      # teaching presets
-tests/
-runs/                   # outputs (git-ignored)
+pyproject.toml                 # package + deps + `sciti` entry point
+.gitignore
+sciti/__init__.py
+sciti/config.py                # pydantic config schema, load_config()
+sciti/rng.py                   # named random streams from one seed
+sciti/data/__init__.py
+sciti/data/loader.py           # prepare(): Excel → baseline.json + validation_report.md
+sciti/data/demand.py           # fit_series(), DemandModel.generate()/.expected()
+sciti/network.py               # Node, Network, build_network(), great_circle_miles()
+sciti/tech/__init__.py
+sciti/tech/catalog.yaml        # 8 technologies
+sciti/tech/catalog.py          # Tech, TechHolding, load_catalog()
+sciti/tech/effects.py          # PARAMS, base_params(), effective_params()
+sciti/engine/__init__.py
+sciti/engine/state.py          # Shipment, NodeState, SimState, init_state()
+sciti/engine/ops.py            # step_week() and its sub-steps
+sciti/engine/economics.py      # price_table(), sell_price(), unit_value(), propagate()
+sciti/engine/adoption.py       # adopt(), drop(), apply_forced()
+sciti/checks.py                # check_invariants(), enforce()
+sciti/disruptions.py           # validate_disruptions(), apply_disruptions()
+sciti/metrics.py               # week_rows(), summarize()
+sciti/outputs.py               # RunWriter: CSV/JSONL/manifest
+sciti/decide/__init__.py
+sciti/decide/interface.py      # Brief, Decision, DecisionPolicy, NonePolicy, validate_reply()
+sciti/decide/briefs.py         # build_brief()
+sciti/decide/mock.py           # MockPolicy
+sciti/decide/rules.py          # RulesPolicy
+sciti/decide/llm.py            # LLMPolicy, SpendTracker
+sciti/decide/replay.py         # ReplayPolicy
+sciti/decide/prompts/v1_system.md
+sciti/coalitions.py            # run_decision_round()
+sciti/runner.py                # run(cfg) -> Path
+sciti/batch.py                 # run_batch()
+sciti/cli.py                   # argparse CLI
+configs/baseline.yaml
+configs/rules.yaml
+configs/mvp_llm.yaml
+configs/classroom_shanghai_tower.yaml
+view/index.html, view/style.css
+view/data.js, view/app.js, view/map.js, view/dash.js
+view/ne_110m_land.geojson      # downloaded once (asked Kevin first), Natural Earth land outline
+sciti/viewserver.py            # serve view + run files on 127.0.0.1, plus a virtual /config.json
+tests/__init__.py, tests/helpers.py
+tests/conftest.py              # synthetic baseline fixture (real schema)
+tests/test_*.py
+tests/golden/none_seed7_summary.json
+runs/                           # outputs (git-ignored)
 ```
 
 Each unit has one job and a narrow interface. The engine never imports the view; the view reads only run output files.
@@ -157,7 +179,7 @@ Every week `t`:
 3. **Retail sales**: retailers sell `min(stock, demand)`. Unmet demand is lost (config: `backorder: false`) and recorded.
 4. **Production**: MFGs build up to capacity and parts on hand; CMs convert raw material up to capacity.
 5. **Forecast**: each node updates its demand forecast (exponential smoothing on the orders it receives; retailers on sales).
-6. **Ordering**: periodic-review order-up-to policy. `S = forecast × (lead_time + 1) + z × σ_forecast × sqrt(lead_time + 1)`; order `max(0, S − inventory_position)`. `z` from a target cycle service level (default 95%).
+6. **Ordering**: periodic-review order-up-to policy. `S = forecast × (lead_time + 1) + z × σ_forecast × sqrt(lead_time + 1)`; order `max(0, S − inventory_position)`. `z` from a target cycle service level (default 95%). For DC, MFG, and CM nodes, `inventory_position` also nets out net backlog owed downstream (orders received but not yet shipped), counted in the node's own input units; the plan's DC-only rule made fill rate collapse by year 3 on real data, so MFG and CM count it too.
 7. **Shipping**: upstream nodes fill orders from stock (proportional rationing if short), choose a mode by the lane's historic mode mix, and create shipments with lead time, cost, and CO2.
 8. **Quality**: each supplier lot fails with a probability from that supplier's share of sentiment-1 feedback; failed units are scrapped at the receiving CM.
 9. **Tech effects** already in force are applied to the parameters above (§6).
@@ -184,11 +206,11 @@ Unit prices for sub-components come from `Supplier Data`. Transfer prices up the
 | | Tech ROI / payback | Discounted gain vs. same-seed no-tech baseline |
 | Customer | Fill rate | Units sold ÷ units demanded (retailers) |
 | | On-time delivery | Share of shipments arriving within quoted lead time |
-| | Delivery lead time | Mean and 95th percentile, order to arrival |
+| | Delivery lead time | `mean_lead_days`/`p95_lead_days`: order-to-arrival into stores, tracked per order week (FIFO) — mean and 95th percentile; `mean_transit_days`/`p95_transit_days` report transit time alone, separately |
 | | Quality | Share of good units (maps to sentiment score) |
 | | Customer satisfaction index | Weighted mean of fill rate, on-time, quality (default weights 0.5, 0.3, 0.2; config) |
 | Other | CO2 | kg by lane and mode |
-| | Bullwhip ratio | Variance of orders ÷ variance of demand, per tier |
+| | Bullwhip ratio | Variance of orders ÷ variance of demand, per tier; MFG and CM orders are converted to product units (÷160, the BOM units per product) before computing the ratio so all tiers are comparable |
 | Innovation | Adoption | Who adopted what, when, alone or in which coalition |
 
 ## 6. Technology catalog
@@ -208,7 +230,7 @@ MVP catalog (default effect sizes; all marked `assumption: true`):
 
 | id | Technology | Eligible | Main effect (default) | Network |
 |---|---|---|---|---|
-| `ml_forecast` | ML demand forecasting | Retailer, DC, MFG | Forecast error SD ×0.7 | solo |
+| `ml_forecast` | ML demand forecasting | Retailer, DC, MFG | `forecast_skill +0.3` — a blend weight toward a better demand model, not a direct forecast-error-SD multiplier | solo |
 | `control_tower` | Supply chain control towers | All | Upstream sees downstream sales, not just orders; bullwhip damped | chain |
 | `rfid` | Item-level RFID | CM, MFG, DC, Retailer | Inventory record error 5% → 1%; shrink −50% | solo |
 | `aps` | Advanced planning and scheduling | CM, MFG | Effective capacity +8% | solo |
@@ -230,7 +252,7 @@ At the start of each quarter (weeks 1, 14, 27, …; 12 rounds per run). Operatio
 A short, structured brief, built only from information that node could plausibly have:
 
 - Its role, location, and a persona drawn from a seeded distribution: risk attitude (cautious / balanced / bold), budget rule (max share of cash for tech), planning horizon.
-- Last quarter: revenue, costs by type, profit, cash, fill rate or on-time rate, stockouts, scrap, CO2.
+- Last quarter: revenue, costs by type, profit, cash, fill rate or on-time rate, stockouts, scrap, and CO2 (the brief always includes last quarter's CO2, not only for CO2-relevant techs).
 - Its current technologies and time since adoption.
 - Direct partners (one tier up and down): which technologies they have, and any group proposals sent to it.
 - The catalog entries it is eligible for: cost, setup time, stated effects, network requirement.
@@ -261,7 +283,7 @@ Rules enforced in code, not trusted to the model:
 - `partners` must be direct partners, or `"chain"` / `"network"` for group proposals.
 - Spend cannot exceed the agent's budget rule; over-budget adopts are rejected and logged.
 - `drop` ends running costs; one-time cost is sunk.
-- At most one new adoption per agent per quarter (config).
+- At most one new adoption per agent per quarter (config). The limit counts only what actually happens that quarter: a solo `adopt`, or membership in a coalition that actually forms. Proposing a group or accepting an invitation does not by itself use up the quota — only formation does.
 
 ### 7.4 Coalitions (alone → dyad → triad → chain → network)
 
@@ -271,6 +293,8 @@ Each quarter runs two passes:
 2. **Response pass:** agents who received proposals get a second brief listing them and reply `accept_group` / `decline_group`.
 
 A coalition forms if every named partner accepts (for `pair`) or at least a config share accepts (default 60%, for `chain` / `network`). Members share the one-time cost equally (config: `equal` or `by_size`) and receive `group_bonus`. Coalition size and type (dyad, triad, chain, network) are recorded.
+
+Formation re-checks members' budgets after acceptance, iteratively: a member whose share it cannot afford is dropped and logged as `rejected` (reason `budget`), the group is re-evaluated against the acceptance rule with the smaller membership, and this repeats until the group is stable (no one over budget) or it falls below two members and fails to form (`coalition_failed`, reason `budget`). A group can also fail to form for other reasons, logged the same way: no eligible partners to invite (`no eligible partners`), the proposer already holds the tech by the time it would form (`held`), the proposer's own quota is already used up (`quota`), or too few invitees accepted (`acceptance`).
 
 **Experiment control:** the config may also force starting adopters or coalitions (e.g., "the Shanghai chain adopts `control_tower` in week 1") so researchers can test fixed structures while the rest of the agents decide.
 
@@ -292,7 +316,7 @@ A coalition forms if every named partner accepts (for `pair`) or at least a conf
 - `summary.json` — outcome measures (§5.5) for the run.
 - `validation_report.md` — copy of the data validation report used.
 
-Batch: `runs/batch_<id>/results.csv` — one row per run, with config factors, seed, and all summary measures, ready for R/Stata/pandas.
+Batch: `runs/batch_<id>/results.csv` — one row per run, with `status` (`ok`/`failed`) and `error` (blank unless failed — a failed seed is recorded and the batch continues), `baseline_for` (the run id it is the paired no-tech baseline for, blank otherwise), readable config-factor columns (e.g. `policy`, `seed`, `weeks`, not a single opaque config hash), and all summary measures, ready for R/Stata/pandas.
 
 CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 
@@ -303,13 +327,14 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 - One master seed; separate named random streams for demand, operations, quality, personas, disruptions, and rules policy.
 - Manifest (§8) captures everything needed to rerun.
 - `sciti replay` re-runs a finished LLM run from `decisions.jsonl` with no API calls; outputs must match byte-for-byte except timestamps. This is the replication path for published results, since LLM output is not exactly repeatable.
-- Every `llm` run can be paired with a same-seed `none` baseline.
+- Every `llm` or `rules` run can be paired with a same-seed `none` baseline for comparison (§5.5 Tech ROI, §12 criterion 4). `sciti batch --with-baseline` builds that baseline with no technology at all — including any config `forced_adoptions` — so the pairing isolates the effect of the agents' own decisions.
 
 ### 9.2 LLM guardrails
 
-- Strict JSON schema; one retry with the validation error shown to the model; then the `rules` policy decides for that agent and the fallback is logged.
+- Strict JSON schema; one retry with the validation error shown to the model; then the `rules` policy decides for that agent and the fallback is logged. If the rules fallback's own reply also fails validation, that agent is skipped for the quarter (no decisions applied) rather than crashing the run.
 - Allowed actions and targets enforced in code (§7.3).
-- Timeouts and exponential backoff on API errors; after a config number of consecutive failures the run switches to `rules` for the remainder and marks the manifest.
+- The LLM policy refuses to start a run — before creating a run folder — if any catalog price is zero or `ANTHROPIC_API_KEY` is missing; `configs/mvp_llm.yaml` ships with zero prices on purpose, so it will not run until Kevin sets the model's current per-token prices.
+- Each request has a 60-second timeout; the SDK's own stacked retries are turned off so failures surface promptly. A `529` (overloaded) response is retried once; other API errors, and an auth error in particular, disable the LLM policy for the rest of the run immediately (switch to `rules`, mark the manifest) rather than retrying repeatedly.
 - The model's reason text is stored and shown, never executed or used to change code paths.
 
 ### 9.3 Cost control
@@ -317,6 +342,7 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 - `sciti estimate` before any run.
 - Config caps: `max_llm_calls`, `max_spend_usd`. Before each call the runner checks the running total; at the cap it switches to `rules`, logs it, and finishes the run.
 - Batch runs require `--confirm-spend` when estimated spend exceeds a config threshold.
+- Price floor: the LLM policy refuses to run at all if `decision.price_per_mtok_in` or `_out` is zero or negative (§9.2), so a misconfigured or unset price can't silently run for free or spend unboundedly.
 
 ### 9.4 Simulation invariants (checked every week)
 
@@ -325,6 +351,8 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 - BOM conservation at MFGs: parts consumed = 160 × units built (by sub-component).
 - Every shipment arrives exactly once.
 - Costs and prices finite and within configured bounds.
+- Per-node flow balance, cross-checked against the week's rows (arrivals in, shipments out, sales, scrap) independent of the unit-conservation check above.
+- Every stock and cost value is finite (no NaN/Inf), checked explicitly rather than assumed.
 
 A broken invariant stops the run with the node, week, and values in the error. `checks.strict: false` downgrades to warnings for classroom use.
 
@@ -347,15 +375,15 @@ A broken invariant stops the run with the node, week, and values in the error. `
 
 ## 10. Web view (replay)
 
-Static HTML/JS (D3 vendored into `view/vendor/`), served by `sciti view RUN_DIR`. Reads the run's output files. No network access required.
+Plain HTML/CSS/JS ES modules and Canvas 2D — no JS libraries, no CDN, works offline — served by `sciti view RUN_DIR`. The page reads the run's output files only through the local server's fixed allow-list (`/run/<file>`, and `/base/<file>` for an optional paired no-tech baseline), plus a virtual `/config.json` (`{has_baseline}`) so the page knows whether to load a baseline. The server binds `127.0.0.1` only.
 
-- **Map:** equirectangular world outline; 48 nodes at their locations (suppliers clustered near their CM). Shipments animate as dots along great-circle lanes; dot size ∝ units, color by mode (air, sea, road, rail).
-- **Adoption:** node fill shows technologies (small multi-segment ring, one color per tech); a coalition outline links members; a brief pulse when an adoption or coalition happens.
-- **Problems:** red flash for stockouts; hatched overlay on disrupted nodes/lanes.
-- **Dashboard:** time-series panels for network profit, total cost, customer satisfaction index, fill rate, CO2, and adoption count; each with the same-seed no-tech baseline as a dashed line when a paired baseline run is supplied.
+- **Map:** equirectangular world outline (latitudes 75°N to 60°S); 48 nodes at their locations (suppliers clustered near their CM). Shipments animate as dots moving in straight lon/lat lines (shortest way across the date line, not great-circle arcs); dot size ∝ units, color by mode (air, sea, road, rail).
+- **Adoption:** node fill shows technologies (small multi-segment ring, one color per tech, drawn from a fixed palette with no red — red is reserved for problems); a coalition outline links members; a brief pulse when an adoption or coalition happens.
+- **Problems:** red flash for stockouts; a hatched overlay on a disrupted node with its outgoing lanes drawn as red dashed lines.
+- **Dashboard:** time-series panels for network profit, total cost, customer satisfaction index, fill rate, CO2, and adoption count; each with the same-seed no-tech baseline as a dashed line when a paired baseline run is supplied (only when its week count matches the primary run's).
 - **Controls:** play / pause, speed (1–20 weeks per second), week slider, tech filter, tier filter.
-- **Node panel (click):** stock, costs, service, techs, coalition, and the LLM's reason text for each decision.
-- **Event feed:** plain-language log ("Q3: Dist_Shanghai and MFG_China formed a dyad to adopt control_tower").
+- **Node panel (click):** stock, cash, profit, lost sales (retailers), capacity factor, active techs, and the agent's own recent decisions with the LLM's or rule's reason text.
+- **Event feed:** plain-language log of adoptions, coalitions formed or failed (with the reason), budget rejections, disruptions, and check warnings — most recent first.
 
 ## 11. Testing
 
@@ -364,7 +392,7 @@ Static HTML/JS (D3 vendored into `view/vendor/`), served by `sciti view RUN_DIR`
 - **Golden run:** a small fixed config with `rules` policy and a fixed seed; `summary.json` must match a committed reference.
 - **Replay test:** run with `mock` policy logging decisions, then `replay`; outputs must match.
 - **Invariant test:** 156-week runs across 5 seeds with `checks.strict: true` must finish clean.
-- **Baseline calibration:** with policy `none`, simulated retailer demand over the first 52 weeks must match the demand model's expected first-year totals within ±5% (mean over 10 seeds), 2024 data projected one year by the fitted trend; and simulated lane lead times must match the data's per-mode means within ±15%. Failures are reported, not hidden.
+- **Baseline calibration:** with policy `none`, simulated retailer demand over the first 52 weeks must match the demand model's expected first-year totals within ±5% (mean over 10 seeds), 2024 data projected one year by the fitted trend; simulated MFG→DC lead times match the fitted lane model's predictions at the simulated distances within ±15% (the data's own distances differ from the network's great-circle distances) as an engine/lane-model check; and a separate real-data test compares simulated per-mode transit time against the workbook's own per-mode means within ±25% (real data is noisier and the flat-model fallback for thin lanes, §2.1, widens the gap). Failures are reported, not hidden.
 - **Adversarial LLM replies** (via mock): malformed JSON, ineligible tech, over-budget adopt, unknown partner, huge reason text — each must be rejected and fall back correctly.
 
 ## 12. MVP success criteria
