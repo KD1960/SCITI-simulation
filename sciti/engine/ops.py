@@ -222,7 +222,8 @@ def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int,
         defective = q * min(1.0, sup["defect_share"] * P["defect_mult"])
     else:
         mode, lead, quote, cpu = sample_lane(s.baseline["lanes"][lane_type(sn.role)], miles, rng)
-        co2 = q * s.baseline["co2_ton_per_unit"] * miles * s.baseline["co2_factors"][mode] * P["co2_mult"]
+        tons = s.baseline["co2_ton_per_unit"] if item in PRODUCTS else s.cfg.assumptions.part_weight_tons
+        co2 = q * tons * miles * s.baseline["co2_factors"][mode] * P["co2_mult"]
     lead += P["dispatch_delay_days"] + sn.extra_lead_days
     quote += s.base[src]["dispatch_delay_days"]
     sh = Shipment(id=s.next_id, src=src, dst=dst, item=item, units=q, mode=mode, ship_week=t,

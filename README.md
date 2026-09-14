@@ -115,6 +115,15 @@ policy. Before spending any money:
   runs, however their earlier shipments differed. In a 10-seed rules batch
   this cut the spread of paired profit differences to about a third of the
   baseline's seed-to-seed spread (it was 1.5 times larger before).
+- **CO2 uses assumed weights.** A finished product weighs 0.05 t (from the
+  workbook Glossary); each part weighs that spread over the 160 parts in a
+  product (`assumptions.part_weight_tons`). The workbook itself applies 0.05 t
+  to every part, which made CO2 about 75 times too high.
+- **Forced group adoptions get the group bonus.** A `forced_adoptions` entry
+  with more than one member forms a coalition, so its members receive the
+  technology's `group_bonus` (+25% by default), just like a group the agents
+  form themselves. Force members in separate entries to test adoption without
+  the bonus.
 - **Config paths are relative to the working directory** you run `sciti`
   from, not to the config file's own location. Run commands from the project
   root (as in the examples above), or use absolute paths.

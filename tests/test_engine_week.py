@@ -116,3 +116,15 @@ def test_internal_sales_and_purchases_book_in_the_same_week(baseline):
         sales = sum(ns.ledger["revenue"] for ns in s.nodes.values() if ns.role != "Retail")
         purchases = sum(ns.ledger["purchases"] for ns in s.nodes.values())
         assert purchases == pytest.approx(sales)
+
+
+def test_parts_carry_their_share_of_product_weight_for_co2(baseline):
+    # The Glossary's 0.05 t per unit is a finished product; each part weighs a share of it.
+    from sciti.engine.ops import make_shipment
+    s = make_state(baseline)
+    part = make_shipment(s, "CM_1", "MFG_US", "SR_MCU", 160, 1)
+    product = make_shipment(s, "MFG_US", "DC_Houston", "A", 1, 1)
+    f = s.baseline["co2_factors"]
+    assert part.co2 == pytest.approx(160 * s.cfg.assumptions.part_weight_tons * part.miles * f[part.mode])
+    assert product.co2 == pytest.approx(s.baseline["co2_ton_per_unit"] * product.miles * f[product.mode])
+    assert s.cfg.assumptions.part_weight_tons == pytest.approx(0.05 / 160)
