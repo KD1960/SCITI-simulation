@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-13 (Part B done: Tasks 6–10)
+**Last updated:** 2026-09-13 (Part C done: Tasks 11–16)
 **Phase:** Building on branch `sciti-mvp` with subagent-driven development. Ledger: `.superpowers/sdd/2026-09-12-sciti-1-partA-data/progress.md` (git-ignored).
-**Next step:** Part C, Task 11 (decision interface). Ledgers: `.superpowers/sdd/<plan-part-name>/progress.md`.
+**Next step:** Part D, Task 17 (view server + page shell). Ledgers: `.superpowers/sdd/<plan-part-name>/progress.md`.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -98,12 +98,12 @@ Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development
 | 8 Invariant checks | B | done (68dcaa9..303da12; added flow-balance + NaN checks) |
 | 9 Adoption, outputs, runner, CLI | B | done (89fba42..38f2823; bullwhip in product units, order-to-arrival lead time) |
 | 10 Golden + calibration tests | B | done (2aaf156..7c34936; real-data per-mode transit check, flat lane model for thin data) |
-| 11 Decision interface, briefs, mock | C | not started |
-| 12 Coalitions + decision round | C | not started |
-| 13 Rules policy | C | not started |
-| 14 LLM policy | C | not started |
-| 15 Replay | C | not started |
-| 16 Batch + estimate | C | not started |
+| 11 Decision interface, briefs, mock | C | done (379024c..ab321b8; stricter reply checks, CO2 in briefs) |
+| 12 Coalitions + decision round | C | done (171b738..d4ed130; budget re-check, fallback safety) |
+| 13 Rules policy | C | done (a6e1634..5a2e6bd; quota counts formed groups only) |
+| 14 LLM policy | C | done (4ab14ea..a27c616; price floor, timeout, key check) |
+| 15 Replay | C | done (3ac74a2; real replay exact) |
+| 16 Batch + estimate | C | done (847d9e6..b61e562; failure-tolerant, factor columns, tech-free baseline) |
 | 17 View server + page shell | D | not started |
 | 18 Map animation | D | not started |
 | 19 Dashboard + final verification | D | not started |
@@ -130,6 +130,19 @@ Update this table and the "Last updated" line as each task lands.
 - `run()` applies forced adoptions every week, not only at quarter starts (controller fix). Part C Task 12 edits the same block: keep that.
 - Spec wording to update at the end: §5.3 ordering rule (backlog), §5.5 lead time and bullwhip units, §9.4 checks, §11 calibration.
 - Deferred minors for the final review are in the Part B ledger. The most important: forced adoptions aren't validated up front (an ineligible member crashes mid-run).
+
+**Part C notes (2026-09-13):**
+- 144 tests pass (including realdata). New commands: `sciti replay`, `sciti batch`, `sciti estimate`. No paid LLM run has been made.
+- Real data, rules policy, 156 weeks, seed 1: 51 adoptions, 4 coalitions (2 dyad, 1 triad, 1 chain); fill 0.985. Replay of a rules run: `replication: exact`.
+- **Economic finding to discuss:** in batches, rules runs earn ~1% less profit than the same-seed no-tech baseline (e.g. $31.3B vs $31.6B) with about the same satisfaction index. Tech costs outweigh modeled savings. The catalog costs and effects are placeholders (`assumption: true`), so this is about the parameters, not a result.
+- Rules can't act in quarter 1 (no cost history yet); first adoptions are at week 14.
+- Kevin's rulings from Part C reviews:
+  1. Reply validation rejects wrong types (no crash); accept must name the proposal's tech; briefs include last-quarter CO2.
+  2. Group formation re-checks budgets until stable; a bad fallback reply skips the agent instead of crashing.
+  3. The one-new-tech-per-quarter limit counts solo adopts and FORMED groups only (proposing/accepting don't use it up).
+  4. LLM safety: refuses zero prices and missing key before creating a run folder; 60 s request timeout, no stacked SDK retries; 529 retried; auth errors stop the AI at once; rules fallbacks on retry are logged as fallbacks.
+  5. Batch: a failed seed is recorded and the batch continues; bad seed ranges rejected; results.csv has readable settings columns and `baseline_for`; the paired baseline has no technology at all (forced adoptions removed).
+- `configs/mvp_llm.yaml` has prices 0.0 on purpose: it refuses to run until Kevin sets the model's current prices. `anthropic` SDK is 1.5.0 (uses `httpx2`).
 
 ## 8. Known risks to watch during the build
 
