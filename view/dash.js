@@ -11,10 +11,11 @@ const PANELS = [
 
 const fmt = (v, unit) => {
   if (v === null || v === undefined || Number.isNaN(v)) return "–";
+  const sign = v < 0 ? "-" : "";
   const a = Math.abs(v);
-  const s = a >= 1e9 ? `${(v / 1e9).toFixed(2)}B` : a >= 1e6 ? `${(v / 1e6).toFixed(2)}M` : a >= 1e3 ? `${(v / 1e3).toFixed(1)}k`
-    : a < 2 && a !== 0 && !Number.isInteger(v) ? v.toFixed(3) : v.toFixed(0);
-  return unit + s;
+  const s = a >= 1e9 ? `${(a / 1e9).toFixed(2)}B` : a >= 1e6 ? `${(a / 1e6).toFixed(2)}M` : a >= 1e3 ? `${(a / 1e3).toFixed(1)}k`
+    : a < 2 && a !== 0 && !Number.isInteger(a) ? a.toFixed(3) : a.toFixed(0);
+  return `${sign}${unit}${s}`;
 };
 
 function drawChart(canvas, runSeries, baseSeries, week, unit) {
@@ -97,21 +98,75 @@ export function describe(e, techs) {
   }
 }
 
+// Builds the last-60, newest-first feed lines (spec §10). `coalition_failed` events are
+// grouped one line per week ("W144: 9 group proposals did not form (7 acceptance, 2 held)")
+// so a week with many failed proposals doesn't push adoptions and formed groups off the feed.
+// Every other kept event (adopt alone, coalition formed, drop, rejected, disruption, check
+// warning) still gets its own line. Adopt events belonging to a coalition stay hidden, as before.
+export function feedLines(events, week, techs) {
+  const items = events.filter((e) => e.week <= week && !(e.type === "adopt" && e.coalition));
+  const entries = []; // { week, text } | { week, counts: Map<reason, n> }
+  const groupAt = new Map(); // week -> index into entries, for the running coalition_failed group
+  for (const e of items) {
+    if (e.type === "coalition_failed") {
+      let idx = groupAt.get(e.week);
+      if (idx === undefined) {
+        idx = entries.length;
+        entries.push({ week: e.week, counts: new Map() });
+        groupAt.set(e.week, idx);
+      }
+      const why = FAILED_REASON[e.reason] ?? e.reason;
+      const counts = entries[idx].counts;
+      counts.set(why, (counts.get(why) ?? 0) + 1);
+    } else {
+      entries.push({ week: e.week, text: describe(e, techs) });
+    }
+  }
+  const lines = entries.map((en) => {
+    if (!en.counts) return `W${en.week}: ${en.text}`;
+    const total = [...en.counts.values()].reduce((a, b) => a + b, 0);
+    const parts = [...en.counts.entries()].sort((a, b) => b[1] - a[1]).map(([why, n]) => `${n} ${why}`);
+    return `W${en.week}: ${total} group proposal${total === 1 ? "" : "s"} did not form (${parts.join(", ")})`;
+  });
+  return lines.slice(-60).reverse();
+}
+
 export function renderFeed(el, run, week) {
-  // every event so far, except coalition members' adopt events (the coalition line reports those)
-  const items = run.events.filter((e) => e.week <= week && !(e.type === "adopt" && e.coalition));
+  const lines = feedLines(run.events, week, run.network.techs);
   el.replaceChildren();
-  for (const e of items.slice(-60).reverse()) {
+  for (const text of lines) {
     const p = document.createElement("p");
-    p.textContent = `W${e.week}: ${describe(e, run.network.techs)}`;
+    p.textContent = text;
     el.append(p);
   }
-  if (!items.length) {
+  if (!lines.length) {
     const p = document.createElement("p");
     p.className = "hint";
     p.textContent = "No events yet.";
     el.append(p);
   }
+}
+
+// The node's current tech holdings that came from a coalition (reflecting drops up to `week`),
+// paired with that coalition's kind and other members from the matching `coalition` event.
+export function currentCoalitions(run, nodeId, week) {
+  const holding = {}; // tech -> coalition id (or null for a solo adopt)
+  for (const e of run.events) {
+    if (e.week > week) break;
+    if (e.type === "adopt" && e.node === nodeId) holding[e.tech] = e.coalition ?? null;
+    else if (e.type === "drop" && e.node === nodeId) delete holding[e.tech];
+  }
+  const coalitionById = new Map();
+  for (const e of run.events) {
+    if (e.week > week) break;
+    if (e.type === "coalition") coalitionById.set(e.id, e);
+  }
+  return Object.entries(holding)
+    .filter(([, cid]) => cid)
+    .map(([tech, cid]) => {
+      const ce = coalitionById.get(cid);
+      return { tech, kind: ce?.kind ?? "group", others: (ce?.members ?? []).filter((m) => m !== nodeId) };
+    });
 }
 
 export function renderNodePanel(el, run, nodeId, week, techColor) {
@@ -141,6 +196,25 @@ export function renderNodePanel(el, run, nodeId, week, techColor) {
     add("Active techs", row.techs || "none");
   }
   el.append(h, city, table);
+  const gh = document.createElement("h3");
+  gh.textContent = "Groups";
+  el.append(gh);
+  const groups = currentCoalitions(run, nodeId, week);
+  if (!groups.length) {
+    const p = document.createElement("p");
+    p.className = "hint";
+    p.textContent = "Not in any group.";
+    el.append(p);
+  } else {
+    for (const g of groups) {
+      const p = document.createElement("p");
+      const dot = document.createElement("i");
+      dot.className = "swatch";
+      dot.style.background = techColor[g.tech] ?? "#999";
+      p.append(dot, `${run.network.techs[g.tech] ?? g.tech} — ${g.kind} with ${g.others.join(", ")}`);
+      el.append(p);
+    }
+  }
   const mine = run.decisions.filter((d) => d.agent === nodeId && d.week <= week)
     .flatMap((d) => d.parsed.filter((p) => p.action !== "skip").map((p) => ({ ...p, week: d.week, fallback: d.fallback })));
   const dh = document.createElement("h3");

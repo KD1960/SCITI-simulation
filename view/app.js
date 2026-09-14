@@ -69,7 +69,7 @@ async function main() {
   renderers.push((s) => map.draw(s.t, s));
   $("map").onclick = (e) => {
     const rect = $("map").getBoundingClientRect();
-    const id = map.pick(e.clientX - rect.left, e.clientY - rect.top);
+    const id = map.pick(e.clientX - rect.left, e.clientY - rect.top, state.roles);
     if (id) { state.node = id; setWeek(state.t); }
   };
   window.addEventListener("resize", () => setWeek(state.t));

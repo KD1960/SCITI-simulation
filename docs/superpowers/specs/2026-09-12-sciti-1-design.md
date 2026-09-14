@@ -334,7 +334,7 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 - Strict JSON schema; one retry with the validation error shown to the model; then the `rules` policy decides for that agent and the fallback is logged. If the rules fallback's own reply also fails validation, that agent is skipped for the quarter (no decisions applied) rather than crashing the run.
 - Allowed actions and targets enforced in code (§7.3).
 - The LLM policy refuses to start a run — before creating a run folder — if any catalog price is zero or `ANTHROPIC_API_KEY` is missing; `configs/mvp_llm.yaml` ships with zero prices on purpose, so it will not run until Kevin sets the model's current per-token prices.
-- Each request has a 60-second timeout; the SDK's own stacked retries are turned off so failures surface promptly. A `529` (overloaded) response is retried once; other API errors, and an auth error in particular, disable the LLM policy for the rest of the run immediately (switch to `rules`, mark the manifest) rather than retrying repeatedly.
+- Each request has a 60-second timeout; the SDK's own stacked retries are turned off so failures surface promptly. Connection errors, rate limits, server errors, and a `529` (overloaded) response are all treated as transient and share one loop of up to 3 attempts with exponential backoff. An authentication or permission error is fatal and disables the LLM policy immediately (switch to `rules`, mark the manifest); other API errors count toward a consecutive-failure limit that also disables it, rather than retrying forever.
 - The model's reason text is stored and shown, never executed or used to change code paths.
 
 ### 9.3 Cost control
@@ -382,7 +382,7 @@ Plain HTML/CSS/JS ES modules and Canvas 2D — no JS libraries, no CDN, works of
 - **Problems:** red flash for stockouts; a hatched overlay on a disrupted node with its outgoing lanes drawn as red dashed lines.
 - **Dashboard:** time-series panels for network profit, total cost, customer satisfaction index, fill rate, CO2, and adoption count; each with the same-seed no-tech baseline as a dashed line when a paired baseline run is supplied (only when its week count matches the primary run's).
 - **Controls:** play / pause, speed (1–20 weeks per second), week slider, tech filter, tier filter.
-- **Node panel (click):** stock, cash, profit, lost sales (retailers), capacity factor, active techs, and the agent's own recent decisions with the LLM's or rule's reason text.
+- **Node panel (click):** stock, cash, profit, lost sales (retailers), capacity factor, active techs, coalition (kind and other members, per tech), and the agent's own recent decisions with the LLM's or rule's reason text.
 - **Event feed:** plain-language log of adoptions, coalitions formed or failed (with the reason), budget rejections, disruptions, and check warnings — most recent first.
 
 ## 11. Testing

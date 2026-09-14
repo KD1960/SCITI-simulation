@@ -7,6 +7,29 @@ const TECH_COLORS = ["#4e79a7", "#76b7b2", "#59a14f", "#b07aa1", "#9c755f", "#ba
 
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
+// Pure hit-test: among nodes within reach of (mx, my) — distance <= that node's own radius + 6px —
+// pick the one with the largest radius (so a DC wins over an overlapping cluster of tiny supplier
+// dots even if a supplier is nominally closer), breaking ties by the smallest distance. Nodes whose
+// role isn't in `roles` (the tier filter) are skipped. `project(node)` returns that node's [x, y].
+export function pickNode(nodes, project, roles, mx, my) {
+  let best = null;
+  let bestR = -1;
+  let bestD = Infinity;
+  for (const n of nodes) {
+    if (roles && !roles.has(n.role)) continue;
+    const r = ROLE_R[n.role];
+    const [x, y] = project(n);
+    const d = Math.hypot(x - mx, y - my);
+    if (d > r + 6) continue;
+    if (r > bestR || (r === bestR && d < bestD)) {
+      best = n.id;
+      bestR = r;
+      bestD = d;
+    }
+  }
+  return best;
+}
+
 function lonLerp(a, b, f) {
   let d = b - a;
   if (d > 180) d -= 360;
@@ -200,15 +223,8 @@ export function createMap(canvas, run, land) {
     ctx.globalAlpha = 1;
   }
 
-  function pick(mx, my) {
-    let best = null;
-    let bestD = 12;
-    for (const n of nodes) {
-      const [x, y] = px(n.lon, n.lat);
-      const d = Math.hypot(x - mx, y - my);
-      if (d < bestD) { best = n.id; bestD = d; }
-    }
-    return best;
+  function pick(mx, my, roles) {
+    return pickNode(nodes, (n) => px(n.lon, n.lat), roles, mx, my);
   }
 
   window.addEventListener("resize", resize);
