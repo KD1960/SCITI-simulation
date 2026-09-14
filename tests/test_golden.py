@@ -28,6 +28,19 @@ def test_golden_summary(baseline_path, tmp_path):
     assert got == json.loads(GOLDEN.read_text())
 
 
+NOTECH = Path(__file__).parent / "golden" / "notech_seed3_summary.json"
+
+
+def test_notech_summary_unchanged(baseline_path, tmp_path):
+    # No technology at all: control-tower changes must not move this run by a single byte.
+    c = Config(name="notech", seed=3, weeks=52, baseline_path=str(baseline_path), output_dir=str(tmp_path))
+    got = json.loads((run(c, run_dir=tmp_path / "n") / "summary.json").read_text())
+    if os.environ.get("SCITI_UPDATE_NOTECH_GOLDEN") == "1":
+        NOTECH.write_text(json.dumps(got, indent=1, sort_keys=True))
+        pytest.skip("notech golden file updated")
+    assert got == json.loads(NOTECH.read_text())
+
+
 @pytest.mark.parametrize("seed", [1, 2, 3, 4, 5])
 def test_full_horizon_invariants(baseline_path, tmp_path, seed):
     c = Config(name="inv", seed=seed, weeks=156, baseline_path=str(baseline_path), output_dir=str(tmp_path))
