@@ -328,7 +328,7 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 - Manifest (§8) captures everything needed to rerun.
 - `sciti replay` re-runs a finished LLM run from `decisions.jsonl` with no API calls; outputs must match byte-for-byte except timestamps. This is the replication path for published results, since LLM output is not exactly repeatable.
 - Every `llm` or `rules` run can be paired with a same-seed `none` baseline for comparison (§5.5 Tech ROI, §12 criterion 4). `sciti batch --with-baseline` builds that baseline with no technology at all — including any config `forced_adoptions` — so the pairing isolates the effect of the agents' own decisions.
-- Caveat: the paired baseline shares the same demand draws but not the same lead-time/mode draws — `make_shipment` draws from one sequential `lead` stream per lane, so once the two runs' shipment counts diverge (because one run adopted tech and the other did not), later draws in that stream line up differently between them. Paired profit and cost differences therefore include some lane noise on top of the technology effect being measured.
+- Common random numbers for shipments: `make_shipment` draws lead time and mode from a generator keyed by (seed, sender, receiver, item, ship week) (`sciti.rng.shipment_rng`), not from a sequential stream. A tech run and its paired baseline therefore get the same draws for any lane-week both ship on, even after their shipment histories diverge. (Revised 2026-09-14; before this, paired differences carried lane noise larger than the baseline's own seed-to-seed spread.)
 
 ### 9.2 LLM guardrails
 

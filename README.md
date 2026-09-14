@@ -107,14 +107,14 @@ policy. Before spending any money:
   Every run's manifest lists exactly which assumptions it used
   (`manifest.json` → `assumptions`), and the view shows the same list in the
   header badge's tooltip.
-- **Paired baselines share demand, not lane noise.** A `--with-baseline` pair
-  (or any `llm`/`rules` run compared against a same-seed `none` run) draws
-  demand from the same stream, but lead-time and shipping-mode draws come
-  from one sequential stream per lane. Once the two runs' shipment counts
-  diverge — because one run adopted technology and the other did not — later
-  draws in that stream no longer line up between them. So a paired profit or
-  cost difference includes some lane noise on top of the technology effect
-  being measured, not just the technology effect in isolation.
+- **Paired baselines share demand and shipment draws.** A `--with-baseline`
+  pair (or any `llm`/`rules` run compared against a same-seed `none` run)
+  draws the same demand, and each shipment's lead time and mode come from
+  draws keyed by its lane (sender, receiver, item) and ship week. So a
+  shipment on the same lane in the same week gets the same draws in both
+  runs, however their earlier shipments differed. In a 10-seed rules batch
+  this cut the spread of paired profit differences to about a third of the
+  baseline's seed-to-seed spread (it was 1.5 times larger before).
 - **Config paths are relative to the working directory** you run `sciti`
   from, not to the config file's own location. Run commands from the project
   root (as in the examples above), or use absolute paths.

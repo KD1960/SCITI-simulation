@@ -36,7 +36,7 @@ Turn SCITI 1 from a working prototype into a **trusted, reusable SCITI asset** t
 | Week of | Work |
 |---|---|
 | Sep 14 | ✓ Branch merged; ✓ Mumbai/Tokyo demand fix. Send data corrections report to case authors. |
-| Sep 21 | Per-shipment random draws (test first). Rerun 10-seed paired check. |
+| Sep 21 | ✓ Per-shipment random draws; ✓ 10-seed paired check (profit SD ratio 0.35). |
 | Sep 28 | Investigate the pilot anomalies: ML forecasting and control tower lower profit; risk intelligence recovers ~100% of a disruption; CO2 about 50 t per product. |
 | Oct 5 | Fixes reviewed; STATUS.md updated. **Milestone M1: engine trusted.** |
 

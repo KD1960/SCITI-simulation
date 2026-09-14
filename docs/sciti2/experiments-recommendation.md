@@ -10,7 +10,7 @@
 
 Run experiments in this order:
 
-1. **E0 — Make the comparisons trustworthy** (fix lane noise, check three odd results; the Mumbai/Tokyo demand bug is already fixed). Small job, and everything later depends on it.
+1. **E0 — Make the comparisons trustworthy** (check three odd results; the lane-noise fix and the Mumbai/Tokyo demand fix are done). Small job, and everything later depends on it.
 2. **E1 — One-technology screen** at 30 seeds. Gives a clean effect table for each technology.
 3. **E2 — Stress scenarios.** The baseline chain is almost too healthy to improve, so service effects need disruptions and demand shocks to show up.
 4. **E3 — "Who with whom."** The core research question: same technology, same number of adopters, different group structures.
@@ -68,7 +68,8 @@ These are not proven bugs. They are results that look too strong or point the wr
 
 ### E0 — Make the comparisons trustworthy (do first)
 
-- **Change:** give each shipment its own random draws (for example, seeded from lane + ship week + order index) so a tech run and its baseline see the same lead times and modes. This was the final reviewer's first research recommendation.
+- **Done 2026-09-14:** paired profit SD fell from 1.55× to 0.35× the baseline SD (satisfaction 0.19×). Rules adoption now shows a clear −$107M profit effect (SE ≈ $24M).
+- **Change (done):** give each shipment its own random draws (for example, seeded from lane + ship week + order index) so a tech run and its baseline see the same lead times and modes. This was the final reviewer's first research recommendation.
 - **Check:** rerun the 10-seed rules batch. Success = paired profit SD falls well below the $162M baseline SD (aim for under a third of it).
 - **Demand data fixed (2026-09-14):** the Mumbai (Retailer 5) and Tokyo (Retailer 7) formula bugs are now corrected in `sciti prepare`. The pilot numbers above were run before the fix; seed 1 no-tech now gives fill 0.978 and profit $34.1B (was 0.984 and about $31.4B). Rerun the pilot after the lane-draw fix.
 - **Also:** the three checks in §3. Record each answer in STATUS.md.

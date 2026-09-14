@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** per-shipment lane random draws (experiments report E0), then check the pilot anomalies, then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Next step:** check the pilot anomalies (experiments report §3), then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -167,6 +167,8 @@ Update this table and the "Last updated" line as each task lands.
 - **Demand bug fixed:** workbook formulas for Retailer 5 (P, R) and Retailer 7 (V, W) scale the wrong Retailer 1 product (Mumbai A = B = C; Tokyo A shrank ~7%/yr). `parse_demand` now detects a store column matching scale × a different Retailer 1 product, rebuilds it from the intended product, and logs it (4 columns fixed). 168 tests pass incl. realdata. Seed-1 no-tech run after the fix: fill 0.978, profit $34.1B (was 0.984, ~$31.4B). The pilot/screen numbers below predate the fix.
 - **Pilot (10 seeds, rules vs none):** paired profit-difference SD ($220M) is larger than baseline seed SD ($162M), so lane noise defeats pairing. Satisfaction index 0.963 baseline (ceiling).
 - **Screen (5 seeds, each tech forced on all eligible firms):** routing +$403M, blockchain +$571M; ML forecasting −$358M and control tower −$199M despite large bullwhip cuts; risk intel recovers ~all of a CM_3 disruption loss. CO2 ≈ 50 t per product sold. All three flagged for checking.
+
+- **Per-shipment random draws (2026-09-14):** `make_shipment` now uses `shipment_rng(seed, src, dst, item, week)` instead of the sequential `lead` stream (removed from `STREAMS`; other streams unchanged). New test: a lane-week's draws don't depend on earlier shipments. Golden summary regenerated (seed-level changes only). 169 tests pass incl. realdata; a 156-week run still ~2 s. 10-seed rules-vs-none batch, old → new code: paired profit SD / baseline SD 1.55 → 0.35; satisfaction 1.51 → 0.19; fill 1.05 → 0.27. With the new code, rules adoption costs −$107M profit (SE ≈ $24M) vs baseline.
 
 ## 8. Known risks to watch during the build
 

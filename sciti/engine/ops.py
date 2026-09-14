@@ -9,6 +9,7 @@ from sciti.disruptions import apply_disruptions
 from sciti.engine.economics import propagate, sell_price, unit_value
 from sciti.engine.state import Shipment, SimState, input_key, lane_type, output_items
 from sciti.network import PRODUCTS
+from sciti.rng import shipment_rng
 from sciti.tech.effects import effective_params
 
 SHORT_HAUL_MILES = 2500
@@ -212,7 +213,7 @@ def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int,
     sn = s.nodes[src]
     P = sn.params
     miles = s.net.miles(src, dst)
-    rng = s.streams["lead"]
+    rng = shipment_rng(s.cfg.seed, src, dst, item, t)
     defective = 0.0
     if sn.role == "Supplier":
         sup = s.baseline["suppliers"][src]

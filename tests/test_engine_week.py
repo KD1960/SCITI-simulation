@@ -91,3 +91,17 @@ def test_fill_rate_holds_over_three_years(baseline):
         backlog = sum(ns.owed_total(p) for p in PRODUCTS)
         mean_forecast = sum(ns.forecast[p] for p in PRODUCTS)
         assert backlog < 4 * mean_forecast
+
+
+def test_shipment_draws_do_not_depend_on_earlier_shipments(baseline):
+    # Paired runs must see the same lead time and mode on a lane-week even if their shipment histories differ.
+    from sciti.engine.ops import make_shipment
+    s1, s2 = make_state(baseline), make_state(baseline)
+    for t in (1, 2, 3):
+        make_shipment(s2, "MFG_China", "DC_Shanghai", "A", 50, t)
+        make_shipment(s2, "Supplier_1", "CM_1", "SR_MCU", 50, t)
+    for src, dst, item in (("MFG_China", "DC_Shanghai", "A"), ("Supplier_1", "CM_1", "SR_MCU")):
+        a, b = make_shipment(s1, src, dst, item, 100, 5), make_shipment(s2, src, dst, item, 100, 5)
+        assert (a.mode, a.lead_days) == (b.mode, b.lead_days)
+    leads = {make_shipment(s1, "MFG_China", "DC_Shanghai", "A", 100, t).lead_days for t in range(1, 21)}
+    assert len(leads) > 1
