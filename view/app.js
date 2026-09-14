@@ -37,7 +37,8 @@ async function main() {
     $("error").textContent = "Could not load the run files. Start the page with `sciti view RUN_DIR`.";
     return;
   }
-  base = await loadRun("base");
+  const config = await fetch("config.json").then((r) => r.json());
+  base = config.has_baseline ? await loadRun("base") : null;
   $("run-name").textContent = run.manifest?.run_id ?? "";
   $("week").max = run.weeks;
   for (const [id, name] of Object.entries(run.network.techs).sort()) $("tech").append(new Option(name, id));

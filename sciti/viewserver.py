@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import functools
+import json
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlparse
@@ -31,20 +32,32 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.base_dir / parts[1]
         return None
 
-    def do_GET(self):
-        target = self._resolve()
-        if target is None or not target.is_file():
-            self.send_error(404)
-            return
-        body = target.read_bytes()
-        ctype = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".json": "application/json",
-                 ".geojson": "application/json", ".csv": "text/csv", ".jsonl": "text/plain"}[target.suffix]
+    def _serve(self, write_body: bool) -> None:
+        if unquote(urlparse(self.path).path) == "/config.json":
+            body = json.dumps({"has_baseline": self.base_dir is not None}).encode()
+            ctype = "application/json"
+        else:
+            target = self._resolve()
+            if target is None or not target.is_file():
+                self.send_error(404)
+                return
+            body = target.read_bytes()
+            ctype = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".json": "application/json",
+                     ".geojson": "application/json", ".csv": "text/csv", ".jsonl": "text/plain"}.get(
+                target.suffix, "application/octet-stream")
         self.send_response(200)
         self.send_header("Content-Type", f"{ctype}; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(body)
+        if write_body:
+            self.wfile.write(body)
+
+    def do_GET(self):
+        self._serve(write_body=True)
+
+    def do_HEAD(self):
+        self._serve(write_body=False)
 
     def log_message(self, fmt, *args):
         pass

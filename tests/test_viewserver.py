@@ -5,6 +5,7 @@ import urllib.request
 
 import pytest
 
+from sciti import viewserver
 from sciti.config import Config
 from sciti.runner import run
 from sciti.viewserver import make_server
@@ -20,8 +21,24 @@ def served(baseline_path, tmp_path):
     srv.shutdown()
 
 
+@pytest.fixture
+def served_with_baseline(baseline_path, tmp_path):
+    d = run(Config(name="v", seed=1, weeks=13, baseline_path=str(baseline_path), output_dir=str(tmp_path)),
+            run_dir=tmp_path / "r")
+    srv = make_server(d, base_dir=d, port=0)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    yield d, f"http://127.0.0.1:{srv.server_address[1]}"
+    srv.shutdown()
+
+
 def get(url):
     with urllib.request.urlopen(url) as r:
+        return r.status, r.read()
+
+
+def head(url):
+    req = urllib.request.Request(url, method="HEAD")
+    with urllib.request.urlopen(req) as r:
         return r.status, r.read()
 
 
@@ -43,3 +60,39 @@ def test_blocks_other_paths(served, path):
     with pytest.raises(urllib.error.HTTPError) as e:
         get(served[1] + path)
     assert e.value.code == 404
+
+
+def test_head_allowlisted_file(served):
+    d, base = served
+    status, body = head(base + "/app.js")
+    assert status == 200
+    assert body == b""
+
+
+@pytest.mark.parametrize("path", ["/run/../manifest.json", "/secret.txt"])
+def test_head_blocks_other_paths(served, path):
+    with pytest.raises(urllib.error.HTTPError) as e:
+        head(served[1] + path)
+    assert e.value.code == 404
+
+
+def test_head_blocks_file_not_on_allowlist(served):
+    d, base = served
+    probe = viewserver.VIEW_DIR / "_probe.txt"
+    probe.write_text("nope")
+    try:
+        with pytest.raises(urllib.error.HTTPError) as e:
+            head(base + "/_probe.txt")
+        assert e.value.code == 404
+    finally:
+        probe.unlink()
+
+
+def test_config_json_no_baseline(served):
+    d, base = served
+    assert json.loads(get(base + "/config.json")[1]) == {"has_baseline": False}
+
+
+def test_config_json_with_baseline(served_with_baseline):
+    d, base = served_with_baseline
+    assert json.loads(get(base + "/config.json")[1]) == {"has_baseline": True}
