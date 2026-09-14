@@ -79,7 +79,6 @@ def _arrivals(s: SimState, t: int) -> None:
         dst.counts["received"] += sh.units
         dst.counts["defects_caught"] += caught
         dst.counts["defects_escaped"] += sh.defective - caught
-        dst.ledger["purchases"] += sh.value
         dst.ledger["shipping"] += sh.cost
         dst.ledger["scrap"] += caught * (sh.value / sh.units if sh.units else 0.0)
         s.arrived.append(sh)
@@ -271,6 +270,7 @@ def _shipping(s: SimState, t: int) -> None:
                 s.in_transit.append(sh)
                 ns.counts["shipped"] += q
                 ns.ledger["revenue"] += sh.value
+                s.nodes[b].ledger["purchases"] += sh.value  # booked at ship, same week as the sale
                 ns.ledger["handling"] += q * ns.params["handling_cost_per_unit"]
 
 

@@ -192,7 +192,7 @@ Nodes are processed downstream to upstream in steps 3–6 and upstream to downst
 Per node, per week:
 
 - **Revenue:** units shipped × transfer price (retailers: units sold × retail price).
-- **Costs:** purchases, shipping (paid by the receiver), holding (annual rate × unit value / 52), stockout penalty (retailers: lost margin + goodwill penalty), scrap, technology (one-time and running).
+- **Costs:** purchases (booked by the buyer in the week the seller ships, so internal sales and purchases cancel in network profit and goods in transit are not counted as profit), shipping (paid by the receiver), holding (annual rate × unit value / 52), stockout penalty (retailers: lost margin + goodwill penalty), scrap, technology (one-time and running).
 - **Cash:** cumulative profit; feeds the agent's budget for tech decisions.
 
 Unit prices for sub-components come from `Supplier Data`. Transfer prices up the chain and retail prices are **not** in the data; they are set in config as cost-plus markups (defaults: CM +20%, MFG +25%, DC +10%, retail +40%) and labeled as assumptions in every output.

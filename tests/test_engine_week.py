@@ -105,3 +105,14 @@ def test_shipment_draws_do_not_depend_on_earlier_shipments(baseline):
         assert (a.mode, a.lead_days) == (b.mode, b.lead_days)
     leads = {make_shipment(s1, "MFG_China", "DC_Shanghai", "A", 100, t).lead_days for t in range(1, 21)}
     assert len(leads) > 1
+
+
+def test_internal_sales_and_purchases_book_in_the_same_week(baseline):
+    # Every internal sale is a purchase for its buyer, so the two must match each week;
+    # otherwise goods in transit at the horizon end show up as network profit.
+    s = make_state(baseline)
+    for t in range(1, 21):
+        step_week(s, t)
+        sales = sum(ns.ledger["revenue"] for ns in s.nodes.values() if ns.role != "Retail")
+        purchases = sum(ns.ledger["purchases"] for ns in s.nodes.values())
+        assert purchases == pytest.approx(sales)
