@@ -1,4 +1,5 @@
 import { loadRun } from "./data.js";
+import { createMap } from "./map.js";
 // [imports]
 
 const ROLES = ["Supplier", "CM", "MFG", "DC", "Retail"];
@@ -63,6 +64,26 @@ async function main() {
     setWeek(Number(e.target.value));
   };
   $("tech").onchange = (e) => { state.tech = e.target.value; setWeek(state.t); };
+  const land = await fetch("ne_110m_land.geojson").then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const map = createMap($("map"), run, land);
+  renderers.push((s) => map.draw(s.t, s));
+  $("map").onclick = (e) => {
+    const rect = $("map").getBoundingClientRect();
+    const id = map.pick(e.clientX - rect.left, e.clientY - rect.top);
+    if (id) { state.node = id; setWeek(state.t); }
+  };
+  window.addEventListener("resize", () => setWeek(state.t));
+  const legend = $("legend");
+  const swatch = (color, text) => {
+    const span = document.createElement("span");
+    const dot = document.createElement("i");
+    dot.className = "swatch";
+    dot.style.background = color;
+    span.append(dot, text);
+    legend.append(span);
+  };
+  for (const [mode, color] of Object.entries(map.modeColor)) swatch(color, `${mode} shipment`);
+  for (const [tech, color] of Object.entries(map.techColor)) swatch(color, run.network.techs[tech]);
   // [setup]
   setWeek(1);
   requestAnimationFrame(tick);
