@@ -91,3 +91,20 @@ def test_batch_config_factors(baseline_path, tmp_path):
     assert rows[0]["decision_max_new_adoptions_per_quarter"] == "2"
     assert rows[0]["forced_adoptions"] == "w1:control_tower:DC_Shanghai|Retail_5"
     assert rows[0]["disruptions"] == "CM_4@20+6x0.25+7d"
+
+
+def test_batch_baseline_has_no_forced_adoptions(baseline_path, tmp_path):
+    from sciti.config import ForcedAdoption
+    c = Config(name="b", seed=0, weeks=13, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+               decision=DecisionCfg(policy="rules"),
+               forced_adoptions=[ForcedAdoption(week=1, tech="routing", members=["MFG_US"])])
+    out = run_batch(c, [1], tmp_path / "batch", with_baseline=True)
+    rows = list(csv.DictReader(open(out / "results.csv")))
+    assert len(rows) == 2
+    primary = rows[0]
+    baseline = rows[1]
+    assert primary["policy"] == "rules" and baseline["policy"] == "none"
+    assert primary["baseline_for"] == "" and baseline["baseline_for"] == "rules"
+    assert baseline["adoptions"] == "0"
+    assert baseline["forced_adoptions"] == ""
+    assert baseline["disruptions"] == primary["disruptions"]

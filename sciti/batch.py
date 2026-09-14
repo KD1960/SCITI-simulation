@@ -129,18 +129,22 @@ def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=Fals
     rows = []
     failed_count = 0
     for seed in seeds:
+        primary_policy = cfg.decision.policy
         variants = [cfg.model_copy(update={"seed": seed}, deep=True)]
         if with_baseline and cfg.decision.policy != "none":
             base = cfg.model_copy(update={"seed": seed}, deep=True)
             base.decision.policy = "none"
+            base.forced_adoptions = []
             variants.append(base)
         for c in variants:
+            is_baseline = c.decision.policy == "none" and with_baseline and primary_policy != "none"
             try:
                 d = run(c, run_dir=out_dir / f"{c.decision.policy}_s{seed}", client=client)
                 summary = json.loads((d / "summary.json").read_text())
                 row = {
                     "seed": seed,
                     "policy": c.decision.policy,
+                    "baseline_for": primary_policy if is_baseline else "",
                     "config_hash": config_hash(c),
                     "run_dir": str(d),
                     "status": "ok",
@@ -155,6 +159,7 @@ def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=Fals
                 row = {
                     "seed": seed,
                     "policy": c.decision.policy,
+                    "baseline_for": primary_policy if is_baseline else "",
                     "config_hash": config_hash(c),
                     "run_dir": "",
                     "status": "failed",
