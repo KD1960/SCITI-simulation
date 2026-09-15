@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** Kevin reviews the failed control-tower acceptance check(s) in docs/sciti2/control-tower-acceptance.md.
+**Next step:** Kevin decides whether to merge branch control-tower-echelon; then rerun the E1 technology screen on the fixed engine, tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -163,7 +163,7 @@ Update this table and the "Last updated" line as each task lands.
 - The SDD ledgers under `.superpowers/sdd/` (git-ignored) were deleted after the final review; this file and git history are the record.
 
 **Thread "SCITI sim 2" (2026-09-14):** no code changed. New files in `docs/sciti2/`: infographic (PNG + HTML), Ridge Line data corrections report (for the case authors), experiments recommendation, project plan, and the data-audit scripts.
-- **Control tower redesign (echelon ordering) built:** plan docs/superpowers/plans/2026-09-14-control-tower-echelon.md; commits 638d43c..(this commit); acceptance: 3/4 — whole network: bullwhip falls at all 3 tiers and holding cost falls ~$493M, but fill rate falls ~12.2 pt and stockout cost rises ~$2.0B (worse than the old rule), so profit falls ~$4.9B; check 2 (fill rate) failed.
+- **Control tower redesign (echelon ordering) built:** plan docs/superpowers/plans/2026-09-14-control-tower-echelon.md; commits 638d43c..c76dd84. Run 1 (acceptance): 3/4 — fill rate fell ~12.2 pt and stockout cost rose ~$2.0B, failing check 2. Fix (spec §3.6, commit c76dd84): add the missing per-stage review week to the echelon lead time and a safety-stock floor so the tower never targets less safety stock than downstream nodes already hold. Run 2 (acceptance, after the fix): 4/4 — whole network vs. no-tech (10 seeds): fill rate +0.09 pt, stockout cost −$14.2M, holding cost −$35.1M, bullwhip DC −2.35 / MFG −13.28 / CM −78.69, network profit +$110.5M. Details in docs/sciti2/control-tower-acceptance.md.
 - **Merged `sciti-mvp` into `main`** (fast-forward), per Kevin.
 - **Demand bug fixed:** workbook formulas for Retailer 5 (P, R) and Retailer 7 (V, W) scale the wrong Retailer 1 product (Mumbai A = B = C; Tokyo A shrank ~7%/yr). `parse_demand` now detects a store column matching scale × a different Retailer 1 product, rebuilds it from the intended product, and logs it (4 columns fixed). 168 tests pass incl. realdata. Seed-1 no-tech run after the fix: fill 0.978, profit $34.1B (was 0.984, ~$31.4B). The pilot/screen numbers below predate the fix.
 - **Pilot (10 seeds, rules vs none):** paired profit-difference SD ($220M) is larger than baseline seed SD ($162M), so lane noise defeats pairing. Satisfaction index 0.963 baseline (ceiling).
