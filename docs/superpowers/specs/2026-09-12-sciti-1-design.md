@@ -231,7 +231,7 @@ MVP catalog (default effect sizes; all marked `assumption: true`):
 | id | Technology | Eligible | Main effect (default) | Network |
 |---|---|---|---|---|
 | `ml_forecast` | ML demand forecasting | Retailer, DC, MFG | `forecast_skill +0.3` — a blend weight toward a better demand model, not a direct forecast-error-SD multiplier | solo |
-| `control_tower` | Supply chain control towers | All | Orders for its whole echelon: stock at and below it, end-customer forecast, echelon lead time; blend weight = share of downstream partners adopting | chain |
+| `control_tower` | Supply chain control towers | All | Orders for its whole echelon: stock at and below it, end-customer forecast, echelon lead time; blend weight = share of downstream partners adopting, ×1.25 in a coalition, capped at 1 | chain |
 | `rfid` | Item-level RFID | CM, MFG, DC, Retailer | Inventory record error 5% → 1%; shrink −50% | solo |
 | `aps` | Advanced planning and scheduling | CM, MFG | Effective capacity +8% | solo |
 | `routing` | Vehicle routing and path optimization | CM, MFG, DC | Shipping cost −8%; CO2 −10% on its outbound lanes | solo |

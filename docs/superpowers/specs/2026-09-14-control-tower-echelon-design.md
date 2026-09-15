@@ -9,7 +9,7 @@
 
 ## 1. Problem
 
-Today a node with a control tower replaces the orders it receives with end-customer demand as its forecast signal:
+Before this change, a node with a control tower replaced the orders it receives with end-customer demand as its forecast signal:
 
 ```
 obs = (1 - v) * orders_in + v * actual_end_demand
@@ -110,7 +110,8 @@ The first build used `LE` without the per-stage `+ 1` and the pooled safety stoc
 | File | Change |
 |---|---|
 | `sciti/engine/state.py` | `NodeState.fc_end`, `err_end`; `SimState.echelon_lead_weeks`; initialize both in `init_state` |
-| `sciti/engine/ops.py` | `obs = orders_in`; update `fc_end`/`err_end`; new `echelon_stock(s, n, item, pipe)` and `_echelon_needs` (or extend `_needs` to return the echelon forecast and sigma); blend orders by `v` |
+| `sciti/engine/echelon.py` | `echelon_stock(s, n, item, pipe)` and `echelon_lead_weeks(net, lead_weeks, mean)` |
+| `sciti/engine/ops.py` | `obs = orders_in`; update `fc_end`/`err_end`; new `_echelon_signal` and `_echelon_safety_floor`; blend orders by `v` |
 | `sciti/tech/catalog.yaml` | No change (effect stays `visibility +1.0`) |
 | `tests/test_engine_week.py` (or new `tests/test_echelon.py`) | Tests in §5 |
 | `tests/golden/none_seed7_summary.json` | Regenerated (the golden config forces a control tower) |
