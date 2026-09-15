@@ -2,7 +2,7 @@
 
 **Project:** SCITI 1
 **Date:** 2026-09-14
-**Status:** Design approved in brainstorming (Option A); awaiting Kevin's review of this spec
+**Status:** Approved by Kevin. Amended 2026-09-14 after acceptance run 1 (§3.4, §3.5, §3.6).
 **Replaces:** the `visibility` effect in `_forecast_and_order` (spec 2026-09-12 §5.3 step 5, §6 `control_tower`)
 
 ---
@@ -72,21 +72,38 @@ Profit is reported with a cost breakdown but has no pass bar (tower costs are pl
 Static, computed once in `init_state` from `lead_weeks` and mean first-year flows (`mean`):
 
 - Retail `r`, `p`: `LE = L(r, p)`
-- DC `d`, `p`: `LE = L(d, p) + Σ_r a_r × LE(r, p)`, with `a_r ∝ share_r[d] × mean[r][p]`, normalized to sum to 1
-- MFG `m`, part `k`: `LE = L(m, k) + Σ_{d,p} b_{d,p} × LE(d, p)`, with `b_{d,p} ∝ share_d[m] × mean[d][p]`, normalized
-- CM `c`, part `k`: `LE = L(c, k) + Σ_m g_m × LE(m, k)`, with `g_m ∝ mean[m][k]`, normalized
+- DC `d`, `p`: `LE = L(d, p) + 1 + Σ_r a_r × LE(r, p)`, with `a_r ∝ share_r[d] × mean[r][p]`, normalized to sum to 1
+- MFG `m`, part `k`: `LE = L(m, k) + 1 + Σ_{d,p} b_{d,p} × LE(d, p)`, with `b_{d,p} ∝ share_d[m] × mean[d][p]`, normalized
+- CM `c`, part `k`: `LE = L(c, k) + 1 + Σ_m g_m × LE(m, k)`, with `g_m ∝ mean[m][k]`, normalized
+
+The `+ 1` is the node's own one-week review period. Every stage in the echelon keeps one (the installation rule covers `L + 1`), so the echelon horizon `LE + 1` equals the sum of `L + 1` over the node and the stages below it.
 
 Stored as `s.echelon_lead_weeks[(n, item)]`. Disruption extra lead days are ignored here, as they are for `lead_weeks` today.
 
 ### 3.5 Order quantity
 
 ```
-q_inst = order_up_to(fc,     sigma,     L,  z, IP)      # today's rule, unchanged
-q_ech  = order_up_to(fc_end, sigma_end, LE, z, IP_E)
+q_inst = order_up_to(fc, sigma, L, z, IP)                       # today's rule, unchanged
+H      = LE + 1                                                  # echelon horizon
+safety = max(z * sigma_end * sqrt(H), SS_floor(n, item))
+q_ech  = max(0, fc_end * H + safety - IP_E)
 q      = (1 - v) * q_inst + v * q_ech
 ```
 
-Both use `order_up_to` (already floors at 0). `q` is split across sources by `source_share` exactly as today. When `v = 0`, `q_ech` is not computed.
+`SS_floor(n, item)` is the sum of the installation safety stocks at and below `n`, in `n`'s input units, all at `n`'s `z`:
+
+| Node | `SS_floor` |
+|---|---|
+| Retail `r`, `p` | `z × sigma_r(p) × sqrt(L(r, p) + 1)` |
+| DC `d`, `p` | own term + `Σ_{r ∈ down(d)} share_r[d] × SS_floor(r, p)` |
+| MFG `m`, part `k` | own term + `bom[k] × Σ_{d ∈ down(m)} Σ_p share_d[m] × SS_floor(d, p)` |
+| CM `c`, part `k` | own term + `Σ_{m ∈ down(c)} SS_floor(m, k)` |
+
+"Own term" is `z × sigma × sqrt(L + 1)` with the node's installation `sigma` from `_needs` (so ML forecasting applies). `q_inst` floors at 0 via `order_up_to`; `q_ech` floors at 0 explicitly. `q` is split across sources by `source_share` exactly as today. When `v = 0`, `q_ech` is not computed.
+
+### 3.6 Why the amendment (acceptance run 1)
+
+The first build used `LE` without the per-stage `+ 1` and the pooled safety stock `z × sigma_end × sqrt(LE + 1)` only. Whole-network adoption cut fill by 12.2 pt (stockout +$2.0B); DC_Shanghai's average stock fell from 8,085 to 1,249 units. Two gaps: (1) the echelon target missed one review week per downstream stage, so a tower DC ran about one week short; (2) the pooled echelon safety stock was smaller than the safety stocks the downstream nodes still keep under their own installation rules, so the tower node squeezed its own stock to fund them. A scratch test fixing only (1) brought whole-network fill to −1.2 pt. The floor fixes (2): the echelon never plans for less safety stock than the stages below it actually hold.
 
 ## 4. Units and files
 
