@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done; control tower redesign to echelon ordering built on branch `control-tower-echelon`)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** E3 who-with-whom experiment (use a 12-week component-maker disruption as the stress condition); then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Next step:** E4 decision-rule sweeps (rules policy) and, with approval, the E5 LLM pilot; also check control tower at high growth and APS losses rising with demand (E2 notes). Tune placeholder tech costs/effects when cited values are ready.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -186,6 +186,8 @@ Update this table and the "Last updated" line as each task lands.
 **E1 technology screen (2026-09-15):** 8 techs × (all eligible firms, one tier), 30 paired seeds, calm conditions, on `de0e9df`. Results: `docs/sciti2/tech-screen-e1.md`; script `docs/sciti2/experiments/tech_screen.py`; numbers `tech_screen_results.csv`. Profit ($M, 3 yrs, all-firms arm): blockchain +686, routing +439, RFID +220, warehouse robotics +154 (also satisfaction +0.010, the only clear service gain), control tower +99 (CM bullwhip −78), risk intel −8 (no disruptions), APS −32, ML forecasting −43 (CM bullwhip −63). Blockchain at suppliers+CMs alone gets the full benefit; control tower needs the whole chain. Placeholder parameters drive the ranking.
 
 **E2 stress test (2026-09-15):** 21 scenarios (growth ×0.5/1/1.5 × no disruption or CM_3/CM_4/DC_Shanghai for 4 or 12 weeks) × 5 arms (none, risk intel, control tower, APS, rules agents), 30 paired seeds, on `810a39a`. Results: `docs/sciti2/stress-test-e2.md`; script `docs/sciti2/experiments/stress_test.py`; numbers `stress_test_results.csv`. Findings: 4-week hits sit inside the buffer; 12-week CM hits cost ~3 pt fill and $1.4–1.6B. Risk intel = insurance (−$8M calm, +$1.2–1.5B in 12-week CM hits). APS = partial insurance (−$30–60M calm, +$250–330M long CM hits). Control tower ~+$100M regardless of disruption, but ~0 at growth ×1.5 (to check). Rules agents never adopt risk intel, APS, or robotics and don't react to disruptions. To check: control tower at high growth; APS losses growing with demand.
+
+**E3 who with whom (2026-09-15):** same tech, 6 adopters in different structures, plus all-firms reference; calm and a 12-week CM_3 hit; 30 paired seeds, on `6ba2678`. Results: `docs/sciti2/who-with-whom-e3.md`; script `docs/sciti2/experiments/who_with_whom.py`; numbers `who_with_whom_results.csv`. Scattered adopters get nothing (pure cost). Control tower: upstream chain best in calm (+$29M, CM bullwhip −51), downstream chain best in disruption (+$61M vs +$3M calm), 3 DC–store pairs ~+$6–8M (n.s.). Blockchain: value ≈ $4M per part-per-product covered by linked suppliers (pairs +$33M, CM_1 hub +$65M, CM_3 hub +$224M); hub shape adds nothing beyond volume. Rules agents' control tower adoptions are all in groups but downstream-leaning (stores 7.1, DCs 3.3, CMs 1.2 per run).
 
 ## 8. Known risks to watch during the build
 
