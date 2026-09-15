@@ -119,6 +119,12 @@ policy. Before spending any money:
   workbook Glossary); each part weighs that spread over the 160 parts in a
   product (`assumptions.part_weight_tons`). The workbook itself applies 0.05 t
   to every part, which made CO2 about 75 times too high.
+- **Control tower = echelon ordering.** A node with a control tower orders for
+  all stock at and below it (its share of each downstream partner's stock and
+  pipeline), using an end-customer demand forecast and the lead time down to
+  the stores. Partial adoption blends this with the normal order. See
+  `docs/superpowers/specs/2026-09-14-control-tower-echelon-design.md` and the
+  acceptance results in `docs/sciti2/control-tower-acceptance.md`.
 - **Forced group adoptions get the group bonus.** A `forced_adoptions` entry
   with more than one member forms a coalition, so its members receive the
   technology's `group_bonus` (+25% by default), just like a group the agents

@@ -178,7 +178,7 @@ Every week `t`:
 2. **Arrivals**: shipments due this week are added to receivers' stock.
 3. **Retail sales**: retailers sell `min(stock, demand)`. Unmet demand is lost (config: `backorder: false`) and recorded.
 4. **Production**: MFGs build up to capacity and parts on hand; CMs convert raw material up to capacity.
-5. **Forecast**: each node updates its demand forecast (exponential smoothing on the orders it receives; retailers on sales).
+5. **Forecast**: each node updates its demand forecast (exponential smoothing on the orders it receives; retailers on sales). Nodes with a control tower also track an echelon forecast of end-customer demand and blend their order toward an echelon order-up-to order (see 2026-09-14-control-tower-echelon-design.md).
 6. **Ordering**: periodic-review order-up-to policy. `S = forecast × (lead_time + 1) + z × σ_forecast × sqrt(lead_time + 1)`; order `max(0, S − inventory_position)`. `z` from a target cycle service level (default 95%). For DC, MFG, and CM nodes, `inventory_position` also nets out net backlog owed downstream (orders received but not yet shipped), counted in the node's own input units; the plan's DC-only rule made fill rate collapse by year 3 on real data, so MFG and CM count it too.
 7. **Shipping**: upstream nodes fill orders from stock (proportional rationing if short), choose a mode by the lane's historic mode mix, and create shipments with lead time, cost, and CO2.
 8. **Quality**: each supplier lot fails with a probability from that supplier's share of sentiment-1 feedback; failed units are scrapped at the receiving CM.
@@ -231,7 +231,7 @@ MVP catalog (default effect sizes; all marked `assumption: true`):
 | id | Technology | Eligible | Main effect (default) | Network |
 |---|---|---|---|---|
 | `ml_forecast` | ML demand forecasting | Retailer, DC, MFG | `forecast_skill +0.3` — a blend weight toward a better demand model, not a direct forecast-error-SD multiplier | solo |
-| `control_tower` | Supply chain control towers | All | Upstream sees downstream sales, not just orders; bullwhip damped | chain |
+| `control_tower` | Supply chain control towers | All | Orders for its whole echelon: stock at and below it, end-customer forecast, echelon lead time; blend weight = share of downstream partners adopting | chain |
 | `rfid` | Item-level RFID | CM, MFG, DC, Retailer | Inventory record error 5% → 1%; shrink −50% | solo |
 | `aps` | Advanced planning and scheduling | CM, MFG | Effective capacity +8% | solo |
 | `routing` | Vehicle routing and path optimization | CM, MFG, DC | Shipping cost −8%; CO2 −10% on its outbound lanes | solo |
