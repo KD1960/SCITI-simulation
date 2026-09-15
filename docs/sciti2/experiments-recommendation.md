@@ -20,6 +20,8 @@ Do not present any result as a real-world estimate until the technology costs an
 
 ## 2. What the pilot showed
 
+> **Superseded (2026-09-15):** these pilot numbers came from the engine before several fixes. For current single-technology results, see `docs/sciti2/tech-screen-e1.md`.
+
 ### 2.1 Agents using the payback rule vs. no technology (10 seeds, paired)
 
 | Measure | No-tech baseline | Rules policy | Paired difference (mean ± SD) |
