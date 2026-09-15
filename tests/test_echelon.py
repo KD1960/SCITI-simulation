@@ -106,6 +106,72 @@ def test_control_tower_order_blends_installation_and_echelon(baseline):
     assert placed[0.5] == pytest.approx(0.5 * (placed[0.0] + placed[1.0]))
 
 
+def test_control_tower_v1_order_matches_echelon_formula(baseline, monkeypatch):
+    """At v=1 the order DC_Houston places equals the echelon formula of spec §3.5, computed
+    from the state as DC_Houston sees it at its ordering moment (after downstream stores order)."""
+    import copy
+    import math
+
+    from sciti.engine import ops
+
+    s = make_state(baseline)
+    for t in range(1, 6):
+        ops.step_week(s, t)
+    c = copy.deepcopy(s)
+    c.nodes["DC_Houston"].params["record_error_sd"] = 0.0
+    c.nodes["DC_Houston"].params["visibility"] = 1.0
+
+    net = c.net
+    z = c.z + c.nodes["DC_Houston"].z_boost
+    srcs = sorted(net.source_share["DC_Houston"].items())
+    # owed_to_me and pipe are untouched by other nodes' ordering this week (only DC_Houston's own
+    # sources' ledgers and existing in-transit shipments matter), so these are safe to precompute.
+    owed_to_me = {p: sum(c.nodes[src].owed.get("DC_Houston", {}).get(p, 0.0) for src, _ in srcs)
+                  for p in "ABC"}
+
+    # Capture the real fc_e/sigma_e, floor, and echelon-stock values as the production code computes
+    # them mid-loop for DC_Houston (i.e. after retail has already ordered this week), rather than
+    # re-deriving them independently.
+    captured: dict[str, dict[str, float]] = {"signal": {}, "floor": {}, "stock": {}}
+    orig_signal, orig_floor, orig_stock = ops._echelon_signal, ops._echelon_safety_floor, ops.echelon_stock
+
+    def spy_signal(state, n, item, exp_next):
+        result = orig_signal(state, n, item, exp_next)
+        if n == "DC_Houston":
+            captured["signal"][item] = result
+        return result
+
+    def spy_floor(state, n, item, exp_next, zz):
+        result = orig_floor(state, n, item, exp_next, zz)
+        if n == "DC_Houston":
+            captured["floor"][item] = result
+        return result
+
+    def spy_stock(state, n, item, pipe, own_input=None):
+        result = orig_stock(state, n, item, pipe, own_input=own_input)
+        if n == "DC_Houston":
+            captured["stock"][item] = result
+        return result
+
+    monkeypatch.setattr(ops, "_echelon_signal", spy_signal)
+    monkeypatch.setattr(ops, "_echelon_safety_floor", spy_floor)
+    monkeypatch.setattr(ops, "echelon_stock", spy_stock)
+
+    before = c.nodes["DC_Houston"].counts["orders_placed"]
+    ops._forecast_and_order(c, 6)
+    actual_order = c.nodes["DC_Houston"].counts["orders_placed"] - before
+
+    expected_order = 0.0
+    for p in "ABC":
+        fc_e, sigma_e = captured["signal"][p]
+        horizon = c.echelon_lead_weeks[("DC_Houston", p)] + 1
+        safety = max(z * sigma_e * math.sqrt(horizon), captured["floor"][p])
+        ip_e = captured["stock"][p] + owed_to_me[p]
+        expected_order += max(0.0, fc_e * horizon + safety - ip_e)
+
+    assert actual_order == pytest.approx(expected_order)
+
+
 def test_whole_network_control_tower_runs_clean_and_replays(baseline_path, tmp_path):
     import json
 
