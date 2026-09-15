@@ -612,3 +612,207 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 - Spec §3.1–3.5 → Task 1 (stock, lead) and Task 2 (forecasts, blend, scope via `v`).
 - Spec §5 tests 1–7 → Task 1 Step 1 (no-tech), Task 1 Step 3 (DC, MFG, CM stock, lead), Task 2 Step 1 (blend; whole-network strict run + replay). Test 1's "orders match" is covered by the byte-identical no-tech summary.
 - Spec §6 → Task 3.
+
+---
+
+## Amendment (2026-09-14): acceptance run 1 failed check 2
+
+Task 3's experiment failed the fill-rate check (whole network −12.2 pt). Kevin chose to fix both design gaps and retest. Spec §3.4–3.6 amended (commit 456875b). Tasks 4–5 implement the amendment and rerun the experiment. Task 3's commit (02306f4) stays; Task 5 replaces its results document and status lines.
+
+### Task 4: One review week per stage and a safety-stock floor
+
+**Files:**
+- Modify: `sciti/engine/echelon.py` (`echelon_lead_weeks`)
+- Modify: `sciti/engine/ops.py` (new `_echelon_safety_floor`; the `if v > 0:` block in `_forecast_and_order`)
+- Modify: `tests/test_echelon.py`
+- Modify: `tests/golden/none_seed7_summary.json` (regenerated)
+
+**Interfaces:**
+- Consumes: `_needs(s, n, exp_next) -> list[tuple[item, srcs, forecast, sigma]]` in `ops.py` (installation sigma per ordering item; works for Retail, DC, MFG, CM); `_echelon_signal(s, n, item, exp_next) -> (forecast, sigma)`; `echelon_stock(...)`; `s.lead_weeks`, `s.echelon_lead_weeks`; `net.source_share`, `net.downstream`, `net.bom`; `PRODUCTS`.
+- Produces: `_echelon_safety_floor(s: SimState, n: str, item: str, exp_next: dict, z: float) -> float`; `echelon_lead_weeks` values now include `+ 1` per non-retail stage.
+
+- [ ] **Step 1: Update the lead-time test and add the floor test (failing)**
+
+In `tests/test_echelon.py`, in `test_echelon_lead_weeks_adds_flow_weighted_downstream_lead`, replace the lines from `shanghai = 2 + (0.5 * 1 + 3 * 5) / 3.5` through the final `assert le[("CM_1", "SR_MCU")] ...` with:
+
+```python
+    # Each non-retail stage adds its own one-week review period (spec §3.4).
+    shanghai = 2 + 1 + (0.5 * 1 + 3 * 5) / 3.5
+    assert le[("DC_Shanghai", "A")] == pytest.approx(shanghai)
+    assert le[("DC_Houston", "B")] == pytest.approx(2 + 1 + 1)
+    # MFG_China: DCs weighted by the share they buy from MFG_China (Houston .2, Sofia .4, Dubai .6, Shanghai .9).
+    w = {d: net.source_share[d]["MFG_China"] for d in net.by_role("DC")}
+    dc_le = {"DC_Houston": 4, "DC_Dubai": 4, "DC_Sofia": 4, "DC_Shanghai": shanghai}
+    expected = 3 + 1 + sum(w[d] * dc_le[d] for d in w) / sum(w.values())
+    assert le[("MFG_China", "SR_MCU")] == pytest.approx(expected)
+    us = {d: net.source_share[d]["MFG_US"] for d in net.by_role("DC")}
+    mfg_us = 3 + 1 + sum(us[d] * dc_le[d] for d in us) / sum(us.values())
+    assert le[("CM_1", "SR_MCU")] == pytest.approx(4 + 1 + (mfg_us + expected) / 2)
+```
+
+Append to `tests/test_echelon.py`:
+
+```python
+def test_echelon_safety_floor_adds_installation_safety_below(baseline):
+    import math
+
+    from sciti.engine import ops
+    s = make_state(baseline)
+    for t in range(1, 6):
+        ops.step_week(s, t)
+    net, exp_next, z = s.net, s.flows[6], 1.645
+
+    def own(n, item):
+        sigma = {i: sg for i, _, _, sg in ops._needs(s, n, exp_next)}[item]
+        return z * sigma * math.sqrt(s.lead_weeks[(n, item)] + 1)
+
+    dc = {(d, p): own(d, p) + sum(net.source_share[r][d] * own(r, p) for r in net.downstream[d])
+          for d in net.by_role("DC") for p in "ABC"}
+    assert ops._echelon_safety_floor(s, "DC_Dubai", "A", exp_next, z) == pytest.approx(dc[("DC_Dubai", "A")])
+    # EPDM is 40 units per product.
+    mfg_us = own("MFG_US", "EPDM") + 40 * sum(net.source_share[d]["MFG_US"] * dc[(d, p)]
+                                              for d in net.by_role("DC") for p in "ABC")
+    assert ops._echelon_safety_floor(s, "MFG_US", "EPDM", exp_next, z) == pytest.approx(mfg_us)
+    mfg_china = own("MFG_China", "EPDM") + 40 * sum(net.source_share[d]["MFG_China"] * dc[(d, p)]
+                                                    for d in net.by_role("DC") for p in "ABC")
+    assert ops._echelon_safety_floor(s, "CM_3", "EPDM", exp_next, z) == pytest.approx(
+        own("CM_3", "EPDM") + mfg_us + mfg_china)
+```
+
+- [ ] **Step 2: Run to verify they fail**
+
+Run: `.venv/bin/pytest -q tests/test_echelon.py -k "lead_weeks or safety_floor"`
+Expected: the lead-time test fails (values lack the `+ 1`), and the floor test fails with `AttributeError: module 'sciti.engine.ops' has no attribute '_echelon_safety_floor'`.
+
+- [ ] **Step 3: Add the review week in `echelon_lead_weeks`**
+
+In `sciti/engine/echelon.py`, change the three assignments (the retail one stays unchanged):
+
+```python
+            le[(d, p)] = lead_weeks[(d, p)] + 1 + _weighted(
+                [(net.source_share[r][d] * mean[r][p], le[(r, p)]) for r in net.downstream[d]])
+```
+
+```python
+            le[(m, k)] = lead_weeks[(m, k)] + 1 + below
+```
+
+```python
+            le[(c, k)] = lead_weeks[(c, k)] + 1 + _weighted([(mean[m][k], le[(m, k)]) for m in net.downstream[c]])
+```
+
+and update the docstring to: `"""Own lead time and review week plus the flow-weighted echelon lead time of the nodes below (spec §3.4)."""`
+
+- [ ] **Step 4: Add the safety floor and the new echelon order in `ops.py`**
+
+Add directly below `_echelon_signal`:
+
+```python
+def _echelon_safety_floor(s: SimState, n: str, item: str, exp_next: dict, z: float) -> float:
+    """Installation safety stock at and below n, in n's input units, at n's z (spec 2026-09-14 §3.5)."""
+    net, role = s.net, s.nodes[n].role
+    sigma = {i: sg for i, _, _, sg in _needs(s, n, exp_next)}[item]
+    own = z * sigma * math.sqrt(s.lead_weeks[(n, item)] + 1)
+    if role == "Retail":
+        return own
+    if role == "DC":
+        return own + sum(net.source_share[r][n] * _echelon_safety_floor(s, r, item, exp_next, z)
+                         for r in net.downstream[n])
+    if role == "MFG":
+        return own + net.bom[item] * sum(net.source_share[d][n] * _echelon_safety_floor(s, d, p, exp_next, z)
+                                         for d in net.downstream[n] for p in PRODUCTS)
+    return own + sum(_echelon_safety_floor(s, m, item, exp_next, z) for m in net.downstream[n])
+```
+
+In `_forecast_and_order`, replace:
+
+```python
+                q = (1 - v) * q + v * order_up_to(fc_e, sigma_e, s.echelon_lead_weeks[(n, item)], z, ip_e)
+```
+
+with:
+
+```python
+                horizon = s.echelon_lead_weeks[(n, item)] + 1
+                safety = max(z * sigma_e * math.sqrt(horizon), _echelon_safety_floor(s, n, item, exp_next, z))
+                q = (1 - v) * q + v * max(0.0, fc_e * horizon + safety - ip_e)
+```
+
+- [ ] **Step 5: Run the echelon tests and the no-tech golden**
+
+Run: `.venv/bin/pytest -q tests/test_echelon.py tests/test_golden.py::test_notech_summary_unchanged`
+Expected: all pass (10 echelon tests + no-tech golden). If the no-tech golden fails, stop: a `v == 0` path changed.
+
+- [ ] **Step 6: Regenerate the control-tower golden**
+
+Run: `SCITI_UPDATE_GOLDEN=1 .venv/bin/pytest -q tests/test_golden.py::test_golden_summary` → `1 skipped`.
+Run: `git diff tests/golden/none_seed7_summary.json` and note old → new `fill_rate`, `bullwhip`, `costs.holding`, `costs.stockout`, `network_profit` for the commit message.
+
+- [ ] **Step 7: Full suite and timing**
+
+Run: `time .venv/bin/pytest -q -m "realdata or not realdata"`
+Expected: 181 passed (the pre-existing openpyxl warning only). Note the wall time; if a single 156-week whole-network test takes more than 15 s, report it as a concern.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add sciti/engine/echelon.py sciti/engine/ops.py tests/test_echelon.py tests/golden/none_seed7_summary.json
+git commit -m "fix: echelon order covers each stage's review week and safety stock
+
+Acceptance run 1 cut whole-network fill by 12.2 pt: the echelon target
+missed one review week per downstream stage, and its pooled safety stock
+was below what downstream nodes hold under their own rules (spec 2026-09-14
+§3.6). Echelon lead now adds 1 week per stage; the echelon safety stock is at
+least the sum of installation safety stocks at and below the node.
+
+Golden (Shanghai chain tower): <old -> new values>
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
+
+### Task 5: Rerun the acceptance experiment and update results
+
+**Files:**
+- Modify: `docs/sciti2/control-tower-acceptance.md` (rewrite)
+- Modify: `STATUS.md`
+- Modify: `docs/sciti2/experiments/control_tower_acceptance.py` only if it fails to run (no logic or criteria changes)
+
+**Interfaces:**
+- Consumes: the script from Task 3 (`.venv/bin/python docs/sciti2/experiments/control_tower_acceptance.py OUT_DIR`), which prints a results table and four PASS/FAIL lines.
+
+- [ ] **Step 1: Run the experiment**
+
+Delete the output directory if it exists, then run:
+`.venv/bin/python docs/sciti2/experiments/control_tower_acceptance.py OUT_DIR | tee OUT_DIR.txt`
+(the controller gives OUT_DIR). Expected: a results table and four PASS/FAIL lines.
+
+- [ ] **Step 2: Rewrite `docs/sciti2/control-tower-acceptance.md`**
+
+Plain language for a non-programmer (short sentences, $M, percentage points). Include:
+- Date, commit (`git rev-parse --short HEAD`), command.
+- "Run 2 (after the fix)" results: the four checks, and a whole-network table.
+- A three-column comparison for the whole network: old rule (spec §1: fill −0.23 pt, profit −$62M, stockout +$38M) | run 1 (fill −12.2 pt, stockout +$2,006M, holding −$493M, profit −$4,907M) | run 2.
+- One short paragraph per arm for run 2.
+- A short "What went wrong in run 1 and what changed" section (two gaps, per spec §3.6).
+- If any check fails in run 2: a "Stopped here" section with numbers. Don't change code, parameters, or criteria.
+
+- [ ] **Step 3: Update `STATUS.md`**
+
+- If all four checks pass, replace the `**Next step:**` line with: `**Next step:** Kevin decides whether to merge branch control-tower-echelon; then rerun the E1 technology screen on the fixed engine, tune placeholder tech costs/effects, then (with approval) the first paid LLM run.` If any check fails, use: `**Next step:** Kevin reviews the control-tower acceptance run 2 in docs/sciti2/control-tower-acceptance.md.`
+- Replace the existing "**Control tower redesign (echelon ordering) built:**" bullet with one bullet covering both runs: run 1 failed check 2 (fill −12.2 pt), fix per spec §3.6, run 2 result `<n>/4` with whole-network fill, stockout, holding, bullwhip, profit.
+
+- [ ] **Step 4: Full suite**
+
+Run: `.venv/bin/pytest -q -m "realdata or not realdata"` → all pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add docs/sciti2/control-tower-acceptance.md STATUS.md
+git commit -m "docs: control tower acceptance run 2 after the echelon fix
+
+<n>/4 checks passed. Whole network vs no-tech (10 seeds): <fill, stockout,
+holding, bullwhip DC/MFG/CM, profit>.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
+```
