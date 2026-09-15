@@ -63,7 +63,13 @@ Run 2 is better than both the old rule and run 1 on every one of these numbers. 
 | Satisfaction index | +0.05 pt | +0.03 to +0.08 pt |
 | Holding cost | +$17.4M | +$13.1M to +$21.6M |
 | Network profit | +$26.5M | −$9.3M to +$62.3M |
+| Revenue | +$179.0M | +$58.9M to +$299.1M |
+| Purchases cost | +$124.0M | +$24.6M to +$223.5M |
+| COGS | +$15.9M | −$4.7M to +$36.4M |
+| Shipping cost | −$1.4M | −$8.3M to +$5.5M |
 | Stockout cost | −$15.7M | −$23.8M to −$7.6M |
+| Scrap cost | +$8.3M | +$5.2M to +$11.3M |
+| Tech cost | +$12.3M | +$12.3M to +$12.3M |
 
 ## Shanghai-chain arm (DC_Shanghai + Retail_5–8 adopt)
 
@@ -76,7 +82,13 @@ Run 2 is better than both the old rule and run 1 on every one of these numbers. 
 | Satisfaction index | +0.02 pt | −0.00 to +0.04 pt |
 | Holding cost | +$5.4M | +$1.1M to +$9.7M |
 | Network profit | +$16.6M | −$18.9M to +$52.0M |
+| Revenue | +$40.7M | −$65.6M to +$147.0M |
+| Purchases cost | +$21.6M | −$72.2M to +$115.4M |
+| COGS | +$1.1M | −$26.2M to +$28.4M |
+| Shipping cost | −$2.9M | −$7.5M to +$1.8M |
 | Stockout cost | −$5.5M | −$11.1M to +$0.2M |
+| Scrap cost | +$2.2M | −$1.1M to +$5.6M |
+| Tech cost | +$4.4M | +$4.4M to +$4.4M |
 
 Run 1's Shanghai-chain arm showed fill rate −2.5 pt and stockout cost +$417M. Run 2 shows fill rate roughly flat (+0.03 pt, CI touches zero) and stockout cost essentially flat to slightly lower (−$5.5M, CI touches zero). The small group has less echelon stock to redistribute, so its effect is smaller and less certain than the downstream and whole-network arms — but it moved from clearly harmful in run 1 to harmless in run 2.
 
