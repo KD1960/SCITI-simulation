@@ -75,3 +75,46 @@ def test_echelon_lead_weeks_adds_flow_weighted_downstream_lead(baseline):
     us = {d: net.source_share[d]["MFG_US"] for d in net.by_role("DC")}
     mfg_us = 3 + sum(us[d] * dc_le[d] for d in us) / sum(us.values())
     assert le[("CM_1", "SR_MCU")] == pytest.approx(4 + (mfg_us + expected) / 2)
+
+
+def test_init_state_sets_echelon_forecast_and_lead(baseline):
+    s = make_state(baseline)
+    assert set(s.nodes["DC_Houston"].fc_end) == {"A", "B", "C"}
+    assert set(s.nodes["MFG_US"].fc_end) == set(s.net.bom)
+    assert set(s.nodes["CM_1"].fc_end) == set(s.net.nodes["CM_1"].skus)
+    assert s.nodes["Retail_1"].fc_end == {} and s.nodes["Supplier_1"].fc_end == {}
+    assert s.nodes["DC_Houston"].err_end["A"] == pytest.approx(0.2 * s.nodes["DC_Houston"].fc_end["A"])
+    assert s.echelon_lead_weeks[("DC_Houston", "A")] > s.lead_weeks[("DC_Houston", "A")]
+    assert s.echelon_lead_weeks[("CM_1", "SR_MCU")] > s.echelon_lead_weeks[("MFG_US", "SR_MCU")]
+
+
+def test_control_tower_order_blends_installation_and_echelon(baseline):
+    import copy
+
+    from sciti.engine import ops
+    s = make_state(baseline)
+    for t in range(1, 6):
+        ops.step_week(s, t)
+    placed = {}
+    for v in (0.0, 0.5, 1.0):
+        c = copy.deepcopy(s)
+        c.nodes["DC_Houston"].params["visibility"] = v
+        before = c.nodes["DC_Houston"].counts["orders_placed"]
+        ops._forecast_and_order(c, 6)
+        placed[v] = c.nodes["DC_Houston"].counts["orders_placed"] - before
+    assert placed[1.0] != pytest.approx(placed[0.0])
+    assert placed[0.5] == pytest.approx(0.5 * (placed[0.0] + placed[1.0]))
+
+
+def test_whole_network_control_tower_runs_clean_and_replays(baseline_path, tmp_path):
+    import json
+
+    from sciti.config import Config, DecisionCfg, ForcedAdoption
+    from sciti.network import build_network
+    from sciti.runner import replay_run, run
+    cfg = Config(name="ct", seed=4, weeks=156, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+                 decision=DecisionCfg(policy="rules"))
+    members = list(build_network(json.loads(baseline_path.read_text()), cfg.assumptions).order)
+    cfg.forced_adoptions = [ForcedAdoption(week=1, tech="control_tower", members=members)]
+    orig = run(cfg, run_dir=tmp_path / "orig")  # strict invariant checks raise on any violation
+    assert replay_run(orig, tmp_path / "again") == []

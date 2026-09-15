@@ -6,6 +6,7 @@ import math
 import numpy as np
 
 from sciti.disruptions import apply_disruptions
+from sciti.engine.echelon import echelon_stock
 from sciti.engine.economics import propagate, sell_price, unit_value
 from sciti.engine.state import Shipment, SimState, input_key, lane_type, output_items
 from sciti.network import PRODUCTS
@@ -169,6 +170,13 @@ def _backlog_in_input_units(s: SimState, n: str, item: str) -> float:
     return 0.0
 
 
+def _echelon_signal(s: SimState, n: str, item: str, exp_next: dict) -> tuple[float, float]:
+    """Echelon forecast and sigma for one ordering item, with ML forecasting applied (spec 2026-09-14 §3.2)."""
+    ns = s.nodes[n]
+    w = ns.params["forecast_skill"]
+    return (1 - w) * ns.fc_end[item] + w * exp_next[n][item], 1.25 * ns.err_end[item] * (1 - w / 2)
+
+
 def _forecast_and_order(s: SimState, t: int) -> None:
     net, A = s.net, s.cfg.assumptions
     alpha = A.smoothing_alpha
@@ -182,10 +190,14 @@ def _forecast_and_order(s: SimState, t: int) -> None:
         ns = s.nodes[n]
         v = 0.0 if ns.role == "Retail" else ns.params["visibility"]
         for item in sorted(ns.forecast):
-            obs = (1 - v) * ns.orders_in[item] + v * actual[n][item]
+            obs = ns.orders_in[item]
             prev = ns.forecast[item]
             ns.err[item] = alpha * abs(obs - prev) + (1 - alpha) * ns.err[item]
             ns.forecast[item] = alpha * obs + (1 - alpha) * prev
+        for item in sorted(ns.fc_end):
+            d, prev = actual[n][item], ns.fc_end[item]
+            ns.err_end[item] = alpha * abs(d - prev) + (1 - alpha) * ns.err_end[item]
+            ns.fc_end[item] = alpha * d + (1 - alpha) * prev
         if ns.role == "Supplier":
             continue
         z = s.z + ns.z_boost
@@ -196,6 +208,10 @@ def _forecast_and_order(s: SimState, t: int) -> None:
             owed_by_me = _backlog_in_input_units(s, n, item)
             position = recorded + pipe.get((n, item), 0.0) + owed_to_me - owed_by_me
             q = order_up_to(fc, sigma, s.lead_weeks[(n, item)], z, position)
+            if v > 0:  # control tower: blend toward ordering for the whole echelon (spec 2026-09-14 §3.5)
+                fc_e, sigma_e = _echelon_signal(s, n, item, exp_next)
+                ip_e = echelon_stock(s, n, item, pipe, own_input=recorded) + owed_to_me
+                q = (1 - v) * q + v * order_up_to(fc_e, sigma_e, s.echelon_lead_weeks[(n, item)], z, ip_e)
             if q <= 0:
                 continue
             for src, share in srcs:

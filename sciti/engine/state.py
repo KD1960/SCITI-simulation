@@ -7,6 +7,7 @@ from statistics import NormalDist
 
 import numpy as np
 
+from sciti.engine.echelon import echelon_lead_weeks
 from sciti.engine.economics import price_table, propagate, sell_price
 from sciti.network import PRODUCTS
 from sciti.tech.effects import base_params
@@ -64,6 +65,8 @@ class NodeState:
     owed_fifo: dict[str, dict[str, list[list[float]]]] = field(default_factory=dict)
     forecast: dict[str, float] = field(default_factory=dict)
     err: dict[str, float] = field(default_factory=dict)
+    fc_end: dict[str, float] = field(default_factory=dict)   # echelon forecast of end demand (control tower)
+    err_end: dict[str, float] = field(default_factory=dict)
     orders_in: dict[str, float] = field(default_factory=dict)
     capacity: dict[str, float] = field(default_factory=dict)
     cash: float = 0.0
@@ -131,6 +134,7 @@ class SimState:
     disruption_end: dict[int, int] = field(default_factory=dict)
     next_id: int = 1
     week: int = 0
+    echelon_lead_weeks: dict[tuple[str, str], float] = field(default_factory=dict)
 
 
 def _expected_quote_days(baseline, net, src, dst) -> float:
@@ -180,6 +184,9 @@ def init_state(cfg, baseline, net, demand_model, demand, catalog, streams) -> Si
                 L = max(1, math.ceil(days / 7))
                 lead_weeks[(n, item)] = L
                 ns.stock[input_key(role, item)] = ns.stock.get(input_key(role, item), 0.0) + (L + 2) * mean[n][item]
+                if role != "Retail":
+                    ns.fc_end[item] = mean[n][item]
+                    ns.err_end[item] = 0.2 * mean[n][item]
         weekly_rev = sum(mean[n][i] * sell_price(prices, net, n, i) for i in outs)
         ns.cash = A.initial_cash_weeks * weekly_rev
         ns.reset_week()
@@ -189,4 +196,5 @@ def init_state(cfg, baseline, net, demand_model, demand, catalog, streams) -> Si
     q0 = 1 - float(np.mean([s["defect_share"] for s in baseline["suppliers"].values()])) * (1 - catch)
     return SimState(cfg=cfg, baseline=baseline, net=net, catalog=catalog, streams=streams, demand=demand,
                     demand_model=demand_model, flows=flows, prices=prices, base=base, nodes=nodes,
-                    lead_weeks=lead_weeks, z=z, holdings={n: {} for n in net.order}, quality=[q0])
+                    lead_weeks=lead_weeks, z=z, holdings={n: {} for n in net.order}, quality=[q0],
+                    echelon_lead_weeks=echelon_lead_weeks(net, lead_weeks, mean))
