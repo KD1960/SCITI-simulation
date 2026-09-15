@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done; control tower redesign to echelon ordering built on branch `control-tower-echelon`)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** E2 stress scenarios (disruptions and demand swings; see docs/sciti2/experiments-recommendation.md); then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
+**Next step:** E3 who-with-whom experiment (use a 12-week component-maker disruption as the stress condition); then tune placeholder tech costs/effects, then (with approval) the first paid LLM run.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -184,6 +184,8 @@ Update this table and the "Last updated" line as each task lands.
 **Control tower redesign (2026-09-14, branch control-tower-echelon):** plan docs/superpowers/plans/2026-09-14-control-tower-echelon.md; commits 638d43c..c76dd84. Run 1 (acceptance): 3/4 — fill rate fell ~12.2 pt and stockout cost rose ~$2.0B, failing check 2. Fix (spec §3.6, commit c76dd84): add the missing per-stage review week to the echelon lead time and a safety-stock floor so the tower never targets less safety stock than downstream nodes already hold. Run 2 (acceptance, after the fix): 4/4 — whole network vs. no-tech (10 seeds): fill rate +0.09 pt, stockout cost −$14.2M, holding cost −$35.1M, bullwhip DC −2.35 / MFG −13.28 / CM −78.69, network profit +$110.5M. Details in docs/sciti2/control-tower-acceptance.md. 182 tests pass (including realdata), after final-review fixes to the branch (new test covering the v=1 order formula, per-stage horizon).
 
 **E1 technology screen (2026-09-15):** 8 techs × (all eligible firms, one tier), 30 paired seeds, calm conditions, on `de0e9df`. Results: `docs/sciti2/tech-screen-e1.md`; script `docs/sciti2/experiments/tech_screen.py`; numbers `tech_screen_results.csv`. Profit ($M, 3 yrs, all-firms arm): blockchain +686, routing +439, RFID +220, warehouse robotics +154 (also satisfaction +0.010, the only clear service gain), control tower +99 (CM bullwhip −78), risk intel −8 (no disruptions), APS −32, ML forecasting −43 (CM bullwhip −63). Blockchain at suppliers+CMs alone gets the full benefit; control tower needs the whole chain. Placeholder parameters drive the ranking.
+
+**E2 stress test (2026-09-15):** 21 scenarios (growth ×0.5/1/1.5 × no disruption or CM_3/CM_4/DC_Shanghai for 4 or 12 weeks) × 5 arms (none, risk intel, control tower, APS, rules agents), 30 paired seeds, on `810a39a`. Results: `docs/sciti2/stress-test-e2.md`; script `docs/sciti2/experiments/stress_test.py`; numbers `stress_test_results.csv`. Findings: 4-week hits sit inside the buffer; 12-week CM hits cost ~3 pt fill and $1.4–1.6B. Risk intel = insurance (−$8M calm, +$1.2–1.5B in 12-week CM hits). APS = partial insurance (−$30–60M calm, +$250–330M long CM hits). Control tower ~+$100M regardless of disruption, but ~0 at growth ×1.5 (to check). Rules agents never adopt risk intel, APS, or robotics and don't react to disruptions. To check: control tower at high growth; APS losses growing with demand.
 
 ## 8. Known risks to watch during the build
 
