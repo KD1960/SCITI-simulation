@@ -95,7 +95,7 @@ The payback rule looks back at last quarter's costs and doesn't see what is comi
 ## What this means
 
 - **For teaching:** "insurance vs. everyday savings" is now a clear, data-backed story. Risk intelligence is worthless until a long disruption, then worth about 170 times its cost.
-- **For E3 (who with whom):** use a 12-week component-maker disruption as the stress condition. It is the only scenario that moves service measures by more than a fraction of a point.
+- **For E3 (who with whom):** use a 12-week component-maker disruption as the stress condition. It moves fill rate by about 3 points; the only other large service change is on-time delivery in the 12-week DC Shanghai delay.
 - **For E4 / E5 (how agents decide):** the payback rule ignores insurance and under-adopts the biggest earners. That is a good baseline to beat, and a clear question for the LLM agents: do they buy insurance?
 - **To check:**
   - Why control tower's profit gain vanishes at high growth. The echelon forecast may lag a rising trend.
