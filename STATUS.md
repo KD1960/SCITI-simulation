@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done; control tower redesign to echelon ordering built on branch `control-tower-echelon`)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** E4 decision-rule sweeps (rules policy) and, with approval, the E5 LLM pilot; also check control tower at high growth and APS losses rising with demand (E2 notes). Tune placeholder tech costs/effects when cited values are ready.
+**Next step:** Kevin decides on the E5 LLM pilot (needs approval, current model prices in configs/mvp_llm.yaml, ANTHROPIC_API_KEY). Candidate follow-ups: a shared-savings decision rule (split incentives, E4), control tower at high growth and APS losses (E2).
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -188,6 +188,8 @@ Update this table and the "Last updated" line as each task lands.
 **E2 stress test (2026-09-15):** 21 scenarios (growth ×0.5/1/1.5 × no disruption or CM_3/CM_4/DC_Shanghai for 4 or 12 weeks) × 5 arms (none, risk intel, control tower, APS, rules agents), 30 paired seeds, on `810a39a`. Results: `docs/sciti2/stress-test-e2.md`; script `docs/sciti2/experiments/stress_test.py`; numbers `stress_test_results.csv`. Findings: 4-week hits sit inside the buffer; 12-week CM hits cost ~3 pt fill and $1.4–1.6B. Risk intel = insurance (−$8M calm, +$1.2–1.5B in 12-week CM hits). APS = partial insurance (−$30–60M calm, +$250–330M long CM hits). Control tower ~+$100M regardless of disruption, but ~0 at growth ×1.5 (to check). Rules agents never adopt risk intel, APS, or robotics and don't react to disruptions. To check: control tower at high growth; APS losses growing with demand.
 
 **E3 who with whom (2026-09-15):** same tech, 6 adopters in different structures, plus all-firms reference; calm and a 12-week CM_3 hit; 30 paired seeds, on `6ba2678`. Results: `docs/sciti2/who-with-whom-e3.md`; script `docs/sciti2/experiments/who_with_whom.py`; numbers `who_with_whom_results.csv`. Scattered adopters get nothing (pure cost). Control tower: upstream chain best in calm (+$29M, CM bullwhip −51), downstream chain best in disruption (+$61M vs +$3M calm), 3 DC–store pairs ~+$6–8M (n.s.). Blockchain: value ≈ $4M per part-per-product covered by linked suppliers (pairs +$33M, CM_1 hub +$65M, CM_3 hub +$224M); hub shape adds nothing beyond volume. Rules agents' control tower adoptions are all in groups but downstream-leaning (stores 7.1, DCs 3.3, CMs 1.2 per run).
+
+**E4 decision rules (2026-09-15):** payback-rule agents, full 2^5 factorial (budget share, horizon, chain accept share, cost split, max new per quarter) + default, calm and 12-week CM_3 hit, 30 paired seeds, on `5b3687b`. Results: `docs/sciti2/decision-rules-e4.md`; script `docs/sciti2/experiments/decision_rules.py`; CSVs `decision_rules_main_effects.csv`, `decision_rules_points.csv`. Network gain ranges +$145M to +$348M (defaults +$190M). Main effects (calm/disrupted): 2 per quarter +$81M/+$105M; long horizon +$65M/+$70M; by-size split +$19M/+$14M; 80% acceptance −$14M/−$23M (but +$11–19M within the best combination); budget share exactly zero (smallest budget ~$257k exceeds every one-time cost). Agents never adopt risk intel, APS, or warehouse robotics in any setting. Cause: the rule counts only the adopter's own costs, but shipping and defect scrap are charged to buyers and only stores record stockouts (split incentives).
 
 ## 8. Known risks to watch during the build
 
