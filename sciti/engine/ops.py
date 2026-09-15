@@ -177,6 +177,22 @@ def _echelon_signal(s: SimState, n: str, item: str, exp_next: dict) -> tuple[flo
     return (1 - w) * ns.fc_end[item] + w * exp_next[n][item], 1.25 * ns.err_end[item] * (1 - w / 2)
 
 
+def _echelon_safety_floor(s: SimState, n: str, item: str, exp_next: dict, z: float) -> float:
+    """Installation safety stock at and below n, in n's input units, at n's z (spec 2026-09-14 §3.5)."""
+    net, role = s.net, s.nodes[n].role
+    sigma = {i: sg for i, _, _, sg in _needs(s, n, exp_next)}[item]
+    own = z * sigma * math.sqrt(s.lead_weeks[(n, item)] + 1)
+    if role == "Retail":
+        return own
+    if role == "DC":
+        return own + sum(net.source_share[r][n] * _echelon_safety_floor(s, r, item, exp_next, z)
+                         for r in net.downstream[n])
+    if role == "MFG":
+        return own + net.bom[item] * sum(net.source_share[d][n] * _echelon_safety_floor(s, d, p, exp_next, z)
+                                         for d in net.downstream[n] for p in PRODUCTS)
+    return own + sum(_echelon_safety_floor(s, m, item, exp_next, z) for m in net.downstream[n])
+
+
 def _forecast_and_order(s: SimState, t: int) -> None:
     net, A = s.net, s.cfg.assumptions
     alpha = A.smoothing_alpha
@@ -211,7 +227,9 @@ def _forecast_and_order(s: SimState, t: int) -> None:
             if v > 0:  # control tower: blend toward ordering for the whole echelon (spec 2026-09-14 §3.5)
                 fc_e, sigma_e = _echelon_signal(s, n, item, exp_next)
                 ip_e = echelon_stock(s, n, item, pipe, own_input=recorded) + owed_to_me
-                q = (1 - v) * q + v * order_up_to(fc_e, sigma_e, s.echelon_lead_weeks[(n, item)], z, ip_e)
+                horizon = s.echelon_lead_weeks[(n, item)] + 1
+                safety = max(z * sigma_e * math.sqrt(horizon), _echelon_safety_floor(s, n, item, exp_next, z))
+                q = (1 - v) * q + v * max(0.0, fc_e * horizon + safety - ip_e)
             if q <= 0:
                 continue
             for src, share in srcs:

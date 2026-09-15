@@ -33,21 +33,21 @@ def _weighted(pairs: list[tuple[float, float]]) -> float:
 
 def echelon_lead_weeks(net, lead_weeks: dict[tuple[str, str], int],
                        mean: dict[str, dict[str, float]]) -> dict[tuple[str, str], float]:
-    """Own lead time plus the flow-weighted echelon lead time of the nodes below (spec §3.4)."""
+    """Own lead time and review week plus the flow-weighted echelon lead time of the nodes below (spec §3.4)."""
     le: dict[tuple[str, str], float] = {}
     for r in net.by_role("Retail"):
         for p in PRODUCTS:
             le[(r, p)] = float(lead_weeks[(r, p)])
     for d in net.by_role("DC"):
         for p in PRODUCTS:
-            le[(d, p)] = lead_weeks[(d, p)] + _weighted(
+            le[(d, p)] = lead_weeks[(d, p)] + 1 + _weighted(
                 [(net.source_share[r][d] * mean[r][p], le[(r, p)]) for r in net.downstream[d]])
     for m in net.by_role("MFG"):
         below = _weighted([(net.source_share[d][m] * mean[d][p], le[(d, p)])
                            for d in net.downstream[m] for p in PRODUCTS])
         for k in net.bom:
-            le[(m, k)] = lead_weeks[(m, k)] + below
+            le[(m, k)] = lead_weeks[(m, k)] + 1 + below
     for c in net.by_role("CM"):
         for k in net.nodes[c].skus:
-            le[(c, k)] = lead_weeks[(c, k)] + _weighted([(mean[m][k], le[(m, k)]) for m in net.downstream[c]])
+            le[(c, k)] = lead_weeks[(c, k)] + 1 + _weighted([(mean[m][k], le[(m, k)]) for m in net.downstream[c]])
     return le

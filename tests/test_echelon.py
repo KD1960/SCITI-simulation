@@ -63,18 +63,18 @@ def test_echelon_lead_weeks_adds_flow_weighted_downstream_lead(baseline):
             lead[(r, p)] = 5
     mean = {n: {i: 1.0 for i in s.flows[0][n]} for n in net.order}
     le = echelon_lead_weeks(net, lead, mean)
-    # DC_Shanghai: Retail_5 has weight 0.5 (split with Dubai) and lead 1; Retail_6-8 weight 1, lead 5.
-    shanghai = 2 + (0.5 * 1 + 3 * 5) / 3.5
+    # Each non-retail stage adds its own one-week review period (spec §3.4).
+    shanghai = 2 + 1 + (0.5 * 1 + 3 * 5) / 3.5
     assert le[("DC_Shanghai", "A")] == pytest.approx(shanghai)
-    assert le[("DC_Houston", "B")] == pytest.approx(2 + 1)
+    assert le[("DC_Houston", "B")] == pytest.approx(2 + 1 + 1)
     # MFG_China: DCs weighted by the share they buy from MFG_China (Houston .2, Sofia .4, Dubai .6, Shanghai .9).
     w = {d: net.source_share[d]["MFG_China"] for d in net.by_role("DC")}
-    dc_le = {"DC_Houston": 3, "DC_Dubai": 3, "DC_Sofia": 3, "DC_Shanghai": shanghai}
-    expected = 3 + sum(w[d] * dc_le[d] for d in w) / sum(w.values())
+    dc_le = {"DC_Houston": 4, "DC_Dubai": 4, "DC_Sofia": 4, "DC_Shanghai": shanghai}
+    expected = 3 + 1 + sum(w[d] * dc_le[d] for d in w) / sum(w.values())
     assert le[("MFG_China", "SR_MCU")] == pytest.approx(expected)
     us = {d: net.source_share[d]["MFG_US"] for d in net.by_role("DC")}
-    mfg_us = 3 + sum(us[d] * dc_le[d] for d in us) / sum(us.values())
-    assert le[("CM_1", "SR_MCU")] == pytest.approx(4 + (mfg_us + expected) / 2)
+    mfg_us = 3 + 1 + sum(us[d] * dc_le[d] for d in us) / sum(us.values())
+    assert le[("CM_1", "SR_MCU")] == pytest.approx(4 + 1 + (mfg_us + expected) / 2)
 
 
 def test_init_state_sets_echelon_forecast_and_lead(baseline):
@@ -118,3 +118,29 @@ def test_whole_network_control_tower_runs_clean_and_replays(baseline_path, tmp_p
     cfg.forced_adoptions = [ForcedAdoption(week=1, tech="control_tower", members=members)]
     orig = run(cfg, run_dir=tmp_path / "orig")  # strict invariant checks raise on any violation
     assert replay_run(orig, tmp_path / "again") == []
+
+
+def test_echelon_safety_floor_adds_installation_safety_below(baseline):
+    import math
+
+    from sciti.engine import ops
+    s = make_state(baseline)
+    for t in range(1, 6):
+        ops.step_week(s, t)
+    net, exp_next, z = s.net, s.flows[6], 1.645
+
+    def own(n, item):
+        sigma = {i: sg for i, _, _, sg in ops._needs(s, n, exp_next)}[item]
+        return z * sigma * math.sqrt(s.lead_weeks[(n, item)] + 1)
+
+    dc = {(d, p): own(d, p) + sum(net.source_share[r][d] * own(r, p) for r in net.downstream[d])
+          for d in net.by_role("DC") for p in "ABC"}
+    assert ops._echelon_safety_floor(s, "DC_Dubai", "A", exp_next, z) == pytest.approx(dc[("DC_Dubai", "A")])
+    # EPDM is 40 units per product.
+    mfg_us = own("MFG_US", "EPDM") + 40 * sum(net.source_share[d]["MFG_US"] * dc[(d, p)]
+                                              for d in net.by_role("DC") for p in "ABC")
+    assert ops._echelon_safety_floor(s, "MFG_US", "EPDM", exp_next, z) == pytest.approx(mfg_us)
+    mfg_china = own("MFG_China", "EPDM") + 40 * sum(net.source_share[d]["MFG_China"] * dc[(d, p)]
+                                                    for d in net.by_role("DC") for p in "ABC")
+    assert ops._echelon_safety_floor(s, "CM_3", "EPDM", exp_next, z) == pytest.approx(
+        own("CM_3", "EPDM") + mfg_us + mfg_china)
