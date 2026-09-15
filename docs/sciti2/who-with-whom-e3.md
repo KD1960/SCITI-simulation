@@ -55,7 +55,7 @@ Profit in $M over 3 years; fill rate and satisfaction changes. * = the 95% range
 | All firms (reference) | 48 | 35 | +99* | +120* | +0.08 pt* | +0.23 pt* | −78* |
 
 **Why the shapes differ:**
-- **Pairs:** each DC has only one of its stores, so its tower works at partial strength. In a disruption, the DCs in the pairs aren't the ones feeding the hardest-hit stores.
+- **Pairs:** DC_Houston and DC_Dubai have only one of their stores in the pair, so their towers work at partial strength (DC_Sofia's only store is in its pair). The pairs cut stockouts by about $9–10M, but extra holding and scrap cost eat most of that.
 - **Downstream chain:** DC_Shanghai has all of its stores, so it plans for their whole stock. In a disruption that cuts stockouts by $29M. In calm conditions, the extra holding cost (+$6M) and scrap cost (+$4M) cancel the savings.
 - **Upstream chain:** the component makers see half of their factories adopt, so their towers work at more than half strength. That cuts their bullwhip in half and lowers holding cost (−$9M) in calm conditions. In a disruption they hold more stock (+$28M holding), but stockouts fall by $29M.
 
