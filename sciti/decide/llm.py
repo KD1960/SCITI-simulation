@@ -11,6 +11,30 @@ from sciti.decide.interface import Brief, Reply
 PROMPT_VERSION = "v1"
 PROMPT_DIR = Path(__file__).with_name("prompts")
 
+# The reply shape, enforced by the API (spec §7.3) so a reply cannot come back malformed.
+REPLY_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "decisions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "tech": {"type": "string"},
+                    "action": {"type": "string"},
+                    "partners": {"type": "array", "items": {"type": "string"}},
+                    "reason": {"type": "string"},
+                    "group_id": {"type": "string"},
+                },
+                "required": ["tech", "action", "partners", "reason"],
+                "additionalProperties": False,
+            },
+        }
+    },
+    "required": ["decisions"],
+    "additionalProperties": False,
+}
+
 
 def load_system_prompt() -> str:
     return (PROMPT_DIR / f"{PROMPT_VERSION}_system.md").read_text()
@@ -85,8 +109,10 @@ class LLMPolicy:
         resp, last = None, None
         for attempt in range(3):
             try:
-                resp = self.client.messages.create(model=self.cfg.model, max_tokens=self.cfg.max_tokens,
-                                                   system=self.system, messages=[{"role": "user", "content": content}])
+                resp = self.client.messages.create(
+                    model=self.cfg.model, max_tokens=self.cfg.max_tokens, system=self.system,
+                    messages=[{"role": "user", "content": content}],
+                    output_config={"format": {"type": "json_schema", "schema": REPLY_SCHEMA}})
                 break
             except self._transient as e:
                 last = e

@@ -7,6 +7,6 @@ decision:
   model: claude-sonnet-5
   max_llm_calls: 1500
   max_spend_usd: 20.0
-  price_per_mtok_in: 2.0    # Sonnet 5 list price, 2026-09-16; check before each run
-  price_per_mtok_out: 10.0  # Sonnet 5 list price, 2026-09-16; check before each run
+  price_per_mtok_in: 0.0    # 0.0 refuses to run; set the model's current input price per MTok for a run (Sonnet 5 was 2.0 on 2026-09-16)
+  price_per_mtok_out: 0.0   # 0.0 refuses to run; set the model's current output price per MTok for a run (Sonnet 5 was 10.0 on 2026-09-16)
   visibility: partners

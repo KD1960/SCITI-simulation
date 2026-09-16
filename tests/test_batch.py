@@ -108,3 +108,14 @@ def test_batch_baseline_has_no_forced_adoptions(baseline_path, tmp_path):
     assert baseline["adoptions"] == "0"
     assert baseline["forced_adoptions"] == ""
     assert baseline["disruptions"] == primary["disruptions"]
+
+
+def test_estimate_reports_a_with_retries_figure():
+    # E5: the pilot needed 2.6 calls per agent-quarter once truncated replies were retried, not 1.3.
+    from sciti.batch import EST_CALLS_PER_AGENT_ROUND_RETRIES
+    llm = Config(name="e", seed=1, decision=DecisionCfg(policy="llm", model="m", price_per_mtok_in=1,
+                                                        price_per_mtok_out=5))
+    e = estimate(llm)
+    assert e["calls_with_retries"] == round(48 * 12 * EST_CALLS_PER_AGENT_ROUND_RETRIES)
+    assert e["usd_with_retries"] > e["usd_expected"]
+    assert e["calls_with_retries"] <= e["calls_max"]

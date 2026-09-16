@@ -90,6 +90,9 @@ policy. Before spending any money:
    ```
    .venv/bin/sciti estimate configs/mvp_llm.yaml
    ```
+   It reports `usd_expected` (no retries) and `usd_with_retries` (every reply
+   retried once, the rate measured in the 2026-09-16 pilot). Budget for the
+   larger one.
 4. Only after you've reviewed the estimate and approved the spend:
    ```
    .venv/bin/sciti run configs/mvp_llm.yaml

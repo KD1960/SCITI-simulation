@@ -332,10 +332,10 @@ CSV and JSON are used (not Parquet) so students can open outputs in Excel.
 
 ### 9.2 LLM guardrails
 
-- Strict JSON schema; one retry with the validation error shown to the model; then the `rules` policy decides for that agent and the fallback is logged. If the rules fallback's own reply also fails validation, that agent is skipped for the quarter (no decisions applied) rather than crashing the run.
+- The reply shape is requested through the API's structured outputs (`output_config.format`, schema in `decide/llm.py`), then validated in code anyway; one retry with the validation error shown to the model; then the `rules` policy decides for that agent and the fallback is logged. If the rules fallback's own reply also fails validation, that agent is skipped for the quarter (no decisions applied) rather than crashing the run.
 - Allowed actions and targets enforced in code (§7.3).
 - The LLM policy refuses to start a run — before creating a run folder — if any catalog price is zero or `ANTHROPIC_API_KEY` is missing; `configs/mvp_llm.yaml` ships with zero prices on purpose, so it will not run until Kevin sets the model's current per-token prices.
-- Each request has a 60-second timeout; the SDK's own stacked retries are turned off so failures surface promptly. Connection errors, rate limits, server errors, and a `529` (overloaded) response are all treated as transient and share one loop of up to 3 attempts with exponential backoff. An authentication or permission error is fatal and disables the LLM policy immediately (switch to `rules`, mark the manifest); other API errors count toward a consecutive-failure limit that also disables it, rather than retrying forever.
+- `decision.max_tokens` defaults to 2000: thinking models spend part of that budget before writing the reply, and 600 truncated replies in the first paid run. Each request has a 60-second timeout; the SDK's own stacked retries are turned off so failures surface promptly. Connection errors, rate limits, server errors, and a `529` (overloaded) response are all treated as transient and share one loop of up to 3 attempts with exponential backoff. An authentication or permission error is fatal and disables the LLM policy immediately (switch to `rules`, mark the manifest); other API errors count toward a consecutive-failure limit that also disables it, rather than retrying forever.
 - The model's reason text is stored and shown, never executed or used to change code paths.
 
 ### 9.3 Cost control

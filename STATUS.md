@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done; control tower redesign to echelon ordering built on branch `control-tower-echelon`)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** fix the LLM call settings (max_tokens/thinking, structured outputs, estimate call count) before any further paid run; then rerun the pilot seed and compare. Placeholder tech costs/effects still need cited values.
+**Next step:** rerun the LLM pilot seed on the fixed settings (needs Kevin's approval and prices; `configs/mvp_llm.yaml` ships with zero prices again) and compare with the 2026-09-16 run. Placeholder tech costs/effects still need cited values.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -192,6 +192,8 @@ Update this table and the "Last updated" line as each task lands.
 **E4 decision rules (2026-09-15):** payback-rule agents, full 2^5 factorial (budget share, horizon, chain accept share, cost split, max new per quarter) + default, calm and 12-week CM_3 hit, 30 paired seeds, on `5b3687b`. Results: `docs/sciti2/decision-rules-e4.md`; script `docs/sciti2/experiments/decision_rules.py`; CSVs `decision_rules_main_effects.csv`, `decision_rules_points.csv`. Network gain ranges +$145M to +$348M (defaults +$190M). Main effects (calm/disrupted): 2 per quarter +$81M/+$105M; long horizon +$65M/+$70M; by-size split +$19M/+$14M; 80% acceptance −$14M/−$23M (but +$11–19M within the best combination); budget share exactly zero (smallest budget ~$257k exceeds every one-time cost). Agents never adopt risk intel, APS, or warehouse robotics in any setting. Cause: the rule counts only the adopter's own costs, but shipping and defect scrap are charged to buyers and only stores record stockouts (split incentives).
 
 **E5 first paid LLM run (2026-09-16):** Sonnet 5, seed 1, 156 weeks, Kevin approved ~$7.49 with a $20 cap. Actual: **$18.61**, 1,500 calls (call cap hit), 2 h 27 m. Results: `docs/sciti2/llm-pilot-e5.md`; run kept in the session scratchpad (`llm_pilot`), not in the repo. `sciti replay` reproduced it **exactly** — spec §12 criterion 3 now met. LLM vs same-seed no-tech: profit +$554M, fill +0.24 pt, 61 adoptions, 9 groups; payback rule on the same seed: +$133M, fill +0.00. LLM agents adopted risk intel (7), APS (6), and robotics (1) — technologies the rule never adopts. Problems: 419 of 1,110 decisions fell back to rules because replies were truncated (`decision.max_tokens: 600` while Sonnet 5 thinks by default, so thinking eats the reply budget); retries doubled the call count. Fix before the next paid run: raise max_tokens (or disable thinking for this call), use structured outputs, and correct the estimate's calls-per-agent assumption.
+
+**LLM call fixes (2026-09-16, after E5):** `decision.max_tokens` default 600 → 2000 (thinking shares the budget); the reply shape is now requested via structured outputs (`REPLY_SCHEMA` in `sciti/decide/llm.py`, `output_config.format`) as well as validated in code; `sciti estimate` now reports `calls_with_retries`/`usd_with_retries` (2.6 calls per agent-quarter, measured) beside the clean figures. `configs/mvp_llm.yaml` is back to zero prices (it refuses to run until prices are set) with the model left at `claude-sonnet-5` and the cap at $20. 185 tests pass. Not yet exercised against the real API — the next paid run is the first test.
 
 ## 8. Known risks to watch during the build
 

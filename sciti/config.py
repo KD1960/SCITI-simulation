@@ -28,7 +28,7 @@ class DecisionCfg(Strict):
     max_spend_usd: float = 25.0
     price_per_mtok_in: float = 0.0
     price_per_mtok_out: float = 0.0
-    max_tokens: int = 600
+    max_tokens: int = 2000   # thinking shares this budget; 600 truncated replies in the 2026-09-16 pilot
     max_consecutive_failures: int = 5
     request_timeout_s: float = 60.0
     confirm_spend_threshold_usd: float = 10.0

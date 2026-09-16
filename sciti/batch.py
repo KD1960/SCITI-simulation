@@ -11,6 +11,8 @@ from sciti.runner import run
 
 EST_TOKENS_IN = 3000
 EST_TOKENS_OUT = 400
+EST_CALLS_PER_AGENT_ROUND = 1.3          # one call per agent plus response passes, no retries
+EST_CALLS_PER_AGENT_ROUND_RETRIES = 2.6  # measured in the 2026-09-16 pilot, when truncated replies were retried
 AGENTS = 48
 
 
@@ -25,13 +27,16 @@ def estimate(cfg) -> dict:
         return {"rounds": rounds, "calls_expected": 0, "calls_max": 0, "usd_expected": 0.0, "usd_max": 0.0,
                 "note": f"policy {D.policy} makes no API calls"}
     per_call = (EST_TOKENS_IN * D.price_per_mtok_in + EST_TOKENS_OUT * D.price_per_mtok_out) / 1e6
-    expected = round(AGENTS * rounds * 1.3)
+    expected = round(AGENTS * rounds * EST_CALLS_PER_AGENT_ROUND)
+    with_retries = min(D.max_llm_calls, round(AGENTS * rounds * EST_CALLS_PER_AGENT_ROUND_RETRIES))
     worst = min(D.max_llm_calls, AGENTS * rounds * 2 * 2)
     note = ("set decision.price_per_mtok_in/out to the model's current prices to estimate spend"
             if D.price_per_mtok_in == 0 and D.price_per_mtok_out == 0 else
             f"spend is also capped at ${D.max_spend_usd} per run")
-    return {"rounds": rounds, "calls_expected": expected, "calls_max": worst,
-            "usd_expected": round(expected * per_call, 4), "usd_max": round(worst * per_call, 4), "note": note}
+    return {"rounds": rounds, "calls_expected": expected, "calls_with_retries": with_retries,
+            "calls_max": worst, "usd_expected": round(expected * per_call, 4),
+            "usd_with_retries": round(with_retries * per_call, 4),
+            "usd_max": round(worst * per_call, 4), "note": note}
 
 
 def parse_seeds(text: str) -> list[int]:

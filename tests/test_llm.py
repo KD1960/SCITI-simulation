@@ -173,3 +173,21 @@ def test_authentication_error_disables_immediately_without_retrying():
     r2 = p.decide(b())
     assert r2.fallback is True
     assert len(c.calls) == calls_after_first
+
+
+def test_reply_budget_leaves_room_for_thinking_and_json():
+    # E5: max_tokens 600 with thinking on truncated replies, forcing retries and rule fallbacks.
+    assert DecisionCfg(policy="llm", model="m", price_per_mtok_in=1, price_per_mtok_out=5).max_tokens == 2000
+
+
+def test_request_asks_for_the_reply_schema():
+    from sciti.decide.llm import REPLY_SCHEMA
+    c = FakeClient()
+    p = LLMPolicy(cfg(), RulesPolicy(np.random.default_rng(0)), client=c, sleep=lambda s: None)
+    p.decide(b())
+    fmt = c.calls[0]["output_config"]["format"]
+    assert fmt["type"] == "json_schema" and fmt["schema"] == REPLY_SCHEMA
+    decision = REPLY_SCHEMA["properties"]["decisions"]["items"]
+    assert REPLY_SCHEMA["required"] == ["decisions"]
+    assert set(decision["required"]) == {"tech", "action", "partners", "reason"}
+    assert "group_id" in decision["properties"] and decision["additionalProperties"] is False
