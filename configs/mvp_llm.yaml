@@ -4,9 +4,9 @@ seed: 1
 weeks: 156
 decision:
   policy: llm
-  model: claude-haiku-4-5-20251001
+  model: claude-sonnet-5
   max_llm_calls: 1500
-  max_spend_usd: 10.0
-  price_per_mtok_in: 0.0    # 0.0 refuses to run (LLMPolicy rejects it) -- set to the model's current input price per million tokens before an LLM run
-  price_per_mtok_out: 0.0   # 0.0 refuses to run (LLMPolicy rejects it) -- set to the model's current output price per million tokens before an LLM run
+  max_spend_usd: 20.0
+  price_per_mtok_in: 2.0    # Sonnet 5 list price, 2026-09-16; check before each run
+  price_per_mtok_out: 10.0  # Sonnet 5 list price, 2026-09-16; check before each run
   visibility: partners
