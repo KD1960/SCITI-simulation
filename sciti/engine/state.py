@@ -8,7 +8,7 @@ from statistics import NormalDist
 import numpy as np
 
 from sciti.engine.echelon import echelon_lead_weeks
-from sciti.engine.economics import price_table, propagate, sell_price
+from sciti.engine.economics import inventory_cost, price_table, propagate, sell_price
 from sciti.network import PRODUCTS
 from sciti.tech.effects import base_params
 
@@ -133,6 +133,7 @@ class SimState:
     quality: list[float] = field(default_factory=list)
     disruption_end: dict[int, int] = field(default_factory=dict)
     next_id: int = 1
+    opening_inventory: float = 0.0
     week: int = 0
     echelon_lead_weeks: dict[tuple[str, str], float] = field(default_factory=dict)
 
@@ -194,7 +195,9 @@ def init_state(cfg, baseline, net, demand_model, demand, catalog, streams) -> Si
     z = NormalDist().inv_cdf(A.target_service_level)
     catch = A.inspection_catch
     q0 = 1 - float(np.mean([s["defect_share"] for s in baseline["suppliers"].values()])) * (1 - catch)
-    return SimState(cfg=cfg, baseline=baseline, net=net, catalog=catalog, streams=streams, demand=demand,
-                    demand_model=demand_model, flows=flows, prices=prices, base=base, nodes=nodes,
-                    lead_weeks=lead_weeks, z=z, holdings={n: {} for n in net.order}, quality=[q0],
-                    echelon_lead_weeks=echelon_lead_weeks(net, lead_weeks, mean))
+    s = SimState(cfg=cfg, baseline=baseline, net=net, catalog=catalog, streams=streams, demand=demand,
+                 demand_model=demand_model, flows=flows, prices=prices, base=base, nodes=nodes,
+                 lead_weeks=lead_weeks, z=z, holdings={n: {} for n in net.order}, quality=[q0],
+                 echelon_lead_weeks=echelon_lead_weeks(net, lead_weeks, mean))
+    s.opening_inventory = inventory_cost(s)
+    return s

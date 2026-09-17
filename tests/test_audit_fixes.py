@@ -102,3 +102,13 @@ def test_early_warning_recovery_mult_shortens_disruption_end(baseline):
     on = [t for t, b in zip(range(1, 20), boosted) if b]
     # disruption_end = 10 + ceil(4 * 0.5) = 12; warning from week 7 (ceil 2.5 = 3 weeks ahead) through week 11
     assert on == list(range(7, 12))
+
+
+def test_summary_reports_profit_with_inventory_change(baseline_path, tmp_path):
+    """network_profit_with_inventory = cash-basis network_profit + (closing - opening inventory at cost)."""
+    c = Config(name="inv", seed=1, weeks=20, baseline_path=str(baseline_path), output_dir=str(tmp_path))
+    summary = json.loads((run(c, run_dir=tmp_path / "r") / "summary.json").read_text())
+    assert summary["inventory_change"] == pytest.approx(summary["inventory_closing"] - summary["inventory_opening"])
+    assert summary["inventory_opening"] > 0
+    assert summary["network_profit_with_inventory"] == pytest.approx(
+        summary["network_profit"] + summary["inventory_change"])

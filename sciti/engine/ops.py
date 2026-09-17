@@ -7,7 +7,7 @@ import numpy as np
 
 from sciti.disruptions import apply_disruptions
 from sciti.engine.echelon import echelon_stock
-from sciti.engine.economics import propagate, sell_price, unit_value
+from sciti.engine.economics import inventory_cost, propagate, sell_price, unit_value
 from sciti.engine.state import Shipment, SimState, input_key, lane_type, output_items
 from sciti.network import PRODUCTS
 from sciti.rng import shipment_rng

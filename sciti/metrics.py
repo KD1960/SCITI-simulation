@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from sciti.engine.economics import inventory_cost
 from sciti.engine.state import COUNT_KEYS, LEDGER_KEYS, PROFIT_COST_KEYS
 
 WEEK_COLUMNS = (["week", "node", "role", "stock_units", "cash", "profit", "capacity_factor", "techs"]
@@ -57,6 +58,7 @@ def summarize(s, rows: list[dict]) -> dict:
             orders = orders / bom_units
         bullwhip[role] = float(np.var(orders) / np.var(dem)) if len(dem) > 1 and np.var(dem) > 0 else None
     adopt_ev = [e for e in s.events if e["type"] == "adopt"]
+    closing = inventory_cost(s)
     profit_by_role = {}
     for r in rows:
         profit_by_role[r["role"]] = profit_by_role.get(r["role"], 0.0) + r["profit"]
@@ -66,6 +68,10 @@ def summarize(s, rows: list[dict]) -> dict:
         "costs": {k: tot(k) for k in PROFIT_COST_KEYS},
         "scrap_value": tot("scrap"),
         "network_profit": tot("profit"),
+        "inventory_opening": s.opening_inventory,
+        "inventory_closing": closing,
+        "inventory_change": closing - s.opening_inventory,
+        "network_profit_with_inventory": tot("profit") + closing - s.opening_inventory,
         "profit_by_role": {k: round(v, 2) for k, v in sorted(profit_by_role.items())},
         "fill_rate": fill,
         "on_time_rate": on_time,

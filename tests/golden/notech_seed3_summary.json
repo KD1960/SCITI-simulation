@@ -18,9 +18,13 @@
   "tech": 0.0
  },
  "fill_rate": 0.9861808413384023,
+ "inventory_change": -1695462544.3973207,
+ "inventory_closing": 4544147235.586148,
+ "inventory_opening": 6239609779.983469,
  "mean_lead_days": 8.402212665796444,
  "mean_transit_days": 9.119403129815954,
  "network_profit": 19412425339.42,
+ "network_profit_with_inventory": 17716962795.022675,
  "on_time_rate": 0.9781509204936274,
  "p95_lead_days": 21.5307154086001,
  "p95_transit_days": 25.87440047639547,

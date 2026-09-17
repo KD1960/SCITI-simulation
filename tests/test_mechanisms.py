@@ -250,6 +250,7 @@ def test_summarize_satisfaction_and_bullwhip(baseline):
     class FakeNode:
         def __init__(self, role):
             self.role = role
+            self.stock = {}  # summarize values closing stock
 
     s.nodes = {"Retail_1": FakeNode("Retail"), "DC_Houston": FakeNode("DC")}
     s.arrived = [
@@ -421,3 +422,29 @@ def test_disruption_extra_lead_days_shifts_lead_and_arrival(baseline):
 
     assert sh_dis.lead_days - sh_base.lead_days == pytest.approx(14.0)
     assert sh_dis.arrive_week - sh_base.arrive_week == 2
+
+
+def test_inventory_cost_values_stock_at_what_the_holder_paid(baseline):
+    """inventory_cost: suppliers at price * supplier_cogs_share; CM raw and finished parts at the
+    mean supplier price; MFG parts at the CM price and products at the bill of materials at CM
+    prices; DC at the MFG price; stores at the DC price; goods in transit at the invoice value."""
+    s = make_state(baseline)
+    for ns in s.nodes.values():
+        for item in list(ns.stock):
+            ns.stock[item] = 0.0
+    P, A = s.prices, s.cfg.assumptions
+    sku = s.net.nodes["Supplier_1"].skus[0]
+    cm = s.net.cm_of[sku]
+    s.nodes["Supplier_1"].stock[sku] = 7.0
+    s.nodes[cm].stock[f"RAW:{sku}"] = 3.0
+    s.nodes[cm].stock[sku] = 4.0
+    s.nodes["MFG_US"].stock[sku] = 6.0
+    s.nodes["MFG_US"].stock["A"] = 2.0
+    s.nodes["DC_Houston"].stock["A"] = 10.0
+    s.nodes["Retail_1"].stock["B"] = 5.0
+    sh = make_shipment(s, "DC_Houston", "Retail_1", "A", 8.0, 1)
+    s.in_transit.append(sh)
+    bom_cost = sum(P["cm"][k] * u for k, u in s.net.bom.items())
+    expected = (7.0 * P["supplier"]["Supplier_1"] * A.supplier_cogs_share + (3.0 + 4.0) * P["raw"][sku]
+                + 6.0 * P["cm"][sku] + 2.0 * bom_cost + 10.0 * P["mfg"] + 5.0 * P["dc"] + 8.0 * P["dc"])
+    assert ops_mod.inventory_cost(s) == pytest.approx(expected)

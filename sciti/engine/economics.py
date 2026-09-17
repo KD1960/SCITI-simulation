@@ -44,6 +44,26 @@ def unit_value(prices, net, node_id, item) -> float:
     return prices["mfg"] if role == "DC" else prices["dc"]
 
 
+def unit_cost(prices, net, node_id, item, supplier_cogs_share: float) -> float:
+    """What the holder paid for one unit of stock (inventory at cost)."""
+    role = net.nodes[node_id].role
+    if role == "Supplier":
+        return prices["supplier"][node_id] * supplier_cogs_share
+    if role == "CM":
+        return prices["raw"][item[4:] if item.startswith("RAW:") else item]
+    if role == "MFG":
+        return sum(prices["cm"][k] * u for k, u in net.bom.items()) if item in PRODUCTS else prices["cm"][item]
+    return prices["mfg"] if role == "DC" else prices["dc"]
+
+
+def inventory_cost(s) -> float:
+    """Stock on hand at cost plus goods in transit at invoice value (the buyer has already booked them)."""
+    share = s.cfg.assumptions.supplier_cogs_share
+    on_hand = sum(q * unit_cost(s.prices, s.net, n, item, share)
+                  for n, ns in s.nodes.items() for item, q in ns.stock.items())
+    return on_hand + sum(sh.value for sh in s.in_transit)
+
+
 def propagate(net, retail: dict[tuple[str, str], float]) -> dict[str, dict[str, float]]:
     out: dict[str, dict[str, float]] = {n: {} for n in net.order}
     for r in net.by_role("Retail"):
