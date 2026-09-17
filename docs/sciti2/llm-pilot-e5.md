@@ -57,6 +57,44 @@ Neither problem invalidates the run — every decision, error, and fallback is l
 - Do they buy insurance *before* a disruption they can't see coming? This run had no disruption; the E2 stress scenario would test it.
 - With fallbacks reduced, does the profit advantage over the rule hold across seeds?
 
+---
+
+## Rerun on the fixed settings (2026-09-16, engine `309f13c`)
+
+Same seed, same model and prices, after the three fixes (reply budget 2,000 tokens; reply shape requested through the API; honest estimate).
+
+| | First run | **Fixed run** |
+|---|---|---|
+| Cost | $18.61 | **$5.40** |
+| Calls | 1,500 (hit the cap) | 706 |
+| Wall time | 2 h 27 m | 50 m |
+| Replies that failed | 38% fell back to the rule | **1%** (7 of 686) |
+| Rule fallbacks | 419 | 2 |
+
+The estimate said $7.49 clean, up to $14.98 with retries. The real figure came in below both.
+
+**Results (seed 1, vs. the same seed with no technology):**
+
+| Measure | LLM (fixed) | LLM (first run) | Payback rule |
+|---|---|---|---|
+| Network profit | **+$475M** | +$554M | +$133M |
+| Satisfaction | **+0.0042** | +0.0023 | −0.0000 |
+| Fill rate | +0.13 pt | +0.24 pt | +0.00 pt |
+| Store on-time | **+1.14 pt** | — | — |
+| Adoptions | 112 | 61 | 52 |
+| Groups formed | 14 (5 chains, 8 pairs, 1 triad) | 9 (no chains) | 4 |
+| Spent on technology | $92M | $50M | $44M |
+
+**What changed with working replies:** the agents adopted nearly twice as much and, for the first time, formed **chains** — 47 control tower adoptions, against 8 in the first run. They also bought insurance again: risk intelligence 10, APS 6, warehouse robotics 3.
+
+**Where the money came from:** purchases −$395M, scrap −$228M, shipping −$233M, COGS −$182M, holding −$57M, stockouts −$21M, minus $92M of technology cost. Bullwhip fell at every tier (component makers −77). CO2 fell 0.21 Mt (−7%).
+
+**Compared with E3:** the agents built the chain structures that E3 found pay best, which the payback rule never does.
+
+**Replication:** `sciti replay` reproduced this run exactly, again.
+
+**Still open:** 7 replies were still cut off at 2,000 tokens; one seed only; no disruption tested. The natural next steps are a stress-scenario LLM run and a few more seeds.
+
 ## Settings
 
 - Seed 1; 156 weeks; 12 decision rounds; 48 agents; `visibility: partners`; prompt version v1.
