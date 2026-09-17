@@ -1,5 +1,11 @@
 # E2 Stress Test — Results
 
+> **Engine changed 2026-09-17** (audit fixes: freight paid by the shipper,
+> blockchain eligibility, random defects, early warning, and expected freight
+> now built into selling prices). Numbers below come from the earlier
+> engine; the risk-intelligence results depend on the early-warning change
+> and should be rerun before citing.
+
 **Date:** 2026-09-15
 **Engine:** `main` at `810a39a`
 **Command:** `.venv/bin/python docs/sciti2/experiments/stress_test.py OUT_DIR` (3,150 runs, about 19 minutes)

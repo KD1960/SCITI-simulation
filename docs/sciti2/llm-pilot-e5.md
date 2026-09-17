@@ -1,5 +1,10 @@
 # E5 First LLM Pilot — Results
 
+> **Engine changed 2026-09-17** (audit fixes: freight paid by the shipper,
+> blockchain eligibility, random defects, early warning, and expected freight
+> now built into selling prices). Numbers below come from the earlier
+> engine; the shipping/scrap cost breakdown should be rerun before citing.
+
 **Date:** 2026-09-16
 **Engine:** `main` at `381eba0`
 **Run:** `mvp_llm_s1_20260916T155215Z`, seed 1, 156 weeks, model `claude-sonnet-5`

@@ -1,9 +1,10 @@
 # E4 How Agents Decide — Results
 
-> **Engine changed 2026-09-17** (audit fixes: freight, blockchain eligibility,
-> random defects, early warning). Numbers below come from the earlier
+> **Engine changed 2026-09-17** (audit fixes: freight paid by the shipper,
+> blockchain eligibility, random defects, early warning, and expected freight
+> now built into selling prices). Numbers below come from the earlier
 > engine; rows for routing and blockchain, and anything that depends on who
-> pays freight, should be rerun before citing.
+> pays freight or on selling prices, should be rerun before citing.
 
 **Date:** 2026-09-15
 **Engine:** `main` at `5b3687b`

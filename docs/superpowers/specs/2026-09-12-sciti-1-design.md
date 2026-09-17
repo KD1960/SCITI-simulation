@@ -192,10 +192,10 @@ Nodes are processed downstream to upstream in steps 3–6 and upstream to downst
 Per node, per week:
 
 - **Revenue:** units shipped × transfer price (retailers: units sold × retail price).
-- **Costs:** purchases (booked by the buyer in the week the seller ships, so internal sales and purchases cancel in network profit and goods in transit are not counted as profit), shipping (paid by the receiver), holding (annual rate × unit value / 52), stockout penalty (retailers: lost margin + goodwill penalty), scrap, technology (one-time and running).
+- **Costs:** purchases (booked by the buyer in the week the seller ships, so internal sales and purchases cancel in network profit and goods in transit are not counted as profit), shipping (paid by the shipper in the week it ships), holding (annual rate × unit value / 52), stockout penalty (retailers: lost margin + goodwill penalty), technology (one-time and running). Scrap is a memo item — the value of units scrapped for defects, already embedded in the purchases the buyer paid for them — not a separate cost subtracted from profit.
 - **Cash:** cumulative profit; feeds the agent's budget for tech decisions.
 
-Unit prices for sub-components come from `Supplier Data`. Transfer prices up the chain and retail prices are **not** in the data; they are set in config as cost-plus markups (defaults: CM +20%, MFG +25%, DC +10%, retail +40%) and labeled as assumptions in every output.
+Unit prices for sub-components come from `Supplier Data`. Transfer prices up the chain and retail prices are **not** in the data; they are set in config as cost-plus markups (defaults: CM +20%, MFG +25%, DC +10%, retail +40%) applied to (cost + expected freight per unit) × (1 + markup) — each tier folds in its expected freight per unit for the lane it ships on before marking up — and labeled as assumptions in every output.
 
 ### 5.5 Outcome measures
 

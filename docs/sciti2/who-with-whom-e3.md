@@ -1,5 +1,11 @@
 # E3 Who With Whom — Results
 
+> **Engine changed 2026-09-17** (audit fixes: freight paid by the shipper,
+> blockchain eligibility, random defects, early warning, and expected freight
+> now built into selling prices). Numbers below come from the earlier
+> engine; the blockchain arms, and the "36 firms" blockchain reference arm
+> (now 34 — Supplier + CM only), should be rerun before citing.
+
 **Date:** 2026-09-15
 **Engine:** `main` at `6ba2678`
 **Command:** `.venv/bin/python docs/sciti2/experiments/who_with_whom.py OUT_DIR` (660 runs)
