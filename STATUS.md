@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-17 (audit fixes and value tests done on branch `audit-fixes`)
-**Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** calibration groundwork — map each technology to a measurable real-world KPI, build an evidence table (effect and cost ranges with sources), and run a sensitivity screen. Branch audit-fixes awaits Kevin's merge decision.
+**Last updated:** 2026-09-17 (audit fixes, freight-in-prices, and value tests merged to `main`; 203 tests pass)
+**Phase:** MVP merged to `main`; engine corrected after the 2026-09-17 test audit. See README.md for how to use it.
+**Next step:** calibration groundwork — map each technology to a measurable real-world KPI, build an evidence table (effect and cost ranges with sources, checked against firm size), and run a sensitivity screen to see which parameters change conclusions. Then rerun E1–E5 on the corrected engine. Kevin's wish list, in his suggested order: disruption library, live step-by-step view, role-playing game.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -202,6 +202,8 @@ Update this table and the "Last updated" line as each task lands.
 **Test audit (2026-09-17):** verdict "partly" — plumbing well tested; tech effects (5 of 8) and outcome metrics weakly tested. 6 confirmed defects: blockchain does nothing at CM/MFG; routing savings booked to customer not adopter; forced coalitions ignore cost_split; quality deterministic (quality stream unused); early warning off once disruption starts; summary costs include scrap (profit excludes it). E4's routing/blockchain split-incentive rows and E1's blockchain one-tier result are partly artifacts of defects 1–2. Full report: `docs/sciti2/test-audit-2026-09-17.md`.
 
 **Audit fixes (2026-09-17, branch `audit-fixes`):** fixed all 6 confirmed defects from the 2026-09-17 test audit. `42181db`: the shipper now pays freight (booked to the sender in the ship week); forced group adoptions follow `decision.cost_split`; the run summary's `costs` are now exactly the profit cost keys, with scrap reported separately as `scrap_value` (a memo item — the value of scrapped units, already inside purchases). `617e08c`: blockchain is now eligible for Supplier and CM only, and defects drop on a supplier shipment when the supplier and CM both hold it; each supplier shipment's defective share is now a random Beta draw (mean = supplier defect share × blockchain multiplier, concentration `assumptions.defect_concentration`, default 50), keyed to the shipment; the risk-intelligence early warning now keeps its extra safety stock through the end of the disruption (rounded up to whole weeks). `66c97b7`/`9fccd23`: added `tests/test_mechanisms.py` (10 value tests for tech effects, costs, metrics, and coalition rules) and `tests/test_audit_fixes.py` (7 tests for the fixes above). Full suite: 202 passed, no xfails. Details and the defect-to-commit / missing-test-to-test-name mapping: `docs/sciti2/test-audit-2026-09-17.md` §Resolution. E1 and E4 results predate these fixes; both docs now carry an engine-changed note.
+
+**Audit fixes merged (2026-09-17, `main` at 5673129):** branch `audit-fixes` fast-forwarded and deleted. All 6 confirmed defects fixed (blockchain pairs Supplier+CM only; shipper pays freight; forced groups follow cost_split; per-shipment Beta defect share; early warning through the disruption; scrap reported as `scrap_value`), plus Kevin's ruling that selling prices now add expected freight per unit before the markup — without it CMs ran ~$1.8B in losses and CM_1 ran out of cash. Real-data check after the fix: all CMs profitable (CM total $3.26B over 156 weeks) and cash-positive every week (minimum $268M). 17 new tests in `tests/test_audit_fixes.py` and `tests/test_mechanisms.py`; 203 pass. E1–E5 result docs carry an "Engine changed 2026-09-17" note; their numbers predate these fixes.
 
 ## 8. Known risks to watch during the build
 
