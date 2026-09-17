@@ -44,9 +44,13 @@ def test_sample_lane_floor_and_quote(baseline):
 def test_prices_chain_markups(baseline):
     net = build_network(baseline, Assumptions())
     pr = price_table(net, baseline, Assumptions().markup)
-    assert pr["cm"]["SR_MCU"] == pytest.approx(20 * 1.2)
-    assert pr["mfg"] == pytest.approx(sum(pr["cm"][k] * u for k, u in net.bom.items()) * 1.25)
-    assert pr["retail"] == pytest.approx(pr["mfg"] * 1.1 * 1.4)
+    # f = 0.55*10 + 0.35*2.5 + 0.05*1.9 + 0.05*1.8 = 6.56, same for every lane in the synthetic baseline
+    f = 6.56
+    assert pr["cm"]["SR_MCU"] == pytest.approx((20 + f) * 1.2)
+    assert pr["mfg"] == pytest.approx(
+        (sum(pr["cm"][k] * u for k, u in net.bom.items()) + f) * 1.25)
+    assert pr["dc"] == pytest.approx((pr["mfg"] + f) * 1.1)
+    assert pr["retail"] == pytest.approx(pr["dc"] * 1.4)
     assert sell_price(pr, net, "DC_Dubai", "A") == pr["dc"]
     assert unit_value(pr, net, "CM_1", "RAW:SR_MCU") == pr["raw"]["SR_MCU"]
     assert unit_value(pr, net, "Retail_1", "B") == pr["dc"]

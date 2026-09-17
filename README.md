@@ -133,6 +133,11 @@ policy. Before spending any money:
   of scrapped units for reference. That value is already counted inside
   purchases, so do not add `scrap_value` to the cost columns — it would
   double-count.
+- **Selling prices include the seller's expected freight per unit.** Each
+  tier's transfer price adds the lane's expected freight per unit (the
+  mode-mix-weighted `cost_per_unit`) to its cost before applying its markup,
+  so cost-plus pricing doesn't leave the seller short after it pays for the
+  shipment it sends.
 - **Control tower = echelon ordering.** A node with a control tower orders for
   all stock at and below it (its share of each downstream partner's stock and
   pipeline), using an end-customer demand forecast and the lead time down to

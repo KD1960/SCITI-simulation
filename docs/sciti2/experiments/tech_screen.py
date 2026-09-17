@@ -29,7 +29,7 @@ COLS = ["network_profit", "satisfaction_index", "fill_rate", "retail_on_time_rat
         "bullwhip_DC", "bullwhip_MFG", "bullwhip_CM"]
 # One-tier arm per technology: the tier where its effect is most direct.
 TIER = {"ml_forecast": ["Retail"], "control_tower": ["DC", "Retail"], "rfid": ["Retail"], "aps": ["MFG"],
-        "routing": ["DC"], "blockchain": ["Supplier", "CM"], "risk_intel": ["CM"]}
+        "routing": ["DC"], "risk_intel": ["CM"]}
 
 
 def _run(args):

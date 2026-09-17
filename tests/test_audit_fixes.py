@@ -86,3 +86,19 @@ def test_early_warning_stays_on_through_the_disruption_and_rounds_up(baseline):
         boosted.append(s.nodes["MFG_US"].z_boost == 1.0)
     on = [t for t, b in zip(range(1, 20), boosted) if b]
     assert on == list(range(7, 14))  # warning from week 7 (ceil 2.5 = 3 weeks ahead) through week 13
+
+
+def test_early_warning_recovery_mult_shortens_disruption_end(baseline):
+    from sciti.config import Disruption
+    from sciti.disruptions import apply_disruptions
+    s = make_state(baseline, weeks=30)
+    s.cfg.disruptions = [Disruption(target="CM_3", start_week=10, weeks=4, capacity_mult=0.2)]
+    boosted = []
+    for t in range(1, 20):
+        s.nodes["MFG_US"].params["early_warning_weeks"] = 2.5
+        s.nodes["CM_3"].params["recovery_mult"] = 0.5
+        apply_disruptions(s, t)
+        boosted.append(s.nodes["MFG_US"].z_boost == 1.0)
+    on = [t for t, b in zip(range(1, 20), boosted) if b]
+    # disruption_end = 10 + ceil(4 * 0.5) = 12; warning from week 7 (ceil 2.5 = 3 weeks ahead) through week 11
+    assert on == list(range(7, 12))

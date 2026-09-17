@@ -6,12 +6,20 @@ import numpy as np
 from sciti.network import PRODUCTS
 
 
+def _lane_freight_per_unit(baseline, lane_name: str) -> float:
+    lane = baseline["lanes"][lane_name]
+    return sum(mix * lane["modes"][mode]["cost_per_unit"] for mode, mix in lane["mode_mix"].items())
+
+
 def price_table(net, baseline, markup) -> dict:
+    f_cm_mfg = _lane_freight_per_unit(baseline, "cm_mfg")
+    f_mfg_dc = _lane_freight_per_unit(baseline, "mfg_dc")
+    f_dc_retail = _lane_freight_per_unit(baseline, "dc_retail")
     sup = {sid: float(v["price"]) for sid, v in baseline["suppliers"].items()}
     raw = {sku: float(np.mean([sup[s] for s in net.suppliers_of[sku]])) for sku in net.skus}
-    cm = {sku: raw[sku] * (1 + markup["CM"]) for sku in net.skus}
-    mfg = sum(cm[sku] * u for sku, u in net.bom.items()) * (1 + markup["MFG"])
-    dc = mfg * (1 + markup["DC"])
+    cm = {sku: (raw[sku] + f_cm_mfg) * (1 + markup["CM"]) for sku in net.skus}
+    mfg = (sum(cm[sku] * u for sku, u in net.bom.items()) + f_mfg_dc) * (1 + markup["MFG"])
+    dc = (mfg + f_dc_retail) * (1 + markup["DC"])
     return {"supplier": sup, "raw": raw, "cm": cm, "mfg": mfg, "dc": dc,
             "retail": dc * (1 + markup["Retail"])}
 
