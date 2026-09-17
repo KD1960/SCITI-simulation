@@ -95,6 +95,46 @@ The estimate said $7.49 clean, up to $14.98 with retries. The real figure came i
 
 **Still open:** 7 replies were still cut off at 2,000 tokens; one seed only; no disruption tested. The natural next steps are a stress-scenario LLM run and a few more seeds.
 
+---
+
+## Under a disruption (2026-09-16, seed 1, engine `309f13c`)
+
+Same seed and settings, plus the E2 stress condition: Mexico (CM_3) at 20% output with +14 days for 12 weeks from week 30. **$5.68, 754 calls, 54 minutes, 4 fallbacks. Replay exact.**
+
+Compared with the same seed and scenario from E2:
+
+| Measure (vs. no technology, same seed and disruption) | LLM agents | Payback rule |
+|---|---|---|
+| Network profit | **+$1,554M** | +$144M |
+| Fill rate | **+2.46 pt** | +0.09 pt |
+| Satisfaction | **+0.0163** | +0.0003 |
+| Store on-time | **+1.28 pt** | −0.04 pt |
+| Stockout cost | **−$402M** | −$15M |
+| Adoptions / groups | 112 / 14 | 52 / 4 |
+| Spent on technology | $95M | $42M |
+
+For scale: the disruption itself costs about $1.6B and 3.3 fill points with no technology (E2). The LLM agents recover most of it; the payback rule recovers almost none.
+
+### Did they buy insurance before the trouble?
+
+Partly. Insurance adoptions (risk intelligence, APS, warehouse robotics) split 4 before week 30 and 14 after:
+
+| Week | Who | What |
+|---|---|---|
+| 1 | **CM_3** (the plant that gets hit), CM_4, MFG_US | risk intelligence |
+| 27 | DC_Shanghai | risk intelligence |
+| 40 onward | CM_1, CM_2, both factories, all four DCs | risk intelligence, APS, robotics |
+
+The agents cannot see the disruption coming, and nothing in the brief hints at it. The four early buys came from persona, not foresight — the reasons given were about caution and resilience:
+
+> "Cautious persona favors low-cost, quick-setup solo tech that improves risk recovery and early warning" — CM_3, quarter 1
+
+That one adoption matters most: CM_3 is the site that gets hit, and its risk intelligence shortens the shock. The rest bought in *after* the disruption started, which in this model still helps against the tail of it.
+
+**The contrast with the payback rule is the finding.** The rule never buys these technologies at all, in any scenario or setting (E2, E4). LLM agents buy them from week 1 for reasons a spreadsheet payback can't express.
+
+**Caveats:** one seed; the persona mix decides how many cautious firms exist; the recovery effect size is a placeholder.
+
 ## Settings
 
 - Seed 1; 156 weeks; 12 decision rounds; 48 agents; `visibility: partners`; prompt version v1.
