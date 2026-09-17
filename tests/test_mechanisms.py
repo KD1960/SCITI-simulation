@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import statistics
 
 import pytest
@@ -49,22 +50,35 @@ def test_rfid_cuts_record_error_and_shrink(baseline):
     ns.reset_week()
     _close_week(s)
     assert ns.counts["shrink"] == pytest.approx(1000.0 * 0.001)
+    assert ns.stock["A"] == pytest.approx(1000.0 - 1000.0 * 0.001)
 
 
 def test_warehouse_robotics_cuts_handling_and_dispatch_delay(baseline):
     """Warehouse robotics (solo, DC): handling_cost_per_unit *0.8; dispatch_delay_days -1.0 shows
-    up as exactly 1.0 fewer lead_days on an otherwise identical shipment, same due_week."""
-    s = make_state(baseline)
+    up as exactly 1.0 fewer lead_days on an otherwise identical shipment.
+
+    due_week must stay the same, because the quote always adds the BASE dispatch delay
+    (s.base[src]), never the adopter's reduced one. The dc_retail lane is patched to a quote of
+    exactly 6.0 days so 6.0+2.0=8.0 (2 weeks) vs a wrongly-wired 6.0+1.0=7.0 (1 week) actually
+    crosses a week boundary -- with the unpatched lane (~9 vs ~10 days) both wirings round to the
+    same week and the check can't fail either way."""
+    patched = copy.deepcopy(baseline)
+    for mode in patched["lanes"]["dc_retail"]["modes"].values():
+        mode["lead_a"], mode["lead_b"], mode["lead_resid_sd"] = 6.0, 0.0, 0.0
+
+    s = make_state(patched)
     adopt(s, "DC_Houston", "wh_robotics", 0)  # setup_weeks=16 -> active_week=16
     params = effective_params("DC_Houston", 16, s.holdings, s.catalog, s.net, s.base["DC_Houston"])
     assert params["handling_cost_per_unit"] == pytest.approx(0.5 * 0.8)
     s.nodes["DC_Houston"].params = params
     sh_with = make_shipment(s, "DC_Houston", "Retail_1", "A", 100.0, 20)
 
-    s2 = make_state(baseline)  # no robotics: default base params
+    s2 = make_state(patched)  # no robotics: default base params
     sh_without = make_shipment(s2, "DC_Houston", "Retail_1", "A", 100.0, 20)
 
     assert sh_without.lead_days - sh_with.lead_days == pytest.approx(1.0)
+    assert sh_without.lead_days == pytest.approx(8.0) and sh_with.lead_days == pytest.approx(7.0)
+    assert sh_with.due_week == 20 + math.ceil((6.0 + 2.0) / 7)  # base dispatch delay, both cases
     assert sh_with.due_week == sh_without.due_week
 
 
@@ -203,7 +217,14 @@ def test_arrival_inspection_and_holding_and_stockout_costs(baseline):
 
 def test_summarize_satisfaction_and_bullwhip(baseline):
     """summarize(): satisfaction_index = 0.5*fill + 0.3*retail_on_time + 0.2*quality (the config
-    defaults), and bullwhip for MFG = var(orders/160) / var(retail demand) over weeks 14+."""
+    defaults), and bullwhip for MFG = var(orders/160) / var(retail demand) over weeks 14+ only.
+
+    Weeks 1-13 carry demand/orders that are NOT proportional to each other (a demand/order spike
+    unrelated in scale to weeks 14-20), and the weeks-14-20 relationship itself isn't a constant
+    multiple either. That way a wrong window -- an off-by-few slice like [10:] (pulls in the
+    week 11-13 spike) or [15:] (drops weeks 14-15, a subset of a non-proportional series) -- gives
+    a materially different ratio than the correct [13:], so the assertion can actually fail on a
+    wrong window instead of the (window-invariant) proportional design used before."""
     s = make_state(baseline, weeks=20)
 
     class FakeNode:
@@ -226,29 +247,38 @@ def test_summarize_satisfaction_and_bullwhip(baseline):
         row.update(kw)
         return row
 
-    dem = [100.0, 200.0, 100.0, 200.0, 100.0, 200.0, 100.0]  # weeks 14..20
+    # Weeks 1-13: a demand/orders spike, deliberately not in proportion to weeks 14-20.
+    early_dem = [10.0, 20.0] * 6 + [10.0]
+    early_orders_raw = [16000000.0, 1.0] * 6 + [16000000.0]
+    # Weeks 14-20: the window that must be used; also not a single constant multiple within
+    # itself, so a sub-window of it (e.g. [15:]) gives a different ratio than the full window.
+    dem = [50.0, 150.0, 80.0, 220.0, 60.0, 180.0, 90.0]
+    orders_raw = [900.0, 1400.0, 3500.0, 500.0, 2600.0, 300.0, 3100.0]
+
     rows = []
+    for i, w in enumerate(range(1, 14)):
+        d = early_dem[i]
+        rows.append(blank_row(w, "Retail", demand=d, sales=0.8 * d))
+        rows.append(blank_row(w, "MFG", orders_placed=early_orders_raw[i]))
     for i, w in enumerate(range(14, 21)):
         d = dem[i]
         rows.append(blank_row(w, "Retail", demand=d, sales=0.8 * d))
-        rows.append(blank_row(w, "MFG", orders_placed=d * 16))  # /160 gives d/10, proportional to dem
+        rows.append(blank_row(w, "MFG", orders_placed=orders_raw[i]))
 
     out = summarize(s, rows)
 
-    total_demand, total_sales = sum(dem), sum(0.8 * x for x in dem)
-    fill = total_sales / total_demand
+    total_demand = sum(early_dem) + sum(dem)
+    total_sales = sum(0.8 * x for x in early_dem) + sum(0.8 * x for x in dem)
     assert out["fill_rate"] == pytest.approx(0.8)
-    assert out["fill_rate"] == pytest.approx(fill)
+    assert out["fill_rate"] == pytest.approx(total_sales / total_demand)
     assert out["on_time_rate"] == pytest.approx(3 / 4)  # 3 of 4 arrivals on time
     assert out["retail_on_time_rate"] == pytest.approx(1 / 2)  # 1 of 2 retail arrivals on time
     assert out["quality_mean"] == pytest.approx(0.925)
     assert out["satisfaction_index"] == pytest.approx(0.5 * 0.8 + 0.3 * 0.5 + 0.2 * 0.925)
 
-    # orders_scaled[i] = dem[i]/10 for every week, so the ratio of variances is exactly (1/10)**2,
-    # independent of the actual variance of dem.
-    assert out["bullwhip"]["MFG"] == pytest.approx((1 / 10) ** 2)
-    orders_scaled = [x * 16 / 160 for x in dem]
-    assert out["bullwhip"]["MFG"] == pytest.approx(statistics.pvariance(orders_scaled) / statistics.pvariance(dem))
+    orders_scaled = [x / 160 for x in orders_raw]  # weeks 14-20 only, matching spec's weeks[13:]
+    expected_bullwhip = statistics.pvariance(orders_scaled) / statistics.pvariance(dem)
+    assert out["bullwhip"]["MFG"] == pytest.approx(expected_bullwhip)
 
 
 def _reply(*decisions):
@@ -294,10 +324,15 @@ def test_chain_acceptance_forms_at_threshold_fails_below(baseline, monkeypatch):
         writer = _StubWriter()
         ctx = DecisionContext(policy=policy, fallback=policy, writer=writer, personas=personas, recent={})
         run_decision_round(s, 14, ctx)
-        return [e for e in s.events if e["type"] == "coalition" and e.get("id") == gid]
+        return s.events
 
-    assert len(run_round(3)) == 1  # 3/5 = 0.6 >= chain_accept_share -> forms
-    assert len(run_round(2)) == 0  # 2/5 = 0.4 < chain_accept_share -> fails
+    events_3 = run_round(3)
+    assert len([e for e in events_3 if e["type"] == "coalition" and e.get("id") == gid]) == 1
+
+    events_2 = run_round(2)
+    assert len([e for e in events_2 if e["type"] == "coalition" and e.get("id") == gid]) == 0
+    failed = [e for e in events_2 if e["type"] == "coalition_failed" and e.get("id") == gid]
+    assert len(failed) == 1 and failed[0]["reason"] == "acceptance"
 
 
 def test_group_bonus_additive_and_visibility_cap(baseline):
