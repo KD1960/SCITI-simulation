@@ -57,3 +57,29 @@ The part that produces research findings is weakly tested:
 - **E4 split incentives:** the routing case is partly an artifact of defect 2 (who books the saving). The blockchain case is partly defect 1 (CM/factory adoption does nothing). The general split-incentive finding still stands for stockout-based technologies, but the routing and blockchain rows need rework.
 - **E1 blockchain one-tier arm:** "factories add nothing" is defect 1, not a real-world claim.
 - **Satisfaction-index findings (E1–E5):** read with the on-time/quality caveat above.
+
+## Resolution (2026-09-17, branch `audit-fixes`)
+
+Confirmed defects:
+
+1. **Blockchain does nothing when a CM or factory adopts.** Fixed in `617e08c`: blockchain is now eligible for Supplier and CM only, and defects drop on a supplier shipment when the supplier and the CM both hold it.
+2. **Routing savings go to the customer, not the adopter.** Fixed in `42181db`: the shipper now pays freight, booked to the sender in the week it ships.
+3. **Forced coalitions ignore `cost_split`.** Fixed in `42181db`: forced group adoptions now follow `decision.cost_split`.
+4. **Quality has no randomness.** Fixed in `617e08c`: each supplier shipment's defective share is now a Beta draw (mean = supplier defect share × blockchain multiplier, concentration `assumptions.defect_concentration`), keyed to the shipment.
+5. **Early warning switches off once the disruption starts.** Fixed in `617e08c`: the early-warning safety stock now holds through the end of the disruption (rounded up to whole weeks).
+6. **The summary cost list includes scrap.** Fixed in `42181db`: the run summary's `costs` are now exactly the profit cost keys; scrap is reported separately as `scrap_value`, a memo item (value of scrapped units, already inside purchases).
+
+Missing tests (all added in `66c97b7`/`9fccd23`, plus the fix-specific tests in `42181db`/`617e08c`, in `tests/test_mechanisms.py` and `tests/test_audit_fixes.py`):
+
+1. Blockchain wiring — `test_blockchain_is_for_suppliers_and_cms_only`, `test_blockchain_pair_cuts_supplier_defects_on_average`, `test_defect_draw_is_keyed_to_the_shipment`.
+2. RFID record error and shrink — `test_rfid_cuts_record_error_and_shrink`.
+3. Warehouse robotics handling and dispatch delay — `test_warehouse_robotics_cuts_handling_and_dispatch_delay`.
+4. APS capacity multiplier — `test_aps_raises_capacity_mult`.
+5. ML forecast in `_needs` — `test_needs_blends_forecast_and_sigma_by_ml_skill`.
+6. Order position and split by source share — `test_order_position_and_split_by_source_share`.
+7. Arrivals, inspection, holding, and stockout costs — `test_arrival_inspection_and_holding_and_stockout_costs`.
+8. Metrics (satisfaction, bullwhip window) — `test_summarize_satisfaction_and_bullwhip`.
+9. Coalitions (chain acceptance threshold, `by_size` cost split, forced adoptions follow `cost_split`) — `test_chain_acceptance_forms_at_threshold_fails_below`, `test_forced_group_follows_cost_split_by_size`.
+10. Additive group bonus, visibility cap, and `extra_lead_days` — `test_group_bonus_additive_and_visibility_cap`, `test_disruption_extra_lead_days_shifts_lead_and_arrival`.
+
+No xfails; the two fix-specific value tests for the summary-costs identity and shipper-pays-freight timing are `test_summary_costs_add_up_to_network_profit` and `test_shipper_pays_freight_in_the_week_it_ships` (`tests/test_audit_fixes.py`).

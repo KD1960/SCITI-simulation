@@ -122,6 +122,17 @@ policy. Before spending any money:
   workbook Glossary); each part weighs that spread over the 160 parts in a
   product (`assumptions.part_weight_tons`). The workbook itself applies 0.05 t
   to every part, which made CO2 about 75 times too high.
+- **Shippers pay their own freight.** The cost of a shipment is booked to
+  the sender, in the week it ships, not to the receiver. This matters when
+  comparing profit by tier.
+- **Defects are random, per shipment.** Each shipment's share of defective
+  units is drawn at random around the supplier's average defect rate, not
+  fixed. `assumptions.defect_concentration` controls how tight that spread
+  is (higher = closer to the average, lower = more spread out).
+- **`scrap_value` is a memo item, not a cost column.** It reports the value
+  of scrapped units for reference. That value is already counted inside
+  purchases, so do not add `scrap_value` to the cost columns — it would
+  double-count.
 - **Control tower = echelon ordering.** A node with a control tower orders for
   all stock at and below it (its share of each downstream partner's stock and
   pipeline), using an end-customer demand forecast and the lead time down to

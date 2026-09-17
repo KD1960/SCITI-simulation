@@ -1,5 +1,10 @@
 # E1 Technology Screen — Results
 
+> **Engine changed 2026-09-17** (audit fixes: freight, blockchain eligibility,
+> random defects, early warning). Numbers below come from the earlier
+> engine; rows for routing and blockchain, and anything that depends on who
+> pays freight, should be rerun before citing.
+
 **Date:** 2026-09-15
 **Engine:** `main` at `de0e9df` (after the demand fix, per-shipment random draws, purchase timing, part weight, and control tower redesign)
 **Command:** `.venv/bin/python docs/sciti2/experiments/tech_screen.py OUT_DIR`
