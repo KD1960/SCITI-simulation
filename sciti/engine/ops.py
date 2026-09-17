@@ -140,7 +140,7 @@ def _needs(s: SimState, n: str, exp_next: dict) -> list[tuple[str, list[tuple[st
     net, ns = s.net, s.nodes[n]
     w = ns.params["forecast_skill"]
     blend = lambda item: (1 - w) * ns.forecast[item] + w * exp_next[n][item]
-    sig = lambda e: 1.25 * e * (1 - w / 2)
+    sig = lambda e: 1.25 * e
     if ns.role in ("Retail", "DC"):
         srcs = sorted(net.source_share[n].items())
         return [(p, srcs, blend(p), sig(ns.err[p])) for p in PRODUCTS]
@@ -173,7 +173,7 @@ def _echelon_signal(s: SimState, n: str, item: str, exp_next: dict) -> tuple[flo
     """Echelon forecast and sigma for one ordering item, with ML forecasting applied (spec 2026-09-14 §3.2)."""
     ns = s.nodes[n]
     w = ns.params["forecast_skill"]
-    return (1 - w) * ns.fc_end[item] + w * exp_next[n][item], 1.25 * ns.err_end[item] * (1 - w / 2)
+    return (1 - w) * ns.fc_end[item] + w * exp_next[n][item], 1.25 * ns.err_end[item]
 
 
 def _echelon_safety_floor(s: SimState, n: str, item: str, exp_next: dict, z: float) -> float:
@@ -204,14 +204,17 @@ def _forecast_and_order(s: SimState, t: int) -> None:
     for n in reversed(net.order):
         ns = s.nodes[n]
         v = 0.0 if ns.role == "Retail" else ns.params["visibility"]
+        w = ns.params["forecast_skill"]  # errors are measured against the blended forecast the node ordered on
         for item in sorted(ns.forecast):
             obs = ns.orders_in[item]
             prev = ns.forecast[item]
-            ns.err[item] = alpha * abs(obs - prev) + (1 - alpha) * ns.err[item]
+            used = (1 - w) * prev + w * s.flows[t - 1][n][item] if w > 0 else prev
+            ns.err[item] = alpha * abs(obs - used) + (1 - alpha) * ns.err[item]
             ns.forecast[item] = alpha * obs + (1 - alpha) * prev
         for item in sorted(ns.fc_end):
             d, prev = actual[n][item], ns.fc_end[item]
-            ns.err_end[item] = alpha * abs(d - prev) + (1 - alpha) * ns.err_end[item]
+            used = (1 - w) * prev + w * s.flows[t - 1][n][item] if w > 0 else prev
+            ns.err_end[item] = alpha * abs(d - used) + (1 - alpha) * ns.err_end[item]
             ns.fc_end[item] = alpha * d + (1 - alpha) * prev
         if ns.role == "Supplier":
             continue

@@ -106,7 +106,8 @@ def test_aps_raises_capacity_mult(baseline):
 
 def test_needs_blends_forecast_and_sigma_by_ml_skill(baseline):
     """ML forecasting in _needs: forecast = (1-w)*own_forecast + w*echelon_forecast,
-    sigma = 1.25 * err * (1 - w/2), at forecast_skill w = 0.3."""
+    sigma = 1.25 * err with no assumed cut (err itself is measured against the blended forecast),
+    at forecast_skill w = 0.3."""
     s = make_state(baseline)
     ns = s.nodes["DC_Houston"]
     ns.params["forecast_skill"] = 0.3
@@ -116,7 +117,26 @@ def test_needs_blends_forecast_and_sigma_by_ml_skill(baseline):
     results = {item: (fc, sigma) for item, _srcs, fc, sigma in _needs(s, "DC_Houston", exp_next)}
     fc_a, sigma_a = results["A"]
     assert fc_a == pytest.approx(0.7 * 100.0 + 0.3 * 200.0)
-    assert sigma_a == pytest.approx(1.25 * 10.0 * (1 - 0.15))
+    assert sigma_a == pytest.approx(1.25 * 10.0)
+
+
+def test_forecast_error_is_measured_against_the_blended_forecast(baseline):
+    """With ML forecasting, err and err_end track the error of the forecast the node orders on:
+    used = (1-w)*smoothed + w*expected flow for the observed week (flows[t-1]), w = 0.3."""
+    s = make_state(baseline)
+    t, n = 1, "DC_Houston"
+    ns = s.nodes[n]
+    alpha = s.cfg.assumptions.smoothing_alpha
+    ns.params["forecast_skill"] = 0.3
+    ns.forecast["A"], ns.err["A"], ns.orders_in["A"] = 100.0, 10.0, 170.0
+    ns.fc_end["A"], ns.err_end["A"] = 100.0, 10.0
+    s.flows[t - 1][n]["A"] = 200.0
+    actual = ops_mod.propagate(s.net, {k: float(s.demand[k][t - 1]) for k in sorted(s.demand)})[n]["A"]
+    ops_mod._forecast_and_order(s, t)
+    used = 0.7 * 100.0 + 0.3 * 200.0
+    assert ns.err["A"] == pytest.approx(alpha * abs(170.0 - used) + (1 - alpha) * 10.0)
+    assert ns.err_end["A"] == pytest.approx(alpha * abs(actual - used) + (1 - alpha) * 10.0)
+    assert ns.forecast["A"] == pytest.approx(alpha * 170.0 + (1 - alpha) * 100.0)
 
 
 def test_order_position_and_split_by_source_share(baseline, monkeypatch):

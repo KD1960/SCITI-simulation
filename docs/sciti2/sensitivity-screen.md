@@ -39,6 +39,10 @@ n.s. = the 95% range includes zero.
 5. **ML forecasting gets worse as its effect grows.** More forecast skill lowers profit and fill in both scenarios (significant at 1.5× in the CM hit). Better forecasts should not hurt, so this looks like a model problem (likely the same safety-stock pattern found in the old control tower rule), not a parameter question. Reproduce and check before spending evidence effort on it.
 6. **APS loses more in calm as its capacity gain grows** (not significant). Worth a look alongside ML forecasting.
 
+## Update, same day: ML forecasting fix
+
+Finding 5 was reproduced and traced to an assumed safety-stock cut `(1 - w/2)` that the real forecast error did not justify. Fixed on branch `ml-forecast-sigma` (error is now measured against the blended forecast). ML rows rerun, 30 seeds, profit $M / fill pt at 0.5×, 1×, 1.5×: calm −33 / −53 / −65 (all significant), fill +0.01 / 0.00 / +0.03; CM_3 hit −5 / −30 / −39 (all n.s.), fill +0.06 / +0.05 / +0.08. Service no longer falls with skill. Profit still does; the loss is mostly higher supplier output and holding (see STATUS.md). The ML rows in the table above predate the fix.
+
 ## Not covered
 
 - Engine assumptions (markups, holding rate, record error, shrink, defect concentration), group bonus, and setup weeks were not varied.

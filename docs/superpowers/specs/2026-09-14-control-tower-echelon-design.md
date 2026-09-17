@@ -47,7 +47,7 @@ Profit is reported with a cost breakdown but has no pass bar (tower costs are pl
 
 - **Installation forecast (all nodes):** `obs = orders_in` always (retail: sales, as today). The `(1 - v) * orders + v * actual` blend is removed. `err` is unchanged in form.
 - **Echelon forecast (new, per ordering node and item):** `fc_end[item]` and `err_end[item]`, smoothed with the same `alpha` on `D = actual[n][item]`, where `actual = propagate(net, this week's retail demand)` (already computed in `_forecast_and_order`). Initialized like `forecast`/`err`: mean first-year flow and 0.2 × mean.
-- ML forecasting (`forecast_skill` w) applies to both: `blend = (1 - w) * fc + w * exp_next[n][item]`, `sigma = 1.25 * err * (1 - w/2)`.
+- ML forecasting (`forecast_skill` w) applies to both: `blend = (1 - w) * fc + w * exp_next[n][item]`, `sigma = 1.25 * err`. (Revised 2026-09-17: the assumed `(1 - w/2)` cut was removed; `err` and `err_end` are now measured against the blended forecast for the observed week, so sigma falls only as far as the forecast really improves.)
 - Early warning (`z_boost`) applies to both order calculations.
 
 ### 3.3 Echelon stock
