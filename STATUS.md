@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-14 (all 19 tasks done; final review fixes done; control tower redesign to echelon ordering built on branch `control-tower-echelon`)
 **Phase:** MVP built, reviewed, and merged to `main` (2026-09-14). See README.md for how to use it.
-**Next step:** decide what to spend next on LLM runs (more seeds for confidence intervals, ~$5.50 each). Placeholder tech costs/effects still need cited values; control tower at high growth and APS losses (E2 notes) still unexplained.
+**Next step:** fix the 6 confirmed defects and add the 10 missing tests from `docs/sciti2/test-audit-2026-09-17.md` before any calibration or further research runs. Kevin's wish list (live step-by-step view, role-playing game, disruption editor) is not started.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -198,6 +198,8 @@ Update this table and the "Last updated" line as each task lands.
 **LLM pilot rerun on fixed settings (2026-09-16, `309f13c`, run `llm_pilot2` in the session scratchpad):** $5.40, 706 calls, 50 min, 1% malformed replies (was 38%), 2 fallbacks (was 419); replay exact. Seed 1 vs same-seed no-tech: profit +$475M, satisfaction +0.0042, fill +0.13 pt, on-time +1.14 pt, 112 adoptions, 14 groups including 5 chains (control tower 47), insurance bought again (risk intel 10, APS 6, robotics 3). Payback rule on the same seed: +$133M, no chains, no insurance. Costs: purchases −$395M, scrap −$228M, shipping −$233M, tech +$92M; CM bullwhip −77; CO2 −7%. Still open: 7 replies truncated at max_tokens 2000; single seed; no disruption arm.
 
 **LLM run under the E2 disruption (2026-09-16, `309f13c`, `llm_pilot3` in the session scratchpad):** CM_3 12-week hit, seed 1. $5.68, 754 calls, 54 min, 4 fallbacks, replay exact. Vs same-seed/scenario no-tech: profit +$1,554M, fill +2.46 pt, satisfaction +0.0163, on-time +1.28 pt, stockout −$402M (payback rule on the same scenario: +$144M, +0.09 pt). Insurance timing: 4 adoptions before week 30 (CM_3 — the site that gets hit — plus CM_4 and MFG_US in week 1, DC_Shanghai week 27, all citing cautious personas), 14 after. Rules agents never adopt these at all.
+
+**Test audit (2026-09-17):** verdict "partly" — plumbing well tested; tech effects (5 of 8) and outcome metrics weakly tested. 6 confirmed defects: blockchain does nothing at CM/MFG; routing savings booked to customer not adopter; forced coalitions ignore cost_split; quality deterministic (quality stream unused); early warning off once disruption starts; summary costs include scrap (profit excludes it). E4's routing/blockchain split-incentive rows and E1's blockchain one-tier result are partly artifacts of defects 1–2. Full report: `docs/sciti2/test-audit-2026-09-17.md`.
 
 ## 8. Known risks to watch during the build
 
