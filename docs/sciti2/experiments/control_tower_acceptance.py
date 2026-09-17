@@ -22,7 +22,7 @@ SEEDS = list(range(1, 11))
 T_975_DF9 = 2.262  # two-sided 95% t critical value for 10 paired seeds
 COLS = ["bullwhip_DC", "bullwhip_MFG", "bullwhip_CM", "fill_rate", "satisfaction_index", "costs_holding",
         "network_profit", "revenue", "costs_purchases", "costs_cogs", "costs_shipping", "costs_stockout",
-        "costs_scrap", "costs_tech"]
+        "scrap_value", "costs_tech"]
 
 
 def load(batch_dir: Path) -> pd.DataFrame:

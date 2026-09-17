@@ -28,7 +28,7 @@ from sciti.tech.catalog import load_catalog
 SEEDS = list(range(1, 31))
 T_975_DF29 = 2.045  # two-sided 95% t critical value for 30 paired seeds
 COLS = ["network_profit", "satisfaction_index", "fill_rate", "retail_on_time_rate", "quality_mean", "costs_tech",
-        "costs_stockout", "costs_holding", "costs_scrap", "bullwhip_DC", "bullwhip_MFG", "bullwhip_CM"]
+        "costs_stockout", "costs_holding", "scrap_value", "bullwhip_DC", "bullwhip_MFG", "bullwhip_CM"]
 CONDITIONS = {"calm": [], "cm3_12w": [Disruption(target="CM_3", start_week=30, weeks=12, capacity_mult=0.2,
                                                    extra_lead_days=14.0)]}
 # Each arm is a list of groups; each group is one forced-adoption entry.

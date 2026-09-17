@@ -77,12 +77,16 @@ def apply_forced(s, week: int) -> None:
         if not members:
             continue
         coalition = f"forced_{i}" if len(members) > 1 else None
-        share = sum(tech.cost_one_time[s.nodes[m].role] for m in members) / len(members)
+        if s.cfg.decision.cost_split == "by_size":
+            cost_of = {m: tech.cost_one_time[s.nodes[m].role] for m in members}
+        else:
+            share = sum(tech.cost_one_time[s.nodes[m].role] for m in members) / len(members)
+            cost_of = {m: share for m in members}
         if coalition:
             s.events.append({"week": week, "type": "coalition", "id": coalition, "tech": fa.tech,
                              "members": members, "kind": coalition_kind(s.net, members)})
         for m in members:
-            adopt(s, m, fa.tech, week, coalition, share)
+            adopt(s, m, fa.tech, week, coalition, cost_of[m])
 
 
 def coalition_kind(net, members) -> str:

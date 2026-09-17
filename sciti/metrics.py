@@ -63,7 +63,8 @@ def summarize(s, rows: list[dict]) -> dict:
     return {
         "weeks": weeks,
         "revenue": tot("revenue"),
-        "costs": {k: tot(k) for k in PROFIT_COST_KEYS + ("scrap",)},
+        "costs": {k: tot(k) for k in PROFIT_COST_KEYS},
+        "scrap_value": tot("scrap"),
         "network_profit": tot("profit"),
         "profit_by_role": {k: round(v, 2) for k, v in sorted(profit_by_role.items())},
         "fill_rate": fill,
