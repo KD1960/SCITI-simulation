@@ -29,5 +29,10 @@ def apply_disruptions(s, t: int) -> None:
         if ew <= 0:
             continue
         watch = set(s.net.upstream[n]) | {n}
-        if any(d.target in watch and t < d.start_week <= t + ew for d in s.cfg.disruptions):
-            s.nodes[n].z_boost = 1.0
+        for i, d in enumerate(s.cfg.disruptions):
+            if d.target not in watch:
+                continue
+            upcoming = t < d.start_week <= t + math.ceil(ew)
+            ongoing = i in s.disruption_end and d.start_week <= t < s.disruption_end[i]
+            if upcoming or ongoing:
+                s.nodes[n].z_boost = 1.0

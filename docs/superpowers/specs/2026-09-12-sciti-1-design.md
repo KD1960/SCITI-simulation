@@ -181,7 +181,7 @@ Every week `t`:
 5. **Forecast**: each node updates its demand forecast (exponential smoothing on the orders it receives; retailers on sales). Nodes with a control tower also track an echelon forecast of end-customer demand and blend their order toward an echelon order-up-to order (see 2026-09-14-control-tower-echelon-design.md).
 6. **Ordering**: periodic-review order-up-to policy. `S = forecast × (lead_time + 1) + z × σ_forecast × sqrt(lead_time + 1)`; order `max(0, S − inventory_position)`. `z` from a target cycle service level (default 95%). For DC, MFG, and CM nodes, `inventory_position` also nets out net backlog owed downstream (orders received but not yet shipped), counted in the node's own input units; the plan's DC-only rule made fill rate collapse by year 3 on real data, so MFG and CM count it too.
 7. **Shipping**: upstream nodes fill orders from stock (proportional rationing if short), choose a mode by the lane's historic mode mix, and create shipments with lead time, cost, and CO2.
-8. **Quality**: each supplier lot fails with a probability from that supplier's share of sentiment-1 feedback; failed units are scrapped at the receiving CM.
+8. **Quality**: each supplier shipment's defective share is drawn from a Beta distribution with mean = the supplier's sentiment-1 share × blockchain multiplier and concentration `defect_concentration` (default 50, an assumption), keyed to the shipment; failed units are scrapped at the receiving CM.
 9. **Tech effects** already in force are applied to the parameters above (§6).
 10. **Accounting and checks** (§8, §9).
 
@@ -236,8 +236,8 @@ MVP catalog (default effect sizes; all marked `assumption: true`):
 | `aps` | Advanced planning and scheduling | CM, MFG | Effective capacity +8% | solo |
 | `routing` | Vehicle routing and path optimization | CM, MFG, DC | Shipping cost −8%; CO2 −10% on its outbound lanes | solo |
 | `wh_robotics` | Warehouse robotics | DC | Handling cost −20%; dispatch delay −1 day | solo |
-| `blockchain` | Blockchain traceability | Supplier, CM, MFG | Defect escapes −40% | pair |
-| `risk_intel` | Supply chain risk intelligence | CM, MFG, DC | Disruption recovery time −40%; early warning of 2 weeks | solo |
+| `blockchain` | Blockchain traceability | Supplier, CM | Defect escapes −40% on supplier shipments when supplier and CM both hold it | pair |
+| `risk_intel` | Supply chain risk intelligence | CM, MFG, DC | Disruption recovery time −40%; early warning: extra safety stock from 2 weeks before a disruption at the node or a direct supplier through its end | solo |
 
 Adding one of the remaining 40 technologies means adding a catalog row and, only if it needs a new parameter, one effect handler.
 

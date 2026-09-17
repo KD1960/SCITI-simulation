@@ -252,7 +252,14 @@ def make_shipment(s: SimState, src: str, dst: str, item: str, q: float, t: int,
         quote = sup["lead_days"]
         lead = max(1.0, quote + sup["lead_sd_days"] * float(rng.standard_normal()))
         mode, cpu, co2 = "Supplier", 0.0, 0.0
-        defective = q * min(1.0, sup["defect_share"] * P["defect_mult"])
+        m = min(1.0, sup["defect_share"] * P["defect_mult"])
+        if m <= 0:
+            defective = 0.0
+        elif m >= 1:
+            defective = q
+        else:
+            c = s.cfg.assumptions.defect_concentration
+            defective = q * float(rng.beta(m * c, (1 - m) * c))
     else:
         mode, lead, quote, cpu = sample_lane(s.baseline["lanes"][lane_type(sn.role)], miles, rng)
         tons = s.baseline["co2_ton_per_unit"] if item in PRODUCTS else s.cfg.assumptions.part_weight_tons

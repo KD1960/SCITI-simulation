@@ -80,9 +80,9 @@
 - id: blockchain
   name: Blockchain traceability
   observatory_name: Blockchain traceability
-  eligible_roles: [Supplier, CM, MFG]
-  cost_one_time: {Supplier: 100000, CM: 300000, MFG: 500000}
-  cost_per_week: {Supplier: 1000, CM: 3000, MFG: 5000}
+  eligible_roles: [Supplier, CM]
+  cost_one_time: {Supplier: 100000, CM: 300000}
+  cost_per_week: {Supplier: 1000, CM: 3000}
   setup_weeks: 8
   network_requirement: pair
   group_bonus: 0.25

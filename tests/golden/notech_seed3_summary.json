@@ -1,7 +1,7 @@
 {
  "adoptions": 0,
  "bullwhip": {
-  "CM": 10.148265346974382,
+  "CM": 10.09811498218904,
   "DC": 1.6407163791400392,
   "MFG": 4.083391940949193,
   "Retail": 1.0682309385887196
@@ -9,33 +9,33 @@
  "co2_kg": 1214900237.1392214,
  "coalitions": 0,
  "costs": {
-  "cogs": 7368547153.47,
+  "cogs": 7357206037.0199995,
   "handling": 944723.27,
-  "holding": 534402896.26,
-  "purchases": 55798868133.5,
+  "holding": 534693833.92,
+  "purchases": 55777479507.5,
   "shipping": 2047525180.14,
   "stockout": 99605132.31,
   "tech": 0.0
  },
  "fill_rate": 0.9861808413384023,
  "mean_lead_days": 8.402212665796444,
- "mean_transit_days": 9.120504854424777,
- "network_profit": 14793894906.87,
- "on_time_rate": 0.9781641730691468,
+ "mean_transit_days": 9.119403129815954,
+ "network_profit": 14804945085.22,
+ "on_time_rate": 0.9781509204936274,
  "p95_lead_days": 21.5307154086001,
- "p95_transit_days": 25.866511419914385,
+ "p95_transit_days": 25.87440047639547,
  "profit_by_role": {
-  "CM": -829535820.83,
+  "CM": -808388573.95,
   "DC": 1748409904.37,
   "MFG": 3401238468.66,
   "Retail": 7180649948.25,
-  "Supplier": 3293132406.42
+  "Supplier": 3283035337.89
  },
- "quality_mean": 0.9799999999999999,
+ "quality_mean": 0.980150668647397,
  "retail_on_time_rate": 0.9727574750830564,
- "revenue": 80643788124.77,
- "satisfaction_index": 0.9809176631941181,
- "scrap_value": 1043010385.83,
+ "revenue": 80622399498.5,
+ "satisfaction_index": 0.9809477969235976,
+ "scrap_value": 1021690927.03,
  "tech_spend": 0.0,
  "weeks": 52
 }

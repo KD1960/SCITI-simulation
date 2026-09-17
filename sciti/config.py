@@ -76,6 +76,7 @@ class Assumptions(Strict):
     fg_cover_weeks: float = 2.0
     initial_cash_weeks: float = 13.0
     part_weight_tons: float = 0.05 / 160  # the Glossary's 0.05 t per product, spread over its 160 parts
+    defect_concentration: float = 50.0  # Beta concentration for per-shipment defect draws (spec §5.3 step 8), an assumption
 
 
 class ChecksCfg(Strict):
