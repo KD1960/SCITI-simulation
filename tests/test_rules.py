@@ -122,3 +122,9 @@ def test_insurance_habit_buys_cheap_protection_after_the_payback_picks():
     ship = {"shipping": 13 * 200000}
     assert picks(25e6, ship, [ri, routing]) == [("routing", "adopt")]  # payback pick takes the only slot
     assert picks(25e6, ship, [ri, routing], max_new=2) == [("routing", "adopt"), ("risk_intel", "adopt")]
+    # with one slot and two affordable protections, the one listed first wins (not alphabetical order)
+    aps = dict(ri, id="aps")
+    b = brief({}, eligible=[aps, ri])
+    b.data["last_quarter"]["revenue"] = 25e6
+    b.data["rules"]["insurance"] = {"techs": ["risk_intel", "aps"], "revenue_share": 0.005}
+    assert [d["tech"] for d in json.loads(RulesPolicy(np.random.default_rng(0)).decide(b).raw)["decisions"]] == ["risk_intel"]

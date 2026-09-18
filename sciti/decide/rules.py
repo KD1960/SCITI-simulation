@@ -62,11 +62,12 @@ class RulesPolicy:
             ins = data["rules"].get("insurance")
             if ins:  # cheap protection that last quarter's costs cannot justify (decision.insurance_techs)
                 revenue = data["last_quarter"].get("revenue") or data["budget_available"] / persona["budget_share"]
-                for e in sorted(data["eligible_technologies"], key=lambda e: e["id"]):
+                listed = {e["id"]: e for e in data["eligible_technologies"] if e["id"] in ins["techs"]}
+                for e in [listed[t] for t in ins["techs"] if t in listed]:  # in the order listed: first is most wanted
                     if len(out) >= data["rules"]["max_new_adoptions"]:
                         break
                     first_year = e["one_time_cost"] + 52 * e["weekly_cost"]
-                    if e["id"] in ins["techs"] and e["network_requirement"] == "solo" \
+                    if e["network_requirement"] == "solo" \
                             and e["id"] not in [o["tech"] for o in out] \
                             and e["one_time_cost"] <= data["budget_available"] \
                             and first_year <= ins["revenue_share"] * 4 * revenue:
