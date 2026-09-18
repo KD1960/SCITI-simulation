@@ -52,7 +52,7 @@ What the rule bought: RFID 18, control tower 14, ML forecasting 13, blockchain 8
 
 ## Update 2026-09-18: Kevin chose option (c)
 
-A `rules_roles` agent now also accepts a group invitation when its first-year cost (one-time share + 52 weeks of running cost) is at most `decision.follow_revenue_share` (default 1%) of its yearly revenue and the share fits its budget. Free check (payback rule for everyone, suppliers as followers, seed 1): suppliers accepted all 570 invitations (545 as "small cost; going along with partners"), 2 control tower chains and 4 blockchain chains formed, all 30 suppliers joined both, and the network gain rose from +$363M to +$632M. At 1% every invitation counts as small for every supplier; lower the share to make them choosier. Not yet tried with LLM agents (a paid run).
+A `rules_roles` agent now also accepts a group invitation when its first-year cost (one-time share + 52 weeks of running cost) is at most `decision.follow_revenue_share` of its yearly revenue (first set to 1%) and the share fits its budget. Free check (payback rule for everyone, suppliers as followers, seed 1): suppliers accepted all 570 invitations (545 as "small cost; going along with partners"), 2 control tower chains and 4 blockchain chains formed, all 30 suppliers joined both, and the network gain rose from +$363M to +$632M. Kevin then lowered the default to 0.5%; the free check gives the identical result, because supplier invitations cost only 0.05–0.35% of yearly revenue (median 0.14%). Suppliers start declining only below about 0.1–0.3%. Not yet tried with LLM agents (a paid run).
 
 ## What to decide next
 

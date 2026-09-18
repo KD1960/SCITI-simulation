@@ -39,7 +39,7 @@ class DecisionCfg(Strict):
     # Roles that use the payback rule instead of the main policy (e.g. ["Supplier"] cuts LLM calls ~60%).
     rules_roles: list[Literal["Supplier", "CM", "MFG", "DC", "Retail"]] = Field(default_factory=list)
     # A rules_roles agent also joins a partner's group when its first-year cost is at most this share of yearly revenue.
-    follow_revenue_share: float = 0.01
+    follow_revenue_share: float = 0.005
 
     @model_validator(mode="after")
     def _needs(self):

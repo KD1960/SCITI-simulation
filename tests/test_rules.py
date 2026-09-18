@@ -93,5 +93,5 @@ def test_rules_roles_briefs_carry_the_follow_share_and_others_do_not(baseline):
     personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
     sup = build_brief(s, "Supplier_1", 14, "response", personas["Supplier_1"], [], "partners", 1, proposals=[])
     dc = build_brief(s, "DC_Houston", 14, "response", personas["DC_Houston"], [], "partners", 1, proposals=[])
-    assert sup.data["rules"]["follow_revenue_share"] == 0.01
+    assert sup.data["rules"]["follow_revenue_share"] == 0.005
     assert "follow_revenue_share" not in dc.data["rules"]

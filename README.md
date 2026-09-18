@@ -96,7 +96,7 @@ policy. Before spending any money:
    default) puts those roles on the payback rule instead of the LLM; the
    estimate counts only the remaining agents. Those agents also join a
    partner's group when their first-year cost is at most
-   `decision.follow_revenue_share` (default 1%) of yearly revenue, so
+   `decision.follow_revenue_share` (default 0.5%) of yearly revenue, so
    chain coalitions can still form. Leave it empty for every
    agent on the LLM.
 4. Only after you've reviewed the estimate and approved the spend:
