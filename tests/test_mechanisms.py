@@ -28,19 +28,21 @@ from sciti.engine.ops import (_backlog_in_input_units, _close_week, _needs, _pro
 from sciti.engine.state import PROFIT_COST_KEYS, Shipment, input_key
 from sciti.metrics import summarize
 from sciti.network import build_network
-from sciti.tech.catalog import TechHolding, load_catalog
+from sciti.tech.catalog import DEFAULT_PATH, TechHolding, load_catalog
 from sciti.tech.effects import base_params, effective_params
 from tests.helpers import make_state
 
+CATALOG_V1 = DEFAULT_PATH.with_name("catalog_v1.yaml")
+
 
 def test_rfid_cuts_record_error_and_shrink(baseline):
-    """RFID (solo): record_error_sd *0.2, shrink_rate *0.5; the weekly shrink count is
-    opening stock times the resulting rate (0.002*0.5 = 0.001/week)."""
+    """RFID (solo): record_error_sd *0.2, shrink_rate *0.8; the weekly shrink count is
+    opening stock times the resulting rate (0.002*0.8 = 0.0016/week)."""
     s = make_state(baseline)
     adopt(s, "DC_Houston", "rfid", 0)  # setup_weeks=6 -> active_week=6
     params = effective_params("DC_Houston", 6, s.holdings, s.catalog, s.net, s.base["DC_Houston"])
     assert params["record_error_sd"] == pytest.approx(0.05 * 0.2)
-    assert params["shrink_rate"] == pytest.approx(0.002 * 0.5)
+    assert params["shrink_rate"] == pytest.approx(0.002 * 0.8)
 
     ns = s.nodes["DC_Houston"]
     ns.params = params
@@ -49,22 +51,22 @@ def test_rfid_cuts_record_error_and_shrink(baseline):
     ns.stock["A"] = 1000.0
     ns.reset_week()
     _close_week(s)
-    assert ns.counts["shrink"] == pytest.approx(1000.0 * 0.001)
-    assert ns.stock["A"] == pytest.approx(1000.0 - 1000.0 * 0.001)
+    assert ns.counts["shrink"] == pytest.approx(1000.0 * 0.0016)
+    assert ns.stock["A"] == pytest.approx(1000.0 - 1000.0 * 0.0016)
 
 
 def test_warehouse_robotics_cuts_handling_and_dispatch_delay(baseline):
-    """Warehouse robotics (solo, DC): handling_cost_per_unit *0.8; dispatch_delay_days -1.0 shows
-    up as exactly 1.0 fewer lead_days on an otherwise identical shipment.
+    """Warehouse robotics (solo, DC): handling_cost_per_unit *0.8; dispatch_delay_days -0.6 shows
+    up as exactly 0.6 fewer lead_days on an otherwise identical shipment.
 
     due_week must stay the same, because the quote always adds the BASE dispatch delay
     (s.base[src]), never the adopter's reduced one. The dc_retail lane is patched to a quote of
-    exactly 6.0 days so 6.0+2.0=8.0 (2 weeks) vs a wrongly-wired 6.0+1.0=7.0 (1 week) actually
+    exactly 5.5 days so 5.5+2.0=7.5 (2 weeks) vs a wrongly-wired 5.5+1.4=6.9 (1 week) actually
     crosses a week boundary -- with the unpatched lane (~9 vs ~10 days) both wirings round to the
     same week and the check can't fail either way."""
     patched = copy.deepcopy(baseline)
     for mode in patched["lanes"]["dc_retail"]["modes"].values():
-        mode["lead_a"], mode["lead_b"], mode["lead_resid_sd"] = 6.0, 0.0, 0.0
+        mode["lead_a"], mode["lead_b"], mode["lead_resid_sd"] = 5.5, 0.0, 0.0
 
     s = make_state(patched)
     adopt(s, "DC_Houston", "wh_robotics", 0)  # setup_weeks=16 -> active_week=16
@@ -76,9 +78,9 @@ def test_warehouse_robotics_cuts_handling_and_dispatch_delay(baseline):
     s2 = make_state(patched)  # no robotics: default base params
     sh_without = make_shipment(s2, "DC_Houston", "Retail_1", "A", 100.0, 20)
 
-    assert sh_without.lead_days - sh_with.lead_days == pytest.approx(1.0)
-    assert sh_without.lead_days == pytest.approx(8.0) and sh_with.lead_days == pytest.approx(7.0)
-    assert sh_with.due_week == 20 + math.ceil((6.0 + 2.0) / 7)  # base dispatch delay, both cases
+    assert sh_without.lead_days - sh_with.lead_days == pytest.approx(0.6)
+    assert sh_without.lead_days == pytest.approx(7.5) and sh_with.lead_days == pytest.approx(6.9)
+    assert sh_with.due_week == 20 + math.ceil((5.5 + 2.0) / 7)  # base dispatch delay, both cases
     assert sh_with.due_week == sh_without.due_week
 
 
@@ -357,15 +359,18 @@ def test_chain_acceptance_forms_at_threshold_fails_below(baseline, monkeypatch):
 
 
 def test_group_bonus_additive_and_visibility_cap(baseline):
-    """Group bonus (0.25) scales an 'add' effect: ml_forecast in a coalition gives
-    forecast_skill = 0.3 * 1.25. control_tower's visibility is capped at 1.0: a chain share of
-    0.8 gives exactly the cap (0.8*1.25=1.0), and a share of 1.0 (1.25 uncapped) is also capped."""
+    """Group bonus (0.25) scales an 'add' effect, and effects can differ by role: ml_forecast in a
+    coalition gives forecast_skill = 0.1 * 1.25 at a store and 0.3 * 1.25 at a DC. Visibility is
+    capped at 1.0, shown with the v1 catalog (visibility 1.0): a chain share of 0.8 gives exactly
+    the cap (0.8*1.25=1.0) and a share of 1.0 (1.25 uncapped) is also capped. In catalog v2
+    (visibility 0.6) a full chain in a coalition gives 0.6 * 1.25 = 0.75."""
     cat = load_catalog()
     net = build_network(baseline, Assumptions())
-    base = base_params("Retail", Assumptions())
-    h = {"Retail_1": {"ml_forecast": TechHolding("ml_forecast", 1, 1, coalition_id="c1")}}
-    p = effective_params("Retail_1", 2, h, cat, net, base)
-    assert p["forecast_skill"] == pytest.approx(0.3 * 1.25)
+    for node, role, skill in (("Retail_1", "Retail", 0.1), ("DC_Houston", "DC", 0.3)):
+        h = {node: {"ml_forecast": TechHolding("ml_forecast", 1, 1, coalition_id="c1")}}
+        p = effective_params(node, 2, h, cat, net, base_params(role, Assumptions()))
+        assert p["forecast_skill"] == pytest.approx(skill * 1.25)
+    v2, cat = cat, load_catalog(CATALOG_V1)
 
     class FakeNode:
         def __init__(self, role):
@@ -400,6 +405,7 @@ def test_group_bonus_additive_and_visibility_cap(baseline):
     p_10 = effective_params("DC_X", 2, holdings_10, cat, fake_net, base_dc)
     assert p_10["visibility"] == pytest.approx(min(1.0, 1.0 * 1.25))
     assert p_10["visibility"] == pytest.approx(1.0)
+    assert effective_params("DC_X", 2, holdings_10, v2, fake_net, base_dc)["visibility"] == pytest.approx(0.6 * 1.25)
 
 
 def test_disruption_extra_lead_days_shifts_lead_and_arrival(baseline):

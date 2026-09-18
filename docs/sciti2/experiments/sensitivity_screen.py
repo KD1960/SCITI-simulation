@@ -39,7 +39,10 @@ def scaled_catalog(out: Path, tid: str, k: float) -> str:
     for r in rows:
         if r["id"] == tid:
             for e in r["effects"]:
-                e["value"] = 1 - (1 - e["value"]) * k if e["op"] == "mul" else e["value"] * k
+                scale = (lambda v: 1 - (1 - v) * k) if e["op"] == "mul" else (lambda v: v * k)
+                e["value"] = scale(e["value"])
+                if e.get("by_role"):
+                    e["by_role"] = {role: scale(v) for role, v in e["by_role"].items()}
     path = out / "catalogs" / f"{tid}_k{k}.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(yaml.safe_dump(rows))

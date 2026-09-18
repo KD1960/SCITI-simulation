@@ -19,7 +19,8 @@ def test_catalog_has_the_8_mvp_techs():
     cat = load_catalog()
     assert sorted(cat) == sorted(["ml_forecast", "control_tower", "rfid", "aps", "routing",
                                   "wh_robotics", "blockchain", "risk_intel"])
-    assert all(t.assumption for t in cat.values())
+    # catalog v2: only the technologies with no measured effect stay flagged as assumptions
+    assert sorted(k for k, t in cat.items() if t.assumption) == ["aps", "blockchain", "risk_intel"]
     assert cat["wh_robotics"].eligible_roles == ("DC",)
     assert len(catalog_hash()) == 64
 
@@ -38,7 +39,7 @@ def test_solo_effect_applies_after_setup(world):
     base = base_params("Retail", Assumptions())
     holdings = {"Retail_1": {"ml_forecast": TechHolding("ml_forecast", 1, 5)}}
     assert effective_params("Retail_1", 4, holdings, cat, net, base)["forecast_skill"] == 0.0
-    assert effective_params("Retail_1", 5, holdings, cat, net, base)["forecast_skill"] == pytest.approx(0.3)
+    assert effective_params("Retail_1", 5, holdings, cat, net, base)["forecast_skill"] == pytest.approx(0.1)
 
 
 def test_pair_needs_partner(world):
@@ -47,14 +48,14 @@ def test_pair_needs_partner(world):
     alone = {"Supplier_1": {"blockchain": H("blockchain")}}
     assert effective_params("Supplier_1", 2, alone, cat, net, base)["defect_mult"] == 1.0
     both = {"Supplier_1": {"blockchain": H("blockchain")}, "CM_1": {"blockchain": H("blockchain")}}
-    assert effective_params("Supplier_1", 2, both, cat, net, base)["defect_mult"] == pytest.approx(0.6)
+    assert effective_params("Supplier_1", 2, both, cat, net, base)["defect_mult"] == pytest.approx(0.82)
 
 
 def test_chain_scales_by_downstream_share(world):
     net, cat = world
     base = base_params("DC", Assumptions())
     h = {"DC_Houston": {"control_tower": H("control_tower")}, "Retail_1": {"control_tower": H("control_tower")}}
-    assert effective_params("DC_Houston", 2, h, cat, net, base)["visibility"] == pytest.approx(0.5)
+    assert effective_params("DC_Houston", 2, h, cat, net, base)["visibility"] == pytest.approx(0.5 * 0.6)
 
 
 def test_group_bonus(world):

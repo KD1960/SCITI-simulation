@@ -1,6 +1,5 @@
-# SCITI 1 technology catalog v2 (2026-09-18). Effect sizes are the MID values of docs/sciti2/evidence-table.md;
-# `assumption: true` marks technologies with no measured effect. Costs are still placeholders (spec §6, §9.7).
-# v1 (all placeholders) is kept as catalog_v1.yaml for comparison runs.
+# v1 placeholder catalog, kept for comparison runs (use with `catalog_path`). The default is catalog.yaml (v2).
+# SCITI 1 MVP technology catalog. All effect sizes and costs are assumptions (spec §6, §9.7).
 - id: ml_forecast
   name: ML demand forecasting
   observatory_name: ML demand forecasting
@@ -10,9 +9,9 @@
   setup_weeks: 8
   network_requirement: solo
   group_bonus: 0.25
-  effects: [{param: forecast_skill, op: add, value: 0.3, by_role: {Retail: 0.1}}]
-  evidence: "M5 (Makridakis et al. 2022, IJF): ML beats exponential smoothing by ~3% at product-store level, ~23% mid-level, 22% overall; DeepAR ~15%. Stores 0.1, DCs and factories 0.3. See docs/sciti2/evidence-table.md 2.6."
-  assumption: false
+  effects: [{param: forecast_skill, op: add, value: 0.3}]
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
 - id: control_tower
   name: Supply chain control tower
   observatory_name: Supply chain control towers
@@ -22,9 +21,9 @@
   setup_weeks: 12
   network_requirement: chain
   group_bonus: 0.25
-  effects: [{param: visibility, op: add, value: 0.6}]
-  evidence: "Visibility alone realises part of the echelon benefit: Cachon & Fisher 2000 (2% cost), Croson & Donohue 2006 (upstream order variance -37 to -52%), Chen et al. 2000; 0.85+ only with VMI-style decision transfer. See evidence-table.md 2.5."
-  assumption: false
+  effects: [{param: visibility, op: add, value: 1.0}]
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
 - id: rfid
   name: Item-level RFID
   observatory_name: Item-level RFID
@@ -36,9 +35,9 @@
   group_bonus: 0.25
   effects:
     - {param: record_error_sd, op: mul, value: 0.2}
-    - {param: shrink_rate, op: mul, value: 0.8}
-  evidence: "Record accuracy: Hardgrave et al. 2013 (POMS), Auburn/GS1 Project Zipper 2018, ECR 2018 (65-75% to 93-99%). Shrink: ECR 2018, one of ten firms -15%; -50% is a vendor claim. See evidence-table.md 2.3."
-  assumption: false
+    - {param: shrink_rate, op: mul, value: 0.5}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
 - id: aps
   name: Advanced planning and scheduling
   observatory_name: Advanced planning and scheduling
@@ -49,7 +48,7 @@
   network_requirement: solo
   group_bonus: 0.25
   effects: [{param: capacity_mult, op: add, value: 0.08}]
-  evidence: "Vendor cases only (Siemens Opcenter +14 to +20% utilisation), BCG +3 OEE points; peer-reviewed work gives direction, not size. +8% is a discounted midpoint. See evidence-table.md 2.7."
+  evidence: "Placeholder; replace with cited effect size."
   assumption: true
 - id: routing
   name: Vehicle routing and path optimization
@@ -62,9 +61,9 @@
   group_bonus: 0.25
   effects:
     - {param: ship_cost_mult, op: mul, value: 0.92}
-    - {param: co2_mult, op: mul, value: 0.94}
-  evidence: "ARC Advisory TMS surveys 2011-2016 (freight spend -6 to -10%), Gartner 5-15%; only the mode-shift and consolidation share cuts CO2. See evidence-table.md 2.2."
-  assumption: false
+    - {param: co2_mult, op: mul, value: 0.90}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
 - id: wh_robotics
   name: Warehouse robotics
   observatory_name: Warehouse robotics
@@ -76,9 +75,9 @@
   group_bonus: 0.25
   effects:
     - {param: handling_cost_per_unit, op: mul, value: 0.8}
-    - {param: dispatch_delay_days, op: add, value: -0.6}
-  evidence: "Amazon/Kiva ~20% lower operating cost (2016); Azadeh, de Koster & Roy 2019 (2-3x pick rate, picking ~55% of opex); in-DC processing is 0.5-1 day of a 2-day dispatch. See evidence-table.md 2.4."
-  assumption: false
+    - {param: dispatch_delay_days, op: add, value: -1.0}
+  evidence: "Placeholder; replace with cited effect size."
+  assumption: true
 - id: blockchain
   name: Blockchain traceability
   observatory_name: Blockchain traceability
@@ -88,8 +87,8 @@
   setup_weeks: 8
   network_requirement: pair
   group_bonus: 0.25
-  effects: [{param: defect_mult, op: mul, value: 0.82}]
-  evidence: "No study measures a defect change from blockchain. Inferred from traceability in general: Culot et al. 2024 (IJOPM, no quality metric), Cui, Gaur & Liu 2023 (incentive models), counterfeit base rates (ERAI, GAO). Low confidence. See evidence-table.md 2.1."
+  effects: [{param: defect_mult, op: mul, value: 0.6}]
+  evidence: "Placeholder; replace with cited effect size."
   assumption: true
 - id: risk_intel
   name: Supply chain risk intelligence
@@ -101,8 +100,8 @@
   network_requirement: solo
   group_bonus: 0.25
   effects:
-    - {param: recovery_weeks_saved, op: add, value: 2.0}
+    - {param: recovery_mult, op: mul, value: 0.6}
     - {param: early_warning_weeks, op: add, value: 2.0}
-    - {param: warning_prob, op: add, value: 0.4}
-  evidence: "Monitoring cuts buyer-side detection and response lag (GM: 6 weeks to 6 hours, Forbes 2016), not the site's physical recovery: 2 weeks saved. About 40% of events are forecastable (weather, labour, regulatory; Everstream up to 14 days ahead). Vendor and case evidence only. See evidence-table.md 2.8."
+    - {param: warning_prob, op: add, value: 1.0}  # v1 warned of every disruption
+  evidence: "Placeholder; replace with cited effect size."
   assumption: true

@@ -28,7 +28,7 @@ def test_run_writes_all_outputs(baseline_path, tmp_path):
     assert len(man["config_hash"]) == 64 and "git_commit" in man
     assert man["checks"] == "passed"
     assert man["assumptions"]["config"] == sorted(man["assumptions"]["config"])
-    assert len(man["assumptions"]["catalog_assumed_techs"]) == 8
+    assert man["assumptions"]["catalog_assumed_techs"] == ["aps", "blockchain", "risk_intel"]
 
 
 def test_same_seed_outputs_identical(baseline_path, tmp_path):

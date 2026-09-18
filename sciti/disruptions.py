@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import math
 
+from sciti.rng import warning_draw
+
 
 def validate_disruptions(disruptions, net) -> None:
     for i, d in enumerate(disruptions):
@@ -17,8 +19,10 @@ def apply_disruptions(s, t: int) -> None:
         ns.capacity_factor, ns.extra_lead_days, ns.z_boost = 1.0, 0.0, 0.0
     for i, d in enumerate(s.cfg.disruptions):
         if t == d.start_week:
-            mult = s.nodes[d.target].params["recovery_mult"]
-            s.disruption_end[i] = d.start_week + math.ceil(d.weeks * mult)
+            P = s.nodes[d.target].params
+            # Risk intelligence saves the buyer-side lag (a fixed number of weeks), never the whole outage.
+            weeks = max(1, math.ceil(d.weeks * P["recovery_mult"] - P["recovery_weeks_saved"]))
+            s.disruption_end[i] = d.start_week + weeks
             s.events.append({"week": t, "type": "disruption_start", "target": d.target,
                              "until": s.disruption_end[i]})
         if i in s.disruption_end and d.start_week <= t < s.disruption_end[i]:
@@ -32,7 +36,8 @@ def apply_disruptions(s, t: int) -> None:
         for i, d in enumerate(s.cfg.disruptions):
             if d.target not in watch:
                 continue
-            upcoming = t < d.start_week <= t + math.ceil(ew)
+            warned = warning_draw(s.cfg.seed, i) < s.nodes[n].params["warning_prob"]
+            upcoming = warned and t < d.start_week <= t + math.ceil(ew)
             ongoing = i in s.disruption_end and d.start_week <= t < s.disruption_end[i]
             if upcoming or ongoing:
                 s.nodes[n].z_boost = 1.0

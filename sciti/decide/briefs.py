@@ -26,8 +26,9 @@ def budget_available(s, node_id: str, persona: dict, recent: list[dict]) -> floa
     return max(0.0, min(ns.cash, persona["budget_share"] * rev))
 
 
-def _effects_text(tech) -> str:
-    return "; ".join(f"{e.param} {'x' if e.op == 'mul' else '+'}{e.value}" for e in tech.effects)
+def _effects_text(tech, role) -> str:
+    return "; ".join(f"{e.param} {'x' if e.op == 'mul' else '+'}{(e.by_role or {}).get(role, e.value)}"
+                     for e in tech.effects)
 
 
 def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, proposals=None) -> Brief:
@@ -58,7 +59,7 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
             {"id": t.id, "name": t.name, "one_time_cost": t.cost_one_time[node.role],
              "weekly_cost": t.cost_per_week[node.role], "setup_weeks": t.setup_weeks,
              "network_requirement": t.network_requirement, "group_bonus": t.group_bonus,
-             "effects": _effects_text(t)}
+             "effects": _effects_text(t, node.role)}
             for t in sorted(s.catalog.values(), key=lambda x: x.id)
             if node.role in t.eligible_roles and t.id not in held],
         "rules": {"pass": pass_, "allowed_actions": list(PROPOSAL_ACTIONS if pass_ == "proposal" else RESPONSE_ACTIONS),

@@ -17,3 +17,8 @@ def shipment_rng(seed: int, src: str, dst: str, item: str, week: int) -> np.rand
     no matter how many shipments came before."""
     lane = zlib.crc32(f"{src}|{dst}|{item}".encode())
     return np.random.default_rng([seed, lane, week])
+
+
+def warning_draw(seed: int, disruption_index: int) -> float:
+    """One draw in [0, 1) per disruption: subscribers whose warning_prob beats it see the event coming."""
+    return float(np.random.default_rng([seed, zlib.crc32(b"warning"), disruption_index]).random())

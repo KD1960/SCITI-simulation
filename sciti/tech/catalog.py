@@ -17,6 +17,7 @@ class Effect:
     param: str
     op: Literal["mul", "add"]
     value: float
+    by_role: dict | None = None  # role -> value, where the evidence differs by tier (overrides value)
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,7 @@ def load_catalog(path: str | Path | None = None) -> dict[str, Tech]:
         bad = [e.param for e in t.effects if e.param not in PARAMS or e.op not in ("mul", "add")]
         roles_bad = [x for x in t.eligible_roles if x not in ROLES
                      or x not in t.cost_one_time or x not in t.cost_per_week]
+        roles_bad += [x for e in t.effects for x in (e.by_role or {}) if x not in t.eligible_roles]
         if bad or roles_bad or t.network_requirement not in ("solo", "pair", "chain") or t.id in out:
             raise ValueError(f"catalog entry {t.id!r} invalid: params {bad}, roles {roles_bad}")
         out[t.id] = t

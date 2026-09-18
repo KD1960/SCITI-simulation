@@ -59,7 +59,7 @@ def test_blockchain_pair_cuts_supplier_defects_on_average(baseline):
     d0 = [make_shipment(plain, "Supplier_1", "CM_1", "SR_MCU", 1000, t).defective for t in range(1, 401)]
     d1 = [make_shipment(paired, "Supplier_1", "CM_1", "SR_MCU", 1000, t).defective for t in range(1, 401)]
     assert np.mean(d0) == pytest.approx(1000 * share, rel=0.1)
-    assert np.mean(d1) == pytest.approx(1000 * share * 0.6, rel=0.1)
+    assert np.mean(d1) == pytest.approx(1000 * share * 0.82, rel=0.1)
     assert np.std(d0) > 0  # random, not a fixed rate
 
 
@@ -81,6 +81,7 @@ def test_early_warning_stays_on_through_the_disruption_and_rounds_up(baseline):
     boosted = []
     for t in range(1, 20):
         s.nodes["MFG_US"].params["early_warning_weeks"] = 2.5
+        s.nodes["MFG_US"].params["warning_prob"] = 1.0
         s.nodes["CM_3"].params["recovery_mult"] = 1.0
         apply_disruptions(s, t)
         boosted.append(s.nodes["MFG_US"].z_boost == 1.0)
@@ -96,6 +97,7 @@ def test_early_warning_recovery_mult_shortens_disruption_end(baseline):
     boosted = []
     for t in range(1, 20):
         s.nodes["MFG_US"].params["early_warning_weeks"] = 2.5
+        s.nodes["MFG_US"].params["warning_prob"] = 1.0
         s.nodes["CM_3"].params["recovery_mult"] = 0.5
         apply_disruptions(s, t)
         boosted.append(s.nodes["MFG_US"].z_boost == 1.0)

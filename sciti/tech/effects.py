@@ -3,7 +3,7 @@ from __future__ import annotations
 
 PARAMS = ("forecast_skill", "visibility", "record_error_sd", "shrink_rate", "capacity_mult",
           "ship_cost_mult", "co2_mult", "handling_cost_per_unit", "dispatch_delay_days",
-          "defect_mult", "recovery_mult", "early_warning_weeks")
+          "defect_mult", "recovery_mult", "recovery_weeks_saved", "early_warning_weeks", "warning_prob")
 
 
 def base_params(role: str, assumptions) -> dict[str, float]:
@@ -14,7 +14,8 @@ def base_params(role: str, assumptions) -> dict[str, float]:
             "capacity_mult": 1.0, "ship_cost_mult": 1.0, "co2_mult": 1.0,
             "handling_cost_per_unit": assumptions.handling_cost_per_unit if is_dc else 0.0,
             "dispatch_delay_days": assumptions.dispatch_delay_days if is_dc else 0.0,
-            "defect_mult": 1.0, "recovery_mult": 1.0, "early_warning_weeks": 0.0}
+            "defect_mult": 1.0, "recovery_mult": 1.0, "recovery_weeks_saved": 0.0,
+            "early_warning_weeks": 0.0, "warning_prob": 0.0}
 
 
 def _active(holdings, node_id, tech_id, week) -> bool:
@@ -38,14 +39,17 @@ def effective_params(node_id, week, holdings, catalog, network, base) -> dict[st
             ref = network.upstream[node_id] if role == "Retail" else network.downstream[node_id]
             s = sum(_active(holdings, q, tech_id, week) for q in ref) / len(ref) if ref else 0.0
         bonus = tech.group_bonus if mine[tech_id].coalition_id else 0.0
+        role = network.nodes[node_id].role
         for e in tech.effects:
+            value = (e.by_role or {}).get(role, e.value)
             if e.op == "mul":
-                m = 1 - (1 - e.value) * s
+                m = 1 - (1 - value) * s
                 m = max(0.0, 1 - (1 - m) * (1 + bonus))
                 p[e.param] *= m
             else:
-                p[e.param] += e.value * s * (1 + bonus)
+                p[e.param] += value * s * (1 + bonus)
     p["dispatch_delay_days"] = max(0.0, p["dispatch_delay_days"])
     p["forecast_skill"] = min(1.0, p["forecast_skill"])
     p["visibility"] = min(1.0, p["visibility"])
+    p["warning_prob"] = min(1.0, p["warning_prob"])
     return p
