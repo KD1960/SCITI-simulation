@@ -18,8 +18,8 @@ def test_flatten():
 def test_estimate_llm_and_rules():
     llm = Config(name="e", seed=1, decision=DecisionCfg(policy="llm", model="m", price_per_mtok_in=1, price_per_mtok_out=5))
     e = estimate(llm)
-    assert e["rounds"] == 12 and e["calls_expected"] == round(48 * 12 * 1.3)
-    assert e["usd_max"] == pytest.approx(e["calls_max"] * (3000 * 1 + 400 * 5) / 1e6)
+    assert e["rounds"] == 12 and e["calls_expected"] == round(48 * 12 * 2.1)
+    assert e["usd_max"] == pytest.approx(e["calls_max"] * (4000 * 1 + 800 * 5) / 1e6)
     assert estimate(Config(name="e", seed=1))["calls_max"] == 0
     assert "price" in estimate(Config(name="e", seed=1, decision=DecisionCfg(policy="llm", model="m")))["note"]
 
@@ -125,5 +125,5 @@ def test_estimate_excludes_rules_roles_agents():
     """Suppliers on the payback rule make no API calls: 30 of the 48 agents drop out of the estimate."""
     base = dict(policy="llm", model="m", price_per_mtok_in=1, price_per_mtok_out=5)
     e = estimate(Config(name="e", seed=1, decision=DecisionCfg(**base, rules_roles=["Supplier"])))
-    assert e["calls_expected"] == round(18 * 12 * 1.3)
+    assert e["calls_expected"] == round(18 * 12 * 2.1)
     assert e["calls_max"] == 18 * 12 * 2 * 2

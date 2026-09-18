@@ -9,9 +9,9 @@ from pathlib import Path
 from sciti.config import config_hash
 from sciti.runner import run
 
-EST_TOKENS_IN = 3000
-EST_TOKENS_OUT = 400
-EST_CALLS_PER_AGENT_ROUND = 1.3          # one call per agent plus response passes, no retries
+EST_TOKENS_IN = 4000   # measured in the 2026-09-18 run: 3,965 in, 762 out per call
+EST_TOKENS_OUT = 800
+EST_CALLS_PER_AGENT_ROUND = 2.1          # measured 2026-09-18: a proposal call plus response passes, few retries
 EST_CALLS_PER_AGENT_ROUND_RETRIES = 2.6  # measured in the 2026-09-16 pilot, when truncated replies were retried
 AGENTS = {"Supplier": 30, "CM": 4, "MFG": 2, "DC": 4, "Retail": 8}
 
