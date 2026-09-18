@@ -24,7 +24,7 @@ from sciti.tech.catalog import load_catalog
 
 SEEDS = list(range(1, 31))
 T_975_DF29 = 2.045  # two-sided 95% t critical value for 30 paired seeds
-COLS = ["network_profit", "satisfaction_index", "fill_rate", "retail_on_time_rate", "quality_mean", "co2_kg",
+COLS = ["network_profit", "network_profit_with_inventory", "satisfaction_index", "fill_rate", "retail_on_time_rate", "quality_mean", "co2_kg",
         "costs_tech", "costs_holding", "costs_shipping", "costs_stockout", "scrap_value", "costs_handling",
         "bullwhip_DC", "bullwhip_MFG", "bullwhip_CM"]
 # One-tier arm per technology: the tier where its effect is most direct.

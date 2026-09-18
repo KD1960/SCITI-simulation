@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-17 (sensitivity screen, ML sigma fix, inventory-adjusted profit on `main`; `rules_roles` on branch `rules-roles`; 208 tests pass)
+**Last updated:** 2026-09-17 (sensitivity screen, ML sigma fix, inventory-adjusted profit, `rules_roles`, and the E1 rerun all on `main`; 208 tests pass)
 **Phase:** MVP merged to `main`; engine corrected after the 2026-09-17 test audit. See README.md for how to use it.
-**Next step:** calibration groundwork — map each technology to a measurable real-world KPI, build an evidence table (effect and cost ranges with sources, checked against firm size), and run a sensitivity screen to see which parameters change conclusions. Then rerun E1–E5 on the corrected engine. Kevin's wish list, in his suggested order: disruption library, live step-by-step view, role-playing game.
+**Next step:** evidence table for the four effect sizes the sensitivity screen flagged (blockchain defect cut, routing shipping cut, RFID shrink/record-error cut, robotics handling/dispatch), each mapped to a measurable KPI with sourced ranges; then rerun E2–E5 on the corrected engine using `network_profit_with_inventory`. Kevin's wish list, in his suggested order: disruption library, live step-by-step view, role-playing game.
 
 Read this file first in any new thread. Then read the spec and the plan index.
 
@@ -218,6 +218,8 @@ Update this table and the "Last updated" line as each task lands.
 **Consolidated inventory basis (2026-09-17, Kevin's ruling A):** `inventory_cost` now values every unit on one network-wide basis — supplier cost (price × cogs share, averaged over a part's suppliers) plus the expected freight paid on each lane so far (`prices["cost"]` from `price_table`); goods in transit at the receiving node's basis. Moving stock between firms no longer changes the total, so the internal-margin problem is gone, and with it the yearly wave: ML 1.5× calm, ML minus no-tech, adjusted profit at weeks 26/52/78/104/130/156 = −12, −15, −20, −39, −37, −33 $M (SE 2–12; cash alone swung −38 to −156). Net of the $19M tech cost, ML forecasting at 1.5× is about −$14M over 3 years: roughly neutral, not a loss. Use `network_profit_with_inventory` for technology comparisons from now on; `network_profit` stays cash-basis. 206 tests pass. Goldens regenerated (new keys only).
 
 **Suppliers on rules (2026-09-17, branch `rules-roles`, Kevin's request):** new `decision.rules_roles` (list of roles). Agents in those roles use the payback rule instead of the main policy; their log records say `policy: rules` (not a fallback), and a replay still takes every agent from the log, so replication stays exact (test). `sciti estimate` counts only the remaining agents. `configs/mvp_llm.yaml` now sets `rules_roles: [Supplier]`: 18 LLM agents instead of 48, so a run should cost about $2 instead of $5.40 at the E5 rerun's rates. README updated. 208 tests pass. Not yet exercised against the real API.
+
+**E1 rerun (2026-09-17, `14b0a08`):** same design, corrected engine, plus `network_profit_with_inventory`. Results: `docs/sciti2/tech-screen-e1-2026-09-17.md`; numbers `tech_screen_results_2026-09-17.csv`; `tech_screen.py` now also collects the inventory-adjusted profit. Profit with inventory ($M, all-firms arm): blockchain +706, routing +444, robotics +198, RFID +185, control tower +65, APS +20 (ns), risk intel −8, ML forecasting −35. Ranking unchanged from 2026-09-15. Inventory-adjusted profit moved control tower (+108 cash → +65), RFID (+223 → +185), APS (−22 → +20, both ns), ML (−53 → −35). Control tower at DCs + stores is now clearly positive (+23). E2–E5 still predate the fixes.
 
 ## 8. Known risks to watch during the build
 

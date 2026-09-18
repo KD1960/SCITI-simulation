@@ -5,6 +5,7 @@
 > now built into selling prices). Numbers below come from the earlier
 > engine; rows for routing and blockchain, and anything that depends on who
 > pays freight or on selling prices, should be rerun before citing.
+> **Rerun 2026-09-17:** see `tech-screen-e1-2026-09-17.md`; use that one.
 
 **Date:** 2026-09-15
 **Engine:** `main` at `de0e9df` (after the demand fix, per-shipment random draws, purchase timing, part weight, and control tower redesign)
