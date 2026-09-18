@@ -50,6 +50,10 @@ What the rule bought: RFID 18, control tower 14, ML forecasting 13, blockchain 8
 4. **Agents turn down duplicate invitations sensibly.** Typical reason: "Already accepting the cheaper DC_Shanghai control tower proposal; avoid duplicate adoption." Many overlapping chain proposals per quarter split the acceptances, which also keeps each below the 60% bar.
 5. Replies still hit the 2,000-token limit 22 times; each costs a retry.
 
+## Update 2026-09-18: Kevin chose option (c)
+
+A `rules_roles` agent now also accepts a group invitation when its first-year cost (one-time share + 52 weeks of running cost) is at most `decision.follow_revenue_share` (default 1%) of its yearly revenue and the share fits its budget. Free check (payback rule for everyone, suppliers as followers, seed 1): suppliers accepted all 570 invitations (545 as "small cost; going along with partners"), 2 control tower chains and 4 blockchain chains formed, all 30 suppliers joined both, and the network gain rose from +$363M to +$632M. At 1% every invitation counts as small for every supplier; lower the share to make them choosier. Not yet tried with LLM agents (a paid run).
+
 ## What to decide next
 
 - **Chain coalitions with suppliers on rules.** Options: (a) suppliers on rules only for their own proposals, LLM for responses (about +30 × response calls); (b) count the 60% acceptance bar over LLM-role invitees only; (c) a supplier accepts a group invitation when its cost share is below a threshold; (d) leave it and treat control tower as out of reach in cheap runs. Needs Kevin's ruling.

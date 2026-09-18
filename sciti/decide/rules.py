@@ -70,6 +70,11 @@ class RulesPolicy:
                 net = self._saving(data, p["tech"], noise, TECH_BONUS[p["tech"]]) - weekly
                 share = p["your_cost_share"]
                 ok = net > 0 and share / net <= persona["horizon_weeks"] and share <= data["budget_available"]
+                reason = "worth it" if ok else "not worth it"
+                follow = data["rules"].get("follow_revenue_share")
+                if not ok and follow and share <= data["budget_available"] and \
+                        share + 52 * weekly <= follow * 4 * data["last_quarter"].get("revenue", 0.0):
+                    ok, reason = True, "small cost; going along with partners"
                 out.append({"tech": p["tech"], "action": "accept_group" if ok else "decline_group",
-                            "partners": [], "reason": "worth it" if ok else "not worth it", "group_id": p["group_id"]})
+                            "partners": [], "reason": reason, "group_id": p["group_id"]})
         return Reply(brief.agent, json.dumps({"decisions": out}))
