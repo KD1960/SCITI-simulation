@@ -11,7 +11,7 @@ def _lane_freight_per_unit(baseline, lane_name: str) -> float:
     return sum(mix * lane["modes"][mode]["cost_per_unit"] for mode, mix in lane["mode_mix"].items())
 
 
-def price_table(net, baseline, markup) -> dict:
+def price_table(net, baseline, markup, supplier_cogs_share: float = 0.7) -> dict:
     f_cm_mfg = _lane_freight_per_unit(baseline, "cm_mfg")
     f_mfg_dc = _lane_freight_per_unit(baseline, "mfg_dc")
     f_dc_retail = _lane_freight_per_unit(baseline, "dc_retail")
@@ -20,8 +20,14 @@ def price_table(net, baseline, markup) -> dict:
     cm = {sku: (raw[sku] + f_cm_mfg) * (1 + markup["CM"]) for sku in net.skus}
     mfg = (sum(cm[sku] * u for sku, u in net.bom.items()) + f_mfg_dc) * (1 + markup["MFG"])
     dc = (mfg + f_dc_retail) * (1 + markup["DC"])
+    # One network-wide inventory cost basis: supplier cost plus freight paid so far (no internal margins).
+    sup_cost = {sid: p * supplier_cogs_share for sid, p in sup.items()}
+    part = {sku: float(np.mean([sup_cost[s] for s in net.suppliers_of[sku]])) for sku in net.skus}
+    product = sum((part[sku] + f_cm_mfg) * u for sku, u in net.bom.items())
+    cost = {"supplier": sup_cost, "part": part, "mfg_part": {k: v + f_cm_mfg for k, v in part.items()},
+            "mfg": product, "dc": product + f_mfg_dc, "retail": product + f_mfg_dc + f_dc_retail}
     return {"supplier": sup, "raw": raw, "cm": cm, "mfg": mfg, "dc": dc,
-            "retail": dc * (1 + markup["Retail"])}
+            "retail": dc * (1 + markup["Retail"]), "cost": cost}
 
 
 def sell_price(prices, net, node_id, item) -> float:
@@ -44,24 +50,23 @@ def unit_value(prices, net, node_id, item) -> float:
     return prices["mfg"] if role == "DC" else prices["dc"]
 
 
-def unit_cost(prices, net, node_id, item, supplier_cogs_share: float) -> float:
-    """What the holder paid for one unit of stock (inventory at cost)."""
-    role = net.nodes[node_id].role
+def unit_cost(prices, net, node_id, item) -> float:
+    """Network-wide cost of one unit of stock at this node: supplier cost plus freight paid so far."""
+    c, role = prices["cost"], net.nodes[node_id].role
     if role == "Supplier":
-        return prices["supplier"][node_id] * supplier_cogs_share
+        return c["supplier"][node_id]
     if role == "CM":
-        return prices["raw"][item[4:] if item.startswith("RAW:") else item]
+        return c["part"][item[4:] if item.startswith("RAW:") else item]
     if role == "MFG":
-        return sum(prices["cm"][k] * u for k, u in net.bom.items()) if item in PRODUCTS else prices["cm"][item]
-    return prices["mfg"] if role == "DC" else prices["dc"]
+        return c["mfg"] if item in PRODUCTS else c["mfg_part"][item]
+    return c["dc"] if role == "DC" else c["retail"]
 
 
 def inventory_cost(s) -> float:
-    """Stock on hand at cost plus goods in transit at invoice value (the buyer has already booked them)."""
-    share = s.cfg.assumptions.supplier_cogs_share
-    on_hand = sum(q * unit_cost(s.prices, s.net, n, item, share)
-                  for n, ns in s.nodes.items() for item, q in ns.stock.items())
-    return on_hand + sum(sh.value for sh in s.in_transit)
+    """Stock on hand plus goods in transit, all on the network-wide cost basis (in transit at the
+    receiving node's basis, since the shipper has already paid the freight)."""
+    on_hand = sum(q * unit_cost(s.prices, s.net, n, item) for n, ns in s.nodes.items() for item, q in ns.stock.items())
+    return on_hand + sum(sh.units * unit_cost(s.prices, s.net, sh.dst, sh.item) for sh in s.in_transit)
 
 
 def propagate(net, retail: dict[tuple[str, str], float]) -> dict[str, dict[str, float]]:

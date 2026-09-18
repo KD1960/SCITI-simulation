@@ -157,7 +157,7 @@ def init_state(cfg, baseline, net, demand_model, demand, catalog, streams) -> Si
              for w in range(1, weeks + 2)]
     yr = min(52, weeks)
     mean = {n: {i: float(np.mean([flows[w][n][i] for w in range(yr)])) for i in flows[0][n]} for n in net.order}
-    prices = price_table(net, baseline, A.markup)
+    prices = price_table(net, baseline, A.markup, A.supplier_cogs_share)
     base = {n: base_params(net.nodes[n].role, A) for n in net.order}
     lead_weeks: dict[tuple[str, str], int] = {}
     nodes: dict[str, NodeState] = {}

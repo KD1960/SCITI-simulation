@@ -425,9 +425,10 @@ def test_disruption_extra_lead_days_shifts_lead_and_arrival(baseline):
 
 
 def test_inventory_cost_values_stock_at_what_the_holder_paid(baseline):
-    """inventory_cost: suppliers at price * supplier_cogs_share; CM raw and finished parts at the
-    mean supplier price; MFG parts at the CM price and products at the bill of materials at CM
-    prices; DC at the MFG price; stores at the DC price; goods in transit at the invoice value."""
+    """inventory_cost values stock on one network-wide basis, so moving stock between firms
+    never changes it: supplier cost (price * supplier_cogs_share, averaged over a part's
+    suppliers) plus the expected freight paid on each lane so far. Goods in transit are valued
+    at the receiving node's basis (the shipper has already paid the freight)."""
     s = make_state(baseline)
     for ns in s.nodes.values():
         for item in list(ns.stock):
@@ -444,7 +445,12 @@ def test_inventory_cost_values_stock_at_what_the_holder_paid(baseline):
     s.nodes["Retail_1"].stock["B"] = 5.0
     sh = make_shipment(s, "DC_Houston", "Retail_1", "A", 8.0, 1)
     s.in_transit.append(sh)
-    bom_cost = sum(P["cm"][k] * u for k, u in s.net.bom.items())
-    expected = (7.0 * P["supplier"]["Supplier_1"] * A.supplier_cogs_share + (3.0 + 4.0) * P["raw"][sku]
-                + 6.0 * P["cm"][sku] + 2.0 * bom_cost + 10.0 * P["mfg"] + 5.0 * P["dc"] + 8.0 * P["dc"])
+    sup_cost = {k: P["supplier"][k] * A.supplier_cogs_share for k in P["supplier"]}
+    part = {k: statistics.mean(sup_cost[x] for x in s.net.suppliers_of[k]) for k in s.net.skus}
+    f = {lane: sum(mix * s.baseline["lanes"][lane]["modes"][m]["cost_per_unit"]
+                   for m, mix in s.baseline["lanes"][lane]["mode_mix"].items())
+         for lane in ("cm_mfg", "mfg_dc", "dc_retail")}
+    product = sum((part[k] + f["cm_mfg"]) * u for k, u in s.net.bom.items())
+    expected = (7.0 * sup_cost["Supplier_1"] + (3.0 + 4.0) * part[sku] + 6.0 * (part[sku] + f["cm_mfg"])
+                + 2.0 * product + 10.0 * (product + f["mfg_dc"]) + (5.0 + 8.0) * (product + f["mfg_dc"] + f["dc_retail"]))
     assert ops_mod.inventory_cost(s) == pytest.approx(expected)

@@ -31,7 +31,7 @@ SEEDS = list(range(1, 31))
 T_975_DF29 = 2.045  # two-sided 95% t critical value for 30 paired seeds
 SCALES = [0.5, 1.0, 1.5]
 SCENARIOS = {"calm": [], "cm3_12w": [Disruption(target="CM_3", start_week=30, weeks=12, capacity_mult=0.2)]}
-COLS = ["network_profit", "satisfaction_index", "fill_rate", "costs_tech"]
+COLS = ["network_profit", "network_profit_with_inventory", "satisfaction_index", "fill_rate", "costs_tech"]
 
 
 def scaled_catalog(out: Path, tid: str, k: float) -> str:
@@ -84,7 +84,7 @@ def main(out: Path) -> None:
         profit, cost = diff["network_profit"], diff["costs_tech"].mean()
         half = T_975_DF29 * profit.std(ddof=1) / np.sqrt(len(profit))
         rows.append({"scenario": scen, "tech": tid, "effect_scale": float(k[1:]),
-                     "profit": profit.mean(), "ci_low": profit.mean() - half, "ci_high": profit.mean() + half,
+                     "profit_with_inventory": diff["network_profit_with_inventory"].mean(), "profit": profit.mean(), "ci_low": profit.mean() - half, "ci_high": profit.mean() + half,
                      "satisfaction": diff["satisfaction_index"].mean(), "fill_rate": diff["fill_rate"].mean(),
                      "costs_tech": cost, "profit_cost_x0.5": profit.mean() + 0.5 * cost,
                      "profit_cost_x2": profit.mean() - cost, "breakeven_cost_mult": 1 + profit.mean() / cost})
