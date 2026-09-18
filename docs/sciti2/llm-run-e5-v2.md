@@ -94,6 +94,41 @@ LLM firms' adoptions (18 downstream firms): RFID 17, control tower 17, ML foreca
 4. **Insurance buying is now seen in all four paid runs** (2026-09-16 ×2, 2026-09-18 ×2): CM_2, CM_3, and CM_4 bought risk intelligence in week 1 in both of today's runs.
 5. LLM agents spend the most on technology ($82M) for a gain similar to the plain rule's (+$354M vs +$363M): in calm conditions the insurance technologies are a cost. The disruption arm is where that spend should pay; it has not been rerun on catalog v2.
 
+## Third run, 2026-09-18: the same agents under a 12-week CM_3 disruption
+
+**Run folder:** `runs/llm_cm3hit_s1_20260918T221641Z` (git-ignored), engine `7712537`, seed 1, suppliers following, CM_3 at 20% capacity for 12 weeks from week 30 (the E2 scenario). Approved by Kevin.
+
+| Run health | |
+|---|---|
+| Replay | **exact** |
+| Invariant checks | passed |
+| LLM calls / cost / time | 318 / **$3.01** / 28 minutes |
+| Malformed replies / fallbacks | 11 / 1 |
+
+With no technology, this disruption costs $2,039M and 3.30 pt of fill on seed 1.
+
+### Arms, seed 1, vs the same-seed no-tech run under the same disruption
+
+| | Payback rule | Rule + suppliers follow | **LLM + suppliers follow** | Rule + follow, plus risk intel forced on CM_3 in week 1 |
+|---|---|---|---|---|
+| Profit with inventory | +$368M | +$664M | **+$1,175M** | +$1,410M |
+| Fill rate | +0.09 pt | +0.17 pt | **+1.40 pt** | +1.37 pt |
+| Satisfaction | +0.0005 | +0.0017 | **+0.0089** | — |
+| Retail on-time | 0.00 pt | 0.00 pt | +0.57 pt | — |
+| Stockout cost | −$17M | −$33M | **−$270M** | — |
+| Adoptions / groups | 62 / 6 | 117 / 7 | 112 / 11 | — |
+| Technology spend | $49M | $67M | $88M | — |
+
+LLM firms' adoptions: RFID 17, control tower 17, ML forecasting 13, risk intelligence 9, routing 9, APS 5, robotics 4, blockchain 4.
+
+### Findings
+
+1. **The insurance paid, and one purchase did almost all of it.** CM_3, the site that gets hit, bought risk intelligence in week 1 (as it did in the calm run and in the 2026-09-16 pilot, citing its cautious persona). That shortened its outage from 12 weeks to 10 and gave its customers two weeks of warning. A free counterfactual shows how much that one decision is worth: forcing risk intelligence on CM_3 alone, with no other technology, recovers **+$798M and +1.25 pt of fill**, 39% of the disruption's cost, for a $250k purchase. Adding CM_2 and CM_4 changes nothing (+$797M).
+2. **The LLM agents beat both rule arms by a wide margin** (+$1,175M vs +$664M and +$368M; fill +1.40 pt vs +0.17 and +0.09). The payback rule cannot make CM_3's purchase: risk intelligence shows no saving in last quarter's costs, so it is never bought, in calm or in crisis (E4: 0 of 33 settings).
+3. **But the rule plus that one purchase would beat the LLM agents** (+$1,410M vs +$1,175M). The LLM agents' remaining shortfall is the blockchain gap from the calm run (scrap saved $62M vs $521M). So the two decision styles are complements on this evidence: the rule is better at harvesting measurable savings, the LLM agents at buying protection against events that have not happened.
+4. **The agents did not react to the disruption much.** Insurance purchases after week 30 look the same as in the calm run (a risk intelligence group in week 66, APS at CMs in weeks 66–79), with the same persona-based reasons; no reply mentions the outage. Agents see last quarter's costs, not an event feed. The foresight is in the week-1 purchase, not in a response.
+5. **Luck flag:** on seed 1 this disruption's warning draw is 0.078, so it is one of the ~40% that can be seen coming and subscribers got the full two weeks of warning. On an unforecastable seed the gain would come only from the two weeks saved. More seeds are needed before quoting a number.
+
 ## What to decide next
 
 - **Chain coalitions with suppliers on rules.** Options: (a) suppliers on rules only for their own proposals, LLM for responses (about +30 × response calls); (b) count the 60% acceptance bar over LLM-role invitees only; (c) a supplier accepts a group invitation when its cost share is below a threshold; (d) leave it and treat control tower as out of reach in cheap runs. Needs Kevin's ruling.
