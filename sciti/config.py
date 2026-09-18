@@ -40,6 +40,10 @@ class DecisionCfg(Strict):
     rules_roles: list[Literal["Supplier", "CM", "MFG", "DC", "Retail"]] = Field(default_factory=list)
     # A rules_roles agent also joins a partner's group when its first-year cost is at most this share of yearly revenue.
     follow_revenue_share: float = 0.005
+    # Rules agents also buy these (solo) technologies without a payback when the first-year cost is at most
+    # insurance_revenue_share of yearly revenue: the habit seen in LLM agents (E5, 2026-09-18).
+    insurance_techs: list[str] = Field(default_factory=list)
+    insurance_revenue_share: float = 0.005
 
     @model_validator(mode="after")
     def _needs(self):

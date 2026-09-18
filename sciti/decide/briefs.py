@@ -65,6 +65,9 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
         "rules": {"pass": pass_, "allowed_actions": list(PROPOSAL_ACTIONS if pass_ == "proposal" else RESPONSE_ACTIONS),
                   "max_new_adoptions": max_new, "max_reason_words": MAX_REASON_WORDS},
     }
+    if s.cfg.decision.insurance_techs:
+        data["rules"]["insurance"] = {"techs": list(s.cfg.decision.insurance_techs),
+                                      "revenue_share": s.cfg.decision.insurance_revenue_share}
     if node.role in s.cfg.decision.rules_roles:
         data["rules"]["follow_revenue_share"] = s.cfg.decision.follow_revenue_share
     if visibility == "network":

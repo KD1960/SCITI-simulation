@@ -59,6 +59,19 @@ class RulesPolicy:
                     ps = sorted(p["id"] for p in data["partners"] if p["role"] in TECH_ROLES[e["id"]])
                     if ps:
                         out.append({"tech": e["id"], "action": "propose_group", "partners": ps, "reason": reason})
+            ins = data["rules"].get("insurance")
+            if ins:  # cheap protection that last quarter's costs cannot justify (decision.insurance_techs)
+                revenue = data["last_quarter"].get("revenue") or data["budget_available"] / persona["budget_share"]
+                for e in sorted(data["eligible_technologies"], key=lambda e: e["id"]):
+                    if len(out) >= data["rules"]["max_new_adoptions"]:
+                        break
+                    first_year = e["one_time_cost"] + 52 * e["weekly_cost"]
+                    if e["id"] in ins["techs"] and e["network_requirement"] == "solo" \
+                            and e["id"] not in [o["tech"] for o in out] \
+                            and e["one_time_cost"] <= data["budget_available"] \
+                            and first_year <= ins["revenue_share"] * 4 * revenue:
+                        out.append({"tech": e["id"], "action": "adopt", "partners": [],
+                                    "reason": "cheap protection; no payback needed"})
         else:
             for p in sorted(data.get("proposals", []), key=lambda p: p["group_id"]):
                 if p["tech"] not in TECH_WEEKLY:
