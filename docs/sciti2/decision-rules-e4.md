@@ -5,6 +5,7 @@
 > now built into selling prices). Numbers below come from the earlier
 > engine; rows for routing and blockchain, and anything that depends on who
 > pays freight or on selling prices, should be rerun before citing.
+> **Rerun 2026-09-18:** see `e2-e4-rerun-v2.md`; use that one.
 
 **Date:** 2026-09-15
 **Engine:** `main` at `5b3687b`

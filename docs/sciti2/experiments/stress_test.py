@@ -32,7 +32,7 @@ GROWTH = (0.5, 1.0, 1.5)
 SITES = ("CM_3", "CM_4", "DC_Shanghai")
 LENGTHS = (4, 12)
 FORCED_TECHS = ("risk_intel", "control_tower", "aps")
-COLS = ["network_profit", "satisfaction_index", "fill_rate", "retail_on_time_rate", "costs_stockout",
+COLS = ["network_profit", "network_profit_with_inventory", "satisfaction_index", "fill_rate", "retail_on_time_rate", "costs_stockout",
         "costs_holding", "costs_tech", "co2_kg", "adoptions", "bullwhip_DC", "bullwhip_MFG", "bullwhip_CM"]
 
 

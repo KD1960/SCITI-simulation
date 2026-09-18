@@ -40,7 +40,7 @@ FACTORS = {
     "cost_split": ("equal", "by_size", "equal"),
     "max_new_per_quarter": (1, 2, 1),
 }
-OUTCOMES = ["network_profit", "satisfaction_index", "fill_rate", "costs_tech", "adoptions", "coalitions"]
+OUTCOMES = ["network_profit", "network_profit_with_inventory", "satisfaction_index", "fill_rate", "costs_tech", "adoptions", "coalitions"]
 
 
 def point_config(name, levels, disruptions, out):
@@ -103,7 +103,7 @@ def main(out: Path) -> None:
     runs = []
     for name, (cond, pname, levels, bits) in meta.items():
         d = res[name].copy()
-        for c in ("network_profit", "satisfaction_index", "fill_rate"):
+        for c in ("network_profit", "network_profit_with_inventory", "satisfaction_index", "fill_rate"):
             d[f"d_{c}"] = d[c] - res[f"{cond}__none"][c]
         d["condition"], d["point"] = cond, pname
         for f in FACTORS:
@@ -113,7 +113,7 @@ def main(out: Path) -> None:
     runs = pd.concat(runs, ignore_index=True)
     runs.to_csv(out / "runs.csv", index=False)
 
-    measures = ["d_network_profit", "d_satisfaction_index", "d_fill_rate", "costs_tech", "adoptions", "coalitions",
+    measures = ["d_network_profit", "d_network_profit_with_inventory", "d_satisfaction_index", "d_fill_rate", "costs_tech", "adoptions", "coalitions",
                 "mean_adopt_week"] + [f"adopt_{t}" for t in TECHS] + ["formed_dyad", "formed_triad", "formed_chain",
                                                                       "formed_network", "failed_acceptance",
                                                                       "failed_budget"]

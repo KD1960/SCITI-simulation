@@ -5,6 +5,7 @@
 > now built into selling prices). Numbers below come from the earlier
 > engine; the blockchain arms, and the "36 firms" blockchain reference arm
 > (now 34 — Supplier + CM only), should be rerun before citing.
+> **Rerun 2026-09-18:** see `e2-e4-rerun-v2.md`; use that one.
 
 **Date:** 2026-09-15
 **Engine:** `main` at `6ba2678`
