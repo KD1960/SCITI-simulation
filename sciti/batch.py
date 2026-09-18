@@ -13,7 +13,7 @@ EST_TOKENS_IN = 3000
 EST_TOKENS_OUT = 400
 EST_CALLS_PER_AGENT_ROUND = 1.3          # one call per agent plus response passes, no retries
 EST_CALLS_PER_AGENT_ROUND_RETRIES = 2.6  # measured in the 2026-09-16 pilot, when truncated replies were retried
-AGENTS = 48
+AGENTS = {"Supplier": 30, "CM": 4, "MFG": 2, "DC": 4, "Retail": 8}
 
 
 class SpendConfirmationRequired(Exception):
@@ -26,10 +26,11 @@ def estimate(cfg) -> dict:
     if D.policy != "llm":
         return {"rounds": rounds, "calls_expected": 0, "calls_max": 0, "usd_expected": 0.0, "usd_max": 0.0,
                 "note": f"policy {D.policy} makes no API calls"}
+    agents = sum(c for role, c in AGENTS.items() if role not in D.rules_roles)
     per_call = (EST_TOKENS_IN * D.price_per_mtok_in + EST_TOKENS_OUT * D.price_per_mtok_out) / 1e6
-    expected = round(AGENTS * rounds * EST_CALLS_PER_AGENT_ROUND)
-    with_retries = min(D.max_llm_calls, round(AGENTS * rounds * EST_CALLS_PER_AGENT_ROUND_RETRIES))
-    worst = min(D.max_llm_calls, AGENTS * rounds * 2 * 2)
+    expected = round(agents * rounds * EST_CALLS_PER_AGENT_ROUND)
+    with_retries = min(D.max_llm_calls, round(agents * rounds * EST_CALLS_PER_AGENT_ROUND_RETRIES))
+    worst = min(D.max_llm_calls, agents * rounds * 2 * 2)
     note = ("set decision.price_per_mtok_in/out to the model's current prices to estimate spend"
             if D.price_per_mtok_in == 0 and D.price_per_mtok_out == 0 else
             f"spend is also capped at ${D.max_spend_usd} per run")

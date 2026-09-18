@@ -43,12 +43,14 @@ def group_members(net, holdings, catalog, proposer, tech_id, partners) -> list[s
 
 def _ask(s, t, ctx, brief, max_new):
     """Policy reply → validate → one retry → rules fallback. Returns decisions and writes the log."""
+    # Agents in decision.rules_roles use the rule directly; a replay takes every agent from the log.
+    policy = ctx.fallback if brief.role in s.cfg.decision.rules_roles and ctx.policy.name != "replay" else ctx.policy
     rec = {"week": t, "quarter": brief.quarter, "pass": brief.pass_, "agent": brief.agent,
-           "policy": ctx.policy.name, "brief": brief.data, "brief_hash": brief_hash(brief),
+           "policy": policy.name, "brief": brief.data, "brief_hash": brief_hash(brief),
            "raw": None, "error": None, "retry_raw": None, "retry_error": None, "fallback": False,
            "fallback_raw": None, "fallback_error": None,
            "tokens_in": 0, "tokens_out": 0, "latency_s": 0.0}
-    reply = ctx.policy.decide(brief)
+    reply = policy.decide(brief)
     rec.update(raw=reply.raw, fallback=reply.fallback, tokens_in=reply.tokens_in,
                tokens_out=reply.tokens_out, latency_s=reply.latency_s)
     if reply.fallback:
@@ -57,7 +59,7 @@ def _ask(s, t, ctx, brief, max_new):
         decisions = validate_reply(parse_reply(reply.raw), brief, max_new)
     except ReplyError as e:
         rec["error"] = str(e)
-        retry = ctx.policy.decide(brief, feedback=str(e))
+        retry = policy.decide(brief, feedback=str(e))
         rec.update(retry_raw=retry.raw, tokens_in=rec["tokens_in"] + retry.tokens_in,
                    tokens_out=rec["tokens_out"] + retry.tokens_out)
         if retry.fallback:

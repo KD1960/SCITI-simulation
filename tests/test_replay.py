@@ -56,3 +56,22 @@ def test_cli_replay(baseline_path, tmp_path, capsys):
     orig = rules_run(baseline_path, tmp_path)
     assert main(["replay", str(orig), "--out", str(tmp_path / "cli")]) == 0
     assert "replication: exact" in capsys.readouterr().out
+
+
+def test_rules_roles_use_the_rules_policy_and_replay_exactly(baseline_path, tmp_path, monkeypatch):
+    """decision.rules_roles: agents in those roles use the payback rule instead of the main policy
+    (their log records say policy "rules", not fallback); the run still replays exactly."""
+    from tests.test_llm import FAKE_KEY, FakeClient
+    from tests.test_llm import cfg as llm_cfg
+    monkeypatch.setenv("ANTHROPIC_API_KEY", FAKE_KEY)
+    valid = json.dumps({"decisions": [{"tech": "routing", "action": "adopt", "partners": [], "reason": "ok"}]})
+    c = Config(name="rr", seed=5, weeks=27, baseline_path=str(baseline_path), output_dir=str(tmp_path),
+               decision=llm_cfg(rules_roles=["Supplier"]))
+    client = FakeClient([valid] * 100)
+    orig = run(c, run_dir=tmp_path / "orig", client=client)
+    records = [json.loads(line) for line in (orig / "decisions.jsonl").read_text().splitlines()]
+    sup = [r for r in records if r["agent"].startswith("Supplier_")]
+    assert sup and all(r["policy"] == "rules" and not r["fallback"] for r in sup)
+    assert all(r["policy"] == "llm" for r in records if not r["agent"].startswith("Supplier_"))
+    assert len([r for r in records if r["policy"] == "llm"]) == len(records) - len(sup)
+    assert replay_run(orig, tmp_path / "again") == []

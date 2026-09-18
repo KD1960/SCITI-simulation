@@ -36,6 +36,8 @@ class DecisionCfg(Strict):
     visibility: Literal["partners", "network"] = "partners"
     chain_accept_share: float = 0.6
     cost_split: Literal["equal", "by_size"] = "equal"
+    # Roles that use the payback rule instead of the main policy (e.g. ["Supplier"] cuts LLM calls ~60%).
+    rules_roles: list[Literal["Supplier", "CM", "MFG", "DC", "Retail"]] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _needs(self):

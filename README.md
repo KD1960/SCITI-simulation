@@ -92,7 +92,10 @@ policy. Before spending any money:
    ```
    It reports `usd_expected` (no retries) and `usd_with_retries` (every reply
    retried once, the rate measured in the 2026-09-16 pilot). Budget for the
-   larger one.
+   larger one. `decision.rules_roles` (e.g. `[Supplier]`, the shipped
+   default) puts those roles on the payback rule instead of the LLM; the
+   estimate counts only the remaining agents. Leave it empty for every
+   agent on the LLM.
 4. Only after you've reviewed the estimate and approved the spend:
    ```
    .venv/bin/sciti run configs/mvp_llm.yaml

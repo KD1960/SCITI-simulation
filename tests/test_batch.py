@@ -119,3 +119,11 @@ def test_estimate_reports_a_with_retries_figure():
     assert e["calls_with_retries"] == round(48 * 12 * EST_CALLS_PER_AGENT_ROUND_RETRIES)
     assert e["usd_with_retries"] > e["usd_expected"]
     assert e["calls_with_retries"] <= e["calls_max"]
+
+
+def test_estimate_excludes_rules_roles_agents():
+    """Suppliers on the payback rule make no API calls: 30 of the 48 agents drop out of the estimate."""
+    base = dict(policy="llm", model="m", price_per_mtok_in=1, price_per_mtok_out=5)
+    e = estimate(Config(name="e", seed=1, decision=DecisionCfg(**base, rules_roles=["Supplier"])))
+    assert e["calls_expected"] == round(18 * 12 * 1.3)
+    assert e["calls_max"] == 18 * 12 * 2 * 2

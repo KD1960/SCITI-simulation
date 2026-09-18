@@ -10,3 +10,4 @@ decision:
   price_per_mtok_in: 0.0    # 0.0 refuses to run; set the model's current input price per MTok for a run (Sonnet 5 was 2.0 on 2026-09-16)
   price_per_mtok_out: 0.0   # 0.0 refuses to run; set the model's current output price per MTok for a run (Sonnet 5 was 10.0 on 2026-09-16)
   visibility: partners
+  rules_roles: [Supplier]   # the 30 suppliers use the payback rule; only the 18 downstream firms call the LLM (about 60% fewer calls)
