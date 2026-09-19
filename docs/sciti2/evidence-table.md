@@ -157,6 +157,8 @@ The "65% → 95%" figure originates in University of Arkansas RFID Research Cent
 
 ### 2.8 Risk intelligence → `recovery_mult`, `early_warning_weeks` (confidence: low-medium)
 
+> **Update 2026-09-19:** a deeper search and a sensitivity run are in `risk-intel-evidence-and-sensitivity.md`. No peer-reviewed study measures monitoring's effect on outage length; best-supported form is saved = min(2 weeks, 0.25–0.30 × outage); warning probability MID 30%.
+
 *KPI mapping.* Monitoring does not shorten the supplier's physical recovery (Renesas still took ~3 months after Tōhoku; Resilinc's 19–25 week natural-disaster recovery is measured at its own subscribers). It compresses the buyer's side: detection (GM: 6 weeks in 2011 → 6 hours in 2016), impact assessment (weeks → days), and time to trigger alternates. So `recovery_mult` is the multiplier on the subscriber's *experienced* outage. Cutting a ~3-week buyer lag to ≤1 week gives 0.85 for a 12-week outage and 0.55 for a 4-week one; a constant multiplier overstates the benefit for long outages. Early warning exists only for forecastable event classes (weather ≤14 days, labour, regulatory, financial distress): roughly a third to a half of alerts. Expected value ≈ 0.4 × 2 weeks ≈ +1 week; better modelled as P(warning) ≈ 0.35–0.5 with a 1–3 week lead.
 
 | Source | Finding | Flag |
