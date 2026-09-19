@@ -11,12 +11,12 @@
 | `id` | C001, C002, … Never reuse or renumber; append new rows at the end. |
 | `date_added` | When the source entered the log. |
 | `technology` | Catalog id (`blockchain`, `routing`, `rfid`, `wh_robotics`, `control_tower`, `ml_forecast`, `aps`, `risk_intel`), `all` for general anchors, `disruptions` for base rates. |
-| `topic` | `effect size`, `implementation failure`, `disruption base rates`, `cost` (none logged yet). |
+| `topic` | `effect size`, `implementation failure`, `disruption base rates`, `cost`. |
 | `parameter` | The model parameter(s) the source bears on. |
 | `citation`, `year`, `url` | The source. |
 | `finding` | What it measured and the number, in one or two sentences. |
 | `quality_flag` | PR peer-reviewed · IND industry/analyst survey · VND vendor · ANEC single case (with qualifiers). |
-| `read_level` | `page or full text`, `snippet/abstract`, or `not recorded` (the 2026-09-17 round did not record this consistently). Check the full text before citing a `snippet/abstract` or `not recorded` row in a paper. |
+| `read_level` | `page or full text`, `snippet/abstract`, `title only`, `memory`, or `not recorded` (the 2026-09-17 round did not record this consistently). Check the full text before citing a `snippet/abstract` or `not recorded` row in a paper. |
 | `role` | How it was used: LOW / MID / HIGH anchor, form of the effect, base rate, general prior, or `context`. |
 | `informs_value` | The parameter value or range the evidence for this technology led to (the same for every row of a technology and topic). |
 | `source_doc` | The write-up that discusses it. |
@@ -24,5 +24,5 @@
 ## What is and is not here
 
 - Backfilled on 2026-09-19 from `evidence-table.md`, `risk-intel-evidence-and-sensitivity.md`, and `implementation-failure-evidence.md` by `build_backfill.py` (a one-off; do not rerun it over an edited CSV).
-- **Not yet logged:** the cost evidence in `evidence-table.md` (it is in prose there), and sources the research helpers reported that did not make it into the write-ups.
+- Rows dated `2026-09-19b` (C133–C190, added by `append_2026-09-19_gaps.py`, also a one-off) hold the cost evidence from `evidence-table.md` and the sources the research helpers reported that never reached a write-up (`source_doc` says "research helper report"). Several of those are marked `title only` or `memory`: read them before relying on them.
 - Numbers traced and found to have **no real source** are listed in `implementation-failure-evidence.md` §2 ("Do not cite"); they are deliberately not in the log.
