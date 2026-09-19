@@ -79,3 +79,33 @@ The direction is supported (dip, then improvement; hub support doubles the rate;
 2. Rerun the split test above and the random-disruption experiment; report each part's contribution separately.
 3. Sensitivity: joiner odds at LOW / MID / HIGH; exponent 0.5 vs 0.7 vs 1.0.
 4. Expect: routing still first in calm; blockchain partly recovered but fragile; control tower modestly positive in calm and clearly positive under disruptions; risk intelligence unchanged except for its partial case.
+
+## 5. Results after building Parts 1 and 2 (2026-09-19, branch `group-project-draw`, not merged)
+
+Built as proposed: `assumptions.group_project_draw` (+ `joiner_p_fail` 0.25, `joiner_p_partial` 0.45) and catalog `depth_exponent` (0.5 for control tower and risk intelligence). 221 tests pass. Numbers: `experiments/random_disruptions_results_risk_learning_project.csv`. Profit with inventory, $M, 30 seeds.
+
+| Arm | Every adoption works | Risk + learning (before) | **With Parts 1 and 2** | 95% range |
+|---|---|---|---|---|
+| Calm: blockchain, all eligible | +321 | +5 (ns) | **+15 (ns)** | 0 to 30 |
+| Calm: control tower, all 48 | +63 | +8 (ns) | **+6 (ns)** | −7 to 19 |
+| Calm: payback rule, suppliers follow | +626 | +247 | +246 | 210 to 282 |
+| Rate 0.2: risk intelligence | +564 | +259 | **+379** | 256 to 502 |
+| Rate 0.2: control tower | +465 | +210 | +212 | 94 to 330 |
+| Rate 0.2: payback rule, suppliers follow | +890 | +373 | +341 | 228 to 454 |
+| Rate 0.2: hybrid (insurance habit) | +1,444 | +625 | **+763** | 553 to 973 |
+| Rate 0.2: hybrid + robotics | +1,495 | +693 | **+855** | 640 to 1,069 |
+
+**What happened, honestly**
+
+1. **Part 2 worked as expected.** Risk intelligence recovers +$379M (was +$259M; fill +0.65 pt), because a partial subscriber now saves one week instead of rounding to none. The insurance habit is worth +$422M (was +$252M; positive in 87% of seeds), and the hybrid recovers 32% of the disruption loss (was 26%).
+2. **Part 1 did not deliver the recovery I predicted** (I said blockchain would come back to +$40–80M; it came back to +$15M, not distinguishable from zero, and control tower did not move). The reason is in my own design: the joiner draw is stacked *on top of* the project draw, so a group member's chance of failing went **up**, not down: control tower 1 − 0.75 × 0.75 = 44% (was 25–29%; realised 49%); blockchain 1 − 0.35 × 0.75 = 74% (was 69–75%). What Part 1 adds is correlation (a working platform carries its members), and that is worth less than the extra failure costs. A check with a perfect platform shows the joiner layer alone takes blockchain from +$321M to +$79M, since a pair still needs two joiners to succeed and suppliers fail 37% of the time.
+3. For control tower the two parts roughly cancel: concave depth helps, stacked failure hurts.
+
+**Options for Part 1 (Kevin's ruling)**
+
+- **(a) Keep it as built.** Defensible reading of the evidence (a platform can fail, and members separately fail to onboard: 30–50% of invited partners do not join in a year), and multi-party technologies stay nearly worthless under implementation risk. That may simply be the honest answer: it is what happened to most real blockchain consortia.
+- **(b) Keep the structure, make joining safer:** e.g. joiner odds 0.10 fail / 0.35 partial. Pure judgment; I have no source for a number, and choosing one because it gives a nicer result would be tuning.
+- **(c) Switch Part 1 off by default** (`group_project_draw: false`), keep Part 2, and leave the flag for sensitivity runs. Simplest; returns to per-member catalog odds.
+- **(d) Replace stacking with substitution:** in a group, the *project* draw replaces the members' failure draws entirely (members only draw depth). Then a control tower member fails 25% of the time, as the catalog says, but all together. This is the cleanest reading of "the measured rates are per project" and removes the double count.
+
+My recommendation is **(d)**: it keeps the evidence-based idea (one project, correlated outcome), removes my double-counting mistake, and needs no invented joiner odds. Members would keep a depth draw (partial vs full) so onboarding quality still varies.
