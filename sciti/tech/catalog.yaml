@@ -1,6 +1,8 @@
 # SCITI 1 technology catalog v2 (2026-09-18). Effect sizes are the MID values of docs/sciti2/evidence-table.md;
 # `assumption: true` marks technologies with no measured effect. Costs are still placeholders (spec §6, §9.7).
-# v1 (all placeholders) is kept as catalog_v1.yaml for comparison runs.
+# p_fail / p_partial / partial_fraction / fail_after_weeks: implementation risk, MID values of
+# docs/sciti2/implementation-failure-evidence.md (only blockchain's are measured; routing's are borrowed).
+# v1 (all placeholders, no implementation risk) is kept as catalog_v1.yaml for comparison runs.
 - id: ml_forecast
   name: ML demand forecasting
   observatory_name: ML demand forecasting
@@ -13,6 +15,10 @@
   effects: [{param: forecast_skill, op: add, value: 0.3, by_role: {Retail: 0.1}}]
   evidence: "M5 (Makridakis et al. 2022, IJF): ML beats exponential smoothing by ~3% at product-store level, ~23% mid-level, 22% overall; DeepAR ~15%. Stores 0.1, DCs and factories 0.3. See docs/sciti2/evidence-table.md 2.6."
   assumption: false
+  p_fail: 0.45
+  p_partial: 0.35
+  partial_fraction: 0.5
+  fail_after_weeks: 39
 - id: control_tower
   name: Supply chain control tower
   observatory_name: Supply chain control towers
@@ -25,6 +31,10 @@
   effects: [{param: visibility, op: add, value: 0.6}]
   evidence: "Visibility alone realises part of the echelon benefit: Cachon & Fisher 2000 (2% cost), Croson & Donohue 2006 (upstream order variance -37 to -52%), Chen et al. 2000; 0.85+ only with VMI-style decision transfer. See evidence-table.md 2.5."
   assumption: false
+  p_fail: 0.25
+  p_partial: 0.5
+  partial_fraction: 0.4
+  fail_after_weeks: 78
 - id: rfid
   name: Item-level RFID
   observatory_name: Item-level RFID
@@ -39,6 +49,10 @@
     - {param: shrink_rate, op: mul, value: 0.8}
   evidence: "Record accuracy: Hardgrave et al. 2013 (POMS), Auburn/GS1 Project Zipper 2018, ECR 2018 (65-75% to 93-99%). Shrink: ECR 2018, one of ten firms -15%; -50% is a vendor claim. See evidence-table.md 2.3."
   assumption: false
+  p_fail: 0.2
+  p_partial: 0.4
+  partial_fraction: 0.6
+  fail_after_weeks: 78
 - id: aps
   name: Advanced planning and scheduling
   observatory_name: Advanced planning and scheduling
@@ -51,6 +65,10 @@
   effects: [{param: capacity_mult, op: add, value: 0.08}]
   evidence: "Vendor cases only (Siemens Opcenter +14 to +20% utilisation), BCG +3 OEE points; peer-reviewed work gives direction, not size. +8% is a discounted midpoint. See evidence-table.md 2.7."
   assumption: true
+  p_fail: 0.15
+  p_partial: 0.5
+  partial_fraction: 0.45
+  fail_after_weeks: 78
 - id: routing
   name: Vehicle routing and path optimization
   observatory_name: Vehicle routing and path optimization
@@ -65,6 +83,10 @@
     - {param: co2_mult, op: mul, value: 0.94}
   evidence: "ARC Advisory TMS surveys 2011-2016 (freight spend -6 to -10%), Gartner 5-15%; only the mode-shift and consolidation share cuts CO2. See evidence-table.md 2.2."
   assumption: false
+  p_fail: 0.15
+  p_partial: 0.5
+  partial_fraction: 0.6
+  fail_after_weeks: 104
 - id: wh_robotics
   name: Warehouse robotics
   observatory_name: Warehouse robotics
@@ -79,6 +101,10 @@
     - {param: dispatch_delay_days, op: add, value: -0.6}
   evidence: "Amazon/Kiva ~20% lower operating cost (2016); Azadeh, de Koster & Roy 2019 (2-3x pick rate, picking ~55% of opex); in-DC processing is 0.5-1 day of a 2-day dispatch. See evidence-table.md 2.4."
   assumption: false
+  p_fail: 0.15
+  p_partial: 0.55
+  partial_fraction: 0.6
+  fail_after_weeks: 104
 - id: blockchain
   name: Blockchain traceability
   observatory_name: Blockchain traceability
@@ -91,6 +117,10 @@
   effects: [{param: defect_mult, op: mul, value: 0.82}]
   evidence: "No study measures a defect change from blockchain. Inferred from traceability in general: Culot et al. 2024 (IJOPM, no quality metric), Cui, Gaur & Liu 2023 (incentive models), counterfeit base rates (ERAI, GAO). Low confidence. See evidence-table.md 2.1."
   assumption: true
+  p_fail: 0.65
+  p_partial: 0.25
+  partial_fraction: 0.4
+  fail_after_weeks: 52
 - id: risk_intel
   name: Supply chain risk intelligence
   observatory_name: Supply chain risk intelligence
@@ -106,3 +136,7 @@
     - {param: warning_prob, op: add, value: 0.3}
   evidence: "Monitoring cuts buyer-side detection and response lag, not the site's physical recovery: min(2 weeks, 25% of the outage) saved (GM 6 weeks to 6 hours; Nokia vs Ericsson 2000; Cisco, Intel 2011; Jain, Girotra & Netessine 2022). About 30% of high-impact events give warning (DHL Resilience360 2019). No study measures monitoring vs outage length. See docs/sciti2/risk-intel-evidence-and-sensitivity.md."
   assumption: true
+  p_fail: 0.3
+  p_partial: 0.45
+  partial_fraction: 0.35
+  fail_after_weeks: 52

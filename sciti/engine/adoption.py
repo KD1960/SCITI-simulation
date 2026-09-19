@@ -1,6 +1,7 @@
 """Technology adoption bookkeeping (spec §6, §7.3)."""
 from __future__ import annotations
 
+from sciti.rng import implementation_draw
 from sciti.tech.catalog import TechHolding
 
 
@@ -34,6 +35,28 @@ def validate_forced_adoptions(forced_adoptions, net, catalog, weeks: int) -> Non
             seen_pairs.add(pair)
 
 
+def implementation_odds(tech, role: str, assumptions) -> tuple[float, float]:
+    """(p_fail, p_partial) for this role; suppliers, the small firms, fail more often."""
+    if not assumptions.implementation_risk:
+        return 0.0, 0.0
+    p_fail, p_partial = tech.p_fail, tech.p_partial
+    if role == "Supplier" and 0 < p_fail < 1:
+        odds = p_fail / (1 - p_fail) * assumptions.small_firm_failure_odds
+        p_partial *= (1 - odds / (1 + odds)) / (1 - p_fail)
+        p_fail = odds / (1 + odds)
+    return p_fail, p_partial
+
+
+def implementation_outcome(u: float, tech, role: str, assumptions) -> tuple[str, float]:
+    """Map a draw u to ("fail" | "partial" | "full", share of the effect delivered)."""
+    p_fail, p_partial = implementation_odds(tech, role, assumptions)
+    if u < p_fail:
+        return "fail", 0.0
+    if u < p_fail + p_partial:
+        return "partial", tech.partial_fraction
+    return "full", 1.0
+
+
 def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = None,
           one_time: float | None = None) -> dict:
     if tech_id not in s.catalog:
@@ -45,10 +68,14 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
     if tech_id in s.holdings[node_id]:
         raise AdoptionError(f"{node_id} already holds {tech_id}")
     cost = tech.cost_one_time[ns.role] if one_time is None else one_time
-    s.holdings[node_id][tech_id] = TechHolding(tech_id, week, week + tech.setup_weeks, coalition_id)
+    outcome, fraction = implementation_outcome(implementation_draw(s.cfg.seed, node_id, tech_id, week), tech, ns.role,
+                                               s.cfg.assumptions)
+    fails_week = week + (tech.fail_after_weeks or tech.setup_weeks) if outcome == "fail" else None
+    s.holdings[node_id][tech_id] = TechHolding(tech_id, week, week + tech.setup_weeks, coalition_id,
+                                               fraction=fraction if outcome != "fail" else 1.0, fails_week=fails_week)
     ns.pending_tech_cost += cost
     ev = {"week": week, "type": "adopt", "node": node_id, "tech": tech_id,
-          "coalition": coalition_id, "one_time": cost}
+          "coalition": coalition_id, "one_time": cost, "outcome": outcome}  # the outcome is for analysts; agents never see it
     s.events.append(ev)
     return ev
 
@@ -60,6 +87,15 @@ def drop(s, node_id: str, tech_id: str, week: int) -> dict:
     ev = {"week": week, "type": "drop", "node": node_id, "tech": tech_id}
     s.events.append(ev)
     return ev
+
+
+def abandon_failed(s, week: int) -> None:
+    """Failing implementations are given up in their fails_week: running cost stops and the firm may try again."""
+    for n in s.net.order:
+        for tech_id in sorted(s.holdings[n]):
+            if s.holdings[n][tech_id].fails_week == week:
+                del s.holdings[n][tech_id]
+                s.events.append({"week": week, "type": "implementation_failed", "node": n, "tech": tech_id})
 
 
 def apply_forced(s, week: int) -> None:

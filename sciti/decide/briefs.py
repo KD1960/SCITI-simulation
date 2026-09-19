@@ -1,6 +1,7 @@
 """What an agent may see at a quarterly decision (spec §7.2)."""
 from __future__ import annotations
 
+from sciti.engine.adoption import implementation_odds
 from sciti.decide.interface import Brief, PROPOSAL_ACTIONS, RESPONSE_ACTIONS, MAX_REASON_WORDS
 from sciti.engine.state import PROFIT_COST_KEYS
 
@@ -24,6 +25,16 @@ def budget_available(s, node_id: str, persona: dict, recent: list[dict]) -> floa
     if not recent:
         rev = ns.cash / s.cfg.assumptions.initial_cash_weeks * 13
     return max(0.0, min(ns.cash, persona["budget_share"] * rev))
+
+
+def _odds(s, tech, role) -> dict:
+    """What an agent may know before adopting: the odds, never the outcome."""
+    p_fail, p_partial = implementation_odds(tech, role, s.cfg.assumptions)
+    if p_fail == 0 and p_partial == 0:
+        return {}
+    expected = (1 - p_fail - p_partial) + p_partial * tech.partial_fraction
+    return {"implementation_odds": {"fail": round(p_fail, 3), "partial": round(p_partial, 3),
+                                    "partial_benefit": tech.partial_fraction, "expected_benefit": round(expected, 3)}}
 
 
 def _effects_text(tech, role) -> str:
@@ -59,7 +70,7 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
             {"id": t.id, "name": t.name, "one_time_cost": t.cost_one_time[node.role],
              "weekly_cost": t.cost_per_week[node.role], "setup_weeks": t.setup_weeks,
              "network_requirement": t.network_requirement, "group_bonus": t.group_bonus,
-             "effects": _effects_text(t, node.role)}
+             "effects": _effects_text(t, node.role), **_odds(s, t, node.role)}
             for t in sorted(s.catalog.values(), key=lambda x: x.id)
             if node.role in t.eligible_roles and t.id not in held],
         "rules": {"pass": pass_, "allowed_actions": list(PROPOSAL_ACTIONS if pass_ == "proposal" else RESPONSE_ACTIONS),

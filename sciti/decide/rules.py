@@ -43,7 +43,8 @@ class RulesPolicy:
             cands = []
             for e in sorted(data["eligible_technologies"], key=lambda e: e["id"]):
                 noise = float(self.rng.lognormal(0, 0.3))
-                net = self._saving(data, e["id"], noise) - e["weekly_cost"]
+                expected = e.get("implementation_odds", {}).get("expected_benefit", 1.0)  # projects can fail or fall short
+                net = self._saving(data, e["id"], noise) * expected - e["weekly_cost"]
                 if net <= 0 or e["one_time_cost"] > data["budget_available"]:
                     continue
                 payback = e["one_time_cost"] / net

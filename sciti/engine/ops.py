@@ -6,6 +6,7 @@ import math
 import numpy as np
 
 from sciti.disruptions import apply_disruptions
+from sciti.engine.adoption import abandon_failed
 from sciti.engine.echelon import echelon_stock
 from sciti.engine.economics import inventory_cost, propagate, sell_price, unit_value
 from sciti.engine.state import Shipment, SimState, input_key, lane_type, output_items
@@ -54,6 +55,7 @@ def sample_lane(stats: dict, miles: float, rng) -> tuple[str, float, float, floa
 
 def step_week(s: SimState, t: int) -> None:
     s.week = t
+    abandon_failed(s, t)
     for n in s.net.order:
         ns = s.nodes[n]
         ns.reset_week()

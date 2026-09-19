@@ -20,7 +20,7 @@ def base_params(role: str, assumptions) -> dict[str, float]:
 
 def _active(holdings, node_id, tech_id, week) -> bool:
     h = holdings.get(node_id, {}).get(tech_id)
-    return h is not None and week >= h.active_week
+    return h is not None and week >= h.active_week and h.fails_week is None
 
 
 def effective_params(node_id, week, holdings, catalog, network, base) -> dict[str, float]:
@@ -38,6 +38,7 @@ def effective_params(node_id, week, holdings, catalog, network, base) -> dict[st
             role = network.nodes[node_id].role
             ref = network.upstream[node_id] if role == "Retail" else network.downstream[node_id]
             s = sum(_active(holdings, q, tech_id, week) for q in ref) / len(ref) if ref else 0.0
+        s *= mine[tech_id].fraction  # partial success delivers a share of the effect
         bonus = tech.group_bonus if mine[tech_id].coalition_id else 0.0
         role = network.nodes[node_id].role
         for e in tech.effects:

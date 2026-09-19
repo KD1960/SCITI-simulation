@@ -84,6 +84,8 @@ class Assumptions(Strict):
     fg_cover_weeks: float = 2.0
     initial_cash_weeks: float = 13.0
     part_weight_tons: float = 0.05 / 160  # the Glossary's 0.05 t per product, spread over its 160 parts
+    implementation_risk: bool = True  # adoptions can fail or partly work (catalog p_fail, p_partial); False = always work
+    small_firm_failure_odds: float = 1.75  # suppliers are the small firms: failure odds x1.5-2 (judgment; evidence doc section 4)
     recovery_saved_max_share: float = 0.25  # risk intelligence saves at most this share of an outage (evidence 0.25-0.30)
     defect_concentration: float = 50.0  # Beta concentration for per-shipment defect draws (spec §5.3 step 8), an assumption
 

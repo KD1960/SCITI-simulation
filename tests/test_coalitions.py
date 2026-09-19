@@ -42,7 +42,7 @@ def test_solo_adopt_logged_and_applied(baseline_path, tmp_path):
     script = [{"agent": "MFG_US", "week": 14, "pass": "proposal", "replies": [reply(d("routing", "adopt"))]}]
     out = run(mock_cfg(baseline_path, tmp_path, script), run_dir=tmp_path / "r")
     ev = [e for e in events(out) if e["type"] == "adopt"]
-    assert ev == [{"week": 14, "type": "adopt", "node": "MFG_US", "tech": "routing", "coalition": None, "one_time": 400000}]
+    assert ev == [{"week": 14, "type": "adopt", "node": "MFG_US", "tech": "routing", "coalition": None, "one_time": 400000, "outcome": "full"}]
     logs = [json.loads(x) for x in (out / "decisions.jsonl").read_text().splitlines()]
     assert len([l for l in logs if l["pass"] == "proposal"]) == 48 * 3
     mine = [l for l in logs if l["agent"] == "MFG_US" and l["week"] == 14][0]

@@ -34,6 +34,11 @@ class Tech:
     effects: tuple[Effect, ...]
     evidence: str
     assumption: bool
+    # Implementation risk (docs/sciti2/implementation-failure-evidence.md); the defaults mean "always works".
+    p_fail: float = 0.0            # abandoned: money spent, never switches on
+    p_partial: float = 0.0         # goes live at partial_fraction of the effect
+    partial_fraction: float = 1.0
+    fail_after_weeks: int = 0      # a failing project is abandoned this many weeks after adoption
 
 
 @dataclass
@@ -42,6 +47,8 @@ class TechHolding:
     adopted_week: int
     active_week: int
     coalition_id: str | None = None
+    fraction: float = 1.0          # share of the catalog effect delivered (partial success < 1)
+    fails_week: int | None = None  # set when the implementation is failing: never active, abandoned this week
 
 
 def load_catalog(path: str | Path | None = None) -> dict[str, Tech]:
@@ -55,7 +62,8 @@ def load_catalog(path: str | Path | None = None) -> dict[str, Tech]:
         roles_bad = [x for x in t.eligible_roles if x not in ROLES
                      or x not in t.cost_one_time or x not in t.cost_per_week]
         roles_bad += [x for e in t.effects for x in (e.by_role or {}) if x not in t.eligible_roles]
-        if bad or roles_bad or t.network_requirement not in ("solo", "pair", "chain") or t.id in out:
+        risk_bad = not (0 <= t.p_fail and 0 <= t.p_partial and t.p_fail + t.p_partial <= 1 and 0 < t.partial_fraction <= 1)
+        if bad or roles_bad or risk_bad or t.network_requirement not in ("solo", "pair", "chain") or t.id in out:
             raise ValueError(f"catalog entry {t.id!r} invalid: params {bad}, roles {roles_bad}")
         out[t.id] = t
     return out

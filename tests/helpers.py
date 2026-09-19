@@ -8,6 +8,7 @@ from sciti.tech.catalog import load_catalog
 
 def make_state(baseline, weeks=30, seed=1):
     cfg = Config(name="t", seed=seed, weeks=weeks)
+    cfg.assumptions.implementation_risk = False  # mechanism tests need every adoption to work; see test_implementation.py
     net = build_network(baseline, cfg.assumptions)
     dm = DemandModel.from_baseline(baseline, cfg.demand.trend_cap, cfg.demand.growth_mult)
     streams = make_streams(seed)

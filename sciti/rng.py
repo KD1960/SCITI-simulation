@@ -19,6 +19,11 @@ def shipment_rng(seed: int, src: str, dst: str, item: str, week: int) -> np.rand
     return np.random.default_rng([seed, lane, week])
 
 
+def implementation_draw(seed: int, node_id: str, tech_id: str, week: int) -> float:
+    """One draw in [0, 1) per adoption attempt: it decides whether the implementation fails, partly works, or works."""
+    return float(np.random.default_rng([seed, zlib.crc32(f"implement|{node_id}|{tech_id}".encode()), week]).random())
+
+
 def warning_draw(seed: int, disruption_index: int) -> float:
     """One draw in [0, 1) per disruption: subscribers whose warning_prob beats it see the event coming."""
     return float(np.random.default_rng([seed, zlib.crc32(b"warning"), disruption_index]).random())
