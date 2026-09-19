@@ -7,6 +7,8 @@
 
 > The disruption rates are a working rule assembled from BCI, MGI (2020), and Resilinc (evidence-table.md §3), not a single primary source. Catalog v2's risk intelligence effect (two weeks of outage saved, 40% chance of warning) and APS effect rest on weak evidence. Costs are placeholders.
 
+> **Updated 2026-09-19 (later the same day):** risk intelligence now saves min(2 weeks, 25% of the outage) and warns of 30% of events (Kevin's ruling; see `risk-intel-evidence-and-sensitivity.md`). The experiment was rerun on the same schedules. **Current numbers are in the "Rerun" section at the end;** the tables below are the earlier fixed-2-weeks form (`random_disruptions_results_fixed2weeks.csv`). Arms that never hold risk intelligence are unchanged.
+
 ## Why
 
 E2 and the hybrid benchmark used one scheduled disruption. That shows what protection is worth *if* a long disruption hits, not what it is worth on average. Here every run gets a random schedule drawn from real-world base rates.
@@ -61,3 +63,19 @@ All disrupted-rate figures are clear of zero at 95%. Ranges at rate 0.2: risk in
 - Judge protection technologies on the random-disruption scenario at rate 0.2, not in calm conditions.
 - A decision policy that cannot value protection (the plain payback rule) misses the single largest source of value at realistic disruption rates. LLM agents and the hybrid rule both capture it.
 - The next most valuable evidence to collect is the real effect of risk monitoring on outage length at the subscriber's site.
+
+## Rerun with risk intelligence as min(2 weeks, 25% of the outage), 30% warning
+
+Same 30 schedules per rate; numbers in `random_disruptions_results.csv`. Profit with inventory, $M.
+
+| Arm | Rate 0.2, fixed 2 weeks | **Rate 0.2, new form** | 95% range | Rate 0.4, new form |
+|---|---|---|---|---|
+| Risk intelligence, all eligible | +724 | **+564** | 385–742 | +1,358 |
+| Hybrid (habit: risk intel, APS) | +1,556 | **+1,444** | 1,162–1,727 | +2,563 |
+| Hybrid + robotics | +1,631 | **+1,495** | 1,214–1,775 | +2,614 |
+| APS / control tower / payback rule with followers | +307 / +465 / +890 | unchanged | | +601 / +981 / +1,195 |
+
+- Risk intelligence keeps 78% of its gain (+$564M for $8M; fill +0.96 pt; positive in 83% of seeds at rate 0.2, worst seed −$33M, median +$630M; positive in every seed at 0.4). It is still the best-value single technology tested here, ahead of control tower (+$465M for $35M).
+- The insurance habit is worth +$554M at rate 0.2 (was +$666M), positive in 87% of seeds, worst seed −$22M. The hybrid recovers 60% of the disruption loss (was 64%).
+- The result landed inside the range the sensitivity run predicted (+$536M to +$724M).
+- All findings and cautions above stand; only the sizes for arms holding risk intelligence moved.

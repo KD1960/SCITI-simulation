@@ -95,6 +95,6 @@ Removable lag is about 1–3 weeks for tier-1 events and 3–5 weeks for sub-tie
 ## What this means for SCITI
 
 1. Risk intelligence's top ranking under realistic disruptions survives the whole defensible range (+$236M to +$838M for $8M).
-2. Switching to min(2, 0.25 × outage) would cut the saving on 1–7 week outages (most events) and leave 8+ week outages unchanged. Since short outages mostly sit inside the buffer, expect a result between the 1-week and 2-week rows (+$536M to +$724M). Needs Kevin's ruling; not changed.
+2. Switching to min(2, 0.25 × outage) would cut the saving on 1–7 week outages (most events) and leave 8+ week outages unchanged. Since short outages mostly sit inside the buffer, expect a result between the 1-week and 2-week rows (+$536M to +$724M). **Kevin approved the change on 2026-09-19;** the rerun gave +$564M (see `random-disruptions.md`, Rerun section).
 3. The evidence says monitoring pays only when there is something to act on. In the model, the benefit is unconditional. A later refinement could tie it to the subscriber's safety stock or to a second source.
 4. First-mover scarcity (Nokia/Ericsson) is not modelled: every subscriber gets the same saving however many share the disrupted supplier. This biases the model *against* risk intelligence in shared-supplier events.
