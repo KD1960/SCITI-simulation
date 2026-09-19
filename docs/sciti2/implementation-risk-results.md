@@ -78,6 +78,8 @@ Outcomes per attempt in the hybrid arm (rate 0.2), without → with learning: bl
 **Findings**
 
 1. **Learning at the MID values helps a little and changes no conclusion:** +$14–17M at rate 0.2 (about 4%), +$91M at rate 0.4. Failure shares fall by 3–10 points.
+> **Correction (same day):** finding 2 below is only half right. A split test (`multi-party-combination-proposal.md` §1) shows blockchain's collapse is driven by *failure* (two independent risky parties must both succeed: +321 → +16 with failure alone, +180 with depth alone); control tower loses about half to each.
+
 2. **The collapse of multi-party value is not mainly about failure, so learning cannot fix it.** Control tower has ~40 of 48 firms live, yet its value stays low, because most live firms are partial successes at 0.4 and a chain's strength is (share of partners live) × (own fraction), with each partner's own visibility scaled the same way. Blockchain needs both ends of a pair live, and both ends are usually partial. The value lost is mostly in the **depth** of implementation, which learning here does not touch (the evidence review suggested it should: Dyer & Hatch measure depth, and "slap-and-ship" is shallow compliance, not failure).
 3. The insurance habit is still worth +$252M at rate 0.2 (positive in 77% of seeds).
 

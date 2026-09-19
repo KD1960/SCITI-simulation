@@ -11,7 +11,7 @@
 | `id` | C001, C002, … Never reuse or renumber; append new rows at the end. |
 | `date_added` | When the source entered the log. |
 | `technology` | Catalog id (`blockchain`, `routing`, `rfid`, `wh_robotics`, `control_tower`, `ml_forecast`, `aps`, `risk_intel`), `all` for general anchors, `disruptions` for base rates. |
-| `topic` | `effect size`, `implementation failure`, `learning`, `disruption base rates`, `cost`. |
+| `topic` | `effect size`, `implementation failure`, `learning`, `combination shape`, `deepening`, `disruption base rates`, `cost`. |
 | `parameter` | The model parameter(s) the source bears on. |
 | `citation`, `year`, `url` | The source. |
 | `finding` | What it measured and the number, in one or two sentences. |
@@ -27,3 +27,4 @@
 - Rows dated `2026-09-19b` (C133–C190, added by `append_2026-09-19_gaps.py`, also a one-off) hold the cost evidence from `evidence-table.md` and the sources the research helpers reported that never reached a write-up (`source_doc` says "research helper report"). Several of those are marked `title only` or `memory`: read them before relying on them.
 - Numbers traced and found to have **no real source** are listed in `implementation-failure-evidence.md` §2 ("Do not cite"); they are deliberately not in the log.
 - Rows dated `2026-09-19c` (C191–C218, `append_2026-09-19_learning.py`) are the learning-effects sources behind `learning-evidence.md`.
+- Rows dated `2026-09-19d` (C219–C245, `append_2026-09-19_combination.py`) are the sources on how partial implementations combine across partners and on deepening, behind `multi-party-combination-proposal.md`.
