@@ -85,6 +85,12 @@ class Assumptions(Strict):
     initial_cash_weeks: float = 13.0
     part_weight_tons: float = 0.05 / 160  # the Glossary's 0.05 t per product, spread over its 160 parts
     implementation_risk: bool = True  # adoptions can fail or partly work (catalog p_fail, p_partial); False = always work
+    # Learning multiplies the odds of failure (docs/sciti2/learning-evidence.md; magnitudes are judgment). 1.0 = no learning.
+    retry_failure_odds: list[float] = Field(default_factory=lambda: [0.75, 0.60])  # after 1, and after 2+ failed attempts
+    own_success_failure_odds: float = 0.87     # per technology the firm already runs successfully
+    own_success_floor: float = 0.50
+    partner_success_failure_odds: float = 0.88  # per direct partner already running this technology successfully
+    partner_success_floor: float = 0.60
     small_firm_failure_odds: float = 1.75  # suppliers are the small firms: failure odds x1.5-2 (judgment; evidence doc section 4)
     recovery_saved_max_share: float = 0.25  # risk intelligence saves at most this share of an outage (evidence 0.25-0.30)
     defect_concentration: float = 50.0  # Beta concentration for per-shipment defect draws (spec §5.3 step 8), an assumption

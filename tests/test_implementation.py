@@ -103,3 +103,37 @@ def test_briefs_show_the_odds_and_the_payback_rule_discounts_by_them(baseline):
         return json.loads(RulesPolicy(NoNoise()).decide(brief({"shipping": 13 * 200000}, horizon=horizon, eligible=[e])).raw)["decisions"]
     assert weeks(False, 30) and not weeks(True, 30)   # 23 weeks passes a 30-week horizon; 41 does not
     assert weeks(True, 45)[0]["reason"] == "payback about 41 weeks"
+
+
+def test_learning_cuts_the_odds_of_failure(baseline):
+    """Learning multiplies the ODDS of failure (docs/sciti2/learning-evidence.md, MID values):
+    x0.75 after one failed attempt at the same technology, x0.60 after two or more; x0.87 per
+    technology the firm already runs successfully (floor 0.50); x0.88 per direct partner already
+    running this technology successfully (floor 0.60). Failing or not-yet-live holdings teach nothing.
+    Routing at a DC (p_fail 0.15, odds 0.1765): one earlier failure, two live technologies, and one
+    live partner give 0.75 * 0.87^2 * 0.88 = 0.4996 -> odds 0.0882 -> p_fail 0.0810."""
+    from sciti.engine.adoption import implementation_odds, learning_multiplier
+    s = make_state(baseline)
+    s.cfg.assumptions.implementation_risk = True
+    assert learning_multiplier(s, "DC_Houston", "routing", 20) == 1.0
+    s.events.append({"week": 5, "type": "implementation_failed", "node": "DC_Houston", "tech": "routing"})
+    assert learning_multiplier(s, "DC_Houston", "routing", 20) == pytest.approx(0.75)
+    s.holdings["DC_Houston"]["rfid"] = TechHolding("rfid", 1, 7)
+    s.holdings["DC_Houston"]["risk_intel"] = TechHolding("risk_intel", 1, 5, fraction=0.35)   # partial still teaches
+    s.holdings["DC_Houston"]["wh_robotics"] = TechHolding("wh_robotics", 1, 17, fails_week=105)  # failing: no lesson yet
+    s.holdings["DC_Houston"]["aps_like"] = TechHolding("ml_forecast", 15, 23)                  # not live until week 23
+    s.holdings["MFG_US"]["routing"] = TechHolding("routing", 1, 5)
+    s.holdings["Retail_1"]["routing"] = TechHolding("routing", 1, 5, fails_week=105)
+    m = learning_multiplier(s, "DC_Houston", "routing", 20)
+    assert m == pytest.approx(0.75 * 0.87 ** 2 * 0.88)
+    p_fail, p_partial = implementation_odds(s.catalog["routing"], "DC", s.cfg.assumptions, m)
+    assert p_fail == pytest.approx(0.0810, abs=2e-4)
+    assert p_partial == pytest.approx(0.50 * (1 - p_fail) / 0.85)   # partial and full share what failure gives up
+    s.events.append({"week": 9, "type": "implementation_failed", "node": "DC_Houston", "tech": "routing"})
+    s.events.append({"week": 12, "type": "implementation_failed", "node": "DC_Houston", "tech": "routing"})
+    assert learning_multiplier(s, "DC_Houston", "routing", 20) == pytest.approx(0.60 * 0.87 ** 2 * 0.88)
+    for i in range(8):   # floors: many live technologies and partners cannot push below 0.50 and 0.60
+        s.holdings["DC_Houston"][f"x{i}"] = TechHolding("rfid", 1, 2)
+    for r in s.net.partners("DC_Houston"):
+        s.holdings[r]["routing"] = TechHolding("routing", 1, 2)
+    assert learning_multiplier(s, "DC_Houston", "routing", 20) == pytest.approx(0.60 * 0.50 * 0.60)

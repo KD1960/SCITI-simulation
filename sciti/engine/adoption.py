@@ -35,21 +35,35 @@ def validate_forced_adoptions(forced_adoptions, net, catalog, weeks: int) -> Non
             seen_pairs.add(pair)
 
 
-def implementation_odds(tech, role: str, assumptions) -> tuple[float, float]:
-    """(p_fail, p_partial) for this role; suppliers, the small firms, fail more often."""
+def learning_multiplier(s, node_id: str, tech_id: str, week: int) -> float:
+    """What experience does to the odds of failure: own failed attempts at this technology, technologies the
+    firm already runs, and direct partners already running this one. Failing or not-yet-live projects teach nothing."""
+    A = s.cfg.assumptions
+    live = lambda h: h.fails_week is None and week >= h.active_week
+    failures = sum(e["type"] == "implementation_failed" and e["node"] == node_id and e["tech"] == tech_id for e in s.events)
+    retry = A.retry_failure_odds[min(failures, len(A.retry_failure_odds)) - 1] if failures else 1.0
+    own = sum(live(h) for t, h in s.holdings[node_id].items() if t != tech_id)
+    partners = sum(tech_id in s.holdings[p] and live(s.holdings[p][tech_id]) for p in s.net.partners(node_id))
+    return (retry * max(A.own_success_floor, A.own_success_failure_odds ** own)
+            * max(A.partner_success_floor, A.partner_success_failure_odds ** partners))
+
+
+def implementation_odds(tech, role: str, assumptions, learning: float = 1.0) -> tuple[float, float]:
+    """(p_fail, p_partial) for this role; suppliers, the small firms, fail more often, and experience helps."""
     if not assumptions.implementation_risk:
         return 0.0, 0.0
     p_fail, p_partial = tech.p_fail, tech.p_partial
-    if role == "Supplier" and 0 < p_fail < 1:
-        odds = p_fail / (1 - p_fail) * assumptions.small_firm_failure_odds
+    mult = learning * (assumptions.small_firm_failure_odds if role == "Supplier" else 1.0)
+    if mult != 1.0 and 0 < p_fail < 1:
+        odds = p_fail / (1 - p_fail) * mult
         p_partial *= (1 - odds / (1 + odds)) / (1 - p_fail)
         p_fail = odds / (1 + odds)
     return p_fail, p_partial
 
 
-def implementation_outcome(u: float, tech, role: str, assumptions) -> tuple[str, float]:
+def implementation_outcome(u: float, tech, role: str, assumptions, learning: float = 1.0) -> tuple[str, float]:
     """Map a draw u to ("fail" | "partial" | "full", share of the effect delivered)."""
-    p_fail, p_partial = implementation_odds(tech, role, assumptions)
+    p_fail, p_partial = implementation_odds(tech, role, assumptions, learning)
     if u < p_fail:
         return "fail", 0.0
     if u < p_fail + p_partial:
@@ -69,7 +83,7 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
         raise AdoptionError(f"{node_id} already holds {tech_id}")
     cost = tech.cost_one_time[ns.role] if one_time is None else one_time
     outcome, fraction = implementation_outcome(implementation_draw(s.cfg.seed, node_id, tech_id, week), tech, ns.role,
-                                               s.cfg.assumptions)
+                                               s.cfg.assumptions, learning_multiplier(s, node_id, tech_id, week))
     fails_week = week + (tech.fail_after_weeks or tech.setup_weeks) if outcome == "fail" else None
     s.holdings[node_id][tech_id] = TechHolding(tech_id, week, week + tech.setup_weeks, coalition_id,
                                                fraction=fraction if outcome != "fail" else 1.0, fails_week=fails_week)
