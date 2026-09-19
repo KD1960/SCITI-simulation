@@ -91,6 +91,11 @@ class Assumptions(Strict):
     own_success_floor: float = 0.50
     partner_success_failure_odds: float = 0.88  # per direct partner already running this technology successfully
     partner_success_floor: float = 0.60
+    # A group adopting a pair or chain technology is one project: one draw at the catalog odds for the platform, then each
+    # member draws its onboarding at these milder odds (general IT-project priors, BCG 30/44/26). See multi-party-combination-proposal.md.
+    group_project_draw: bool = True
+    joiner_p_fail: float = 0.25
+    joiner_p_partial: float = 0.45
     small_firm_failure_odds: float = 1.75  # suppliers are the small firms: failure odds x1.5-2 (judgment; evidence doc section 4)
     recovery_saved_max_share: float = 0.25  # risk intelligence saves at most this share of an outage (evidence 0.25-0.30)
     defect_concentration: float = 50.0  # Beta concentration for per-shipment defect draws (spec §5.3 step 8), an assumption

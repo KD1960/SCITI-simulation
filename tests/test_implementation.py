@@ -137,3 +137,63 @@ def test_learning_cuts_the_odds_of_failure(baseline):
     for r in s.net.partners("DC_Houston"):
         s.holdings[r]["routing"] = TechHolding("routing", 1, 2)
     assert learning_multiplier(s, "DC_Houston", "routing", 20) == pytest.approx(0.60 * 0.50 * 0.60)
+
+
+def test_information_technologies_are_concave_in_depth(baseline):
+    """depth_exponent 0.5 for control tower and risk intelligence (Gavirneni et al. 1999: partial
+    information captures most of the value): a 0.4-deep control tower with its one downstream partner
+    live gives visibility 0.6 * 0.4^0.5 = 0.379, not 0.6 * 0.4 = 0.24. Physical technologies stay
+    linear: a 0.6-deep routing project cuts shipping cost by 8% * 0.6."""
+    s = make_state(baseline)
+    cat = s.catalog
+    assert (cat["control_tower"].depth_exponent, cat["risk_intel"].depth_exponent, cat["routing"].depth_exponent) == (0.5, 0.5, 1.0)
+    store = s.net.downstream["DC_Houston"][0]
+    h = {n: {} for n in s.net.order}
+    for r in s.net.downstream["DC_Houston"]:
+        h[r]["control_tower"] = TechHolding("control_tower", 1, 1)
+    h["DC_Houston"]["control_tower"] = TechHolding("control_tower", 1, 1, fraction=0.4)
+    h["DC_Houston"]["routing"] = TechHolding("routing", 1, 1, fraction=0.6)
+    p = effective_params("DC_Houston", 2, h, cat, s.net, s.base["DC_Houston"])
+    assert p["visibility"] == pytest.approx(0.6 * 0.4 ** 0.5)
+    assert p["ship_cost_mult"] == pytest.approx(1 - 0.08 * 0.6)
+    assert store in h
+
+
+def test_a_group_adopting_a_multi_party_technology_is_one_project(baseline, monkeypatch):
+    """The measured failure rates are per project. A blockchain pair or control tower chain adopted
+    as a group gets ONE project draw at the catalog odds (blockchain 0.65 fail / 0.25 partial at 0.4),
+    keyed by the group id; if it fails, every member fails together. Each member then draws its own
+    onboarding at the milder joiner odds (0.25 fail / 0.45 partial; suppliers' failure odds x1.75 ->
+    0.368), and its depth is the lesser of the project's and its own. Solo technologies adopted in a
+    group, and firms adopting alone, draw as before."""
+    import sciti.engine.adoption as adoption
+    draws = {}
+    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, key, tech, week: draws[key])
+
+    def outcomes(project_u, members):
+        s = make_state(baseline)
+        s.cfg.assumptions.implementation_risk = True
+        draws.clear()
+        draws.update({"g1": project_u, **members})
+        return {m: (adopt(s, m, "blockchain", 1, "g1")["outcome"], s.holdings[m]["blockchain"].fraction,
+                    s.holdings[m]["blockchain"].fails_week) for m in members}
+
+    dead = outcomes(0.64, {"CM_1": 0.99, "Supplier_1": 0.99})           # the platform fails: everyone fails
+    assert {m: o[0] for m, o in dead.items()} == {"CM_1": "fail", "Supplier_1": "fail"}
+    assert dead["CM_1"][2] == 1 + 52
+    full = outcomes(0.95, {"CM_1": 0.24, "CM_2": 0.26, "CM_3": 0.71, "Supplier_1": 0.36, "Supplier_2": 0.37})
+    assert {m: o[0] for m, o in full.items()} == {"CM_1": "fail", "CM_2": "partial", "CM_3": "full",
+                                                   "Supplier_1": "fail", "Supplier_2": "partial"}
+    assert full["CM_2"][1] == 0.4 and full["CM_3"][1] == 1.0
+    shallow = outcomes(0.70, {"CM_3": 0.99})                             # a shallow platform caps a full member at 0.4
+    assert shallow["CM_3"][:2] == ("partial", 0.4)
+
+    s = make_state(baseline)
+    s.cfg.assumptions.implementation_risk = True
+    draws.clear()
+    draws.update({"DC_Houston": 0.22, "CM_1": 0.66})
+    assert adopt(s, "DC_Houston", "rfid", 1, "g2")["outcome"] == "partial"   # solo tech in a group: own odds (0.20 fail)
+    assert adopt(s, "CM_1", "blockchain", 1)["outcome"] == "partial"         # adopting alone: catalog odds (0.65 fail)
+    s.cfg.assumptions.group_project_draw = False
+    draws.update({"CM_2": 0.64})
+    assert adopt(s, "CM_2", "blockchain", 1, "g3")["outcome"] == "fail"      # switch off: per-member catalog odds again

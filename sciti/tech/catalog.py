@@ -39,6 +39,7 @@ class Tech:
     p_partial: float = 0.0         # goes live at partial_fraction of the effect
     partial_fraction: float = 1.0
     fail_after_weeks: int = 0      # a failing project is abandoned this many weeks after adoption
+    depth_exponent: float = 1.0    # effect delivered = depth ** this; 0.5 for information technologies (concave)
 
 
 @dataclass

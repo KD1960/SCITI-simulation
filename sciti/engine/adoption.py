@@ -48,11 +48,12 @@ def learning_multiplier(s, node_id: str, tech_id: str, week: int) -> float:
             * max(A.partner_success_floor, A.partner_success_failure_odds ** partners))
 
 
-def implementation_odds(tech, role: str, assumptions, learning: float = 1.0) -> tuple[float, float]:
-    """(p_fail, p_partial) for this role; suppliers, the small firms, fail more often, and experience helps."""
+def implementation_odds(tech, role: str, assumptions, learning: float = 1.0, joiner: bool = False) -> tuple[float, float]:
+    """(p_fail, p_partial) for this role; suppliers, the small firms, fail more often, and experience helps.
+    A joiner is a member onboarding to a group's project, which has its own draw at the catalog odds."""
     if not assumptions.implementation_risk:
         return 0.0, 0.0
-    p_fail, p_partial = tech.p_fail, tech.p_partial
+    p_fail, p_partial = (assumptions.joiner_p_fail, assumptions.joiner_p_partial) if joiner else (tech.p_fail, tech.p_partial)
     mult = learning * (assumptions.small_firm_failure_odds if role == "Supplier" else 1.0)
     if mult != 1.0 and 0 < p_fail < 1:
         odds = p_fail / (1 - p_fail) * mult
@@ -61,9 +62,10 @@ def implementation_odds(tech, role: str, assumptions, learning: float = 1.0) -> 
     return p_fail, p_partial
 
 
-def implementation_outcome(u: float, tech, role: str, assumptions, learning: float = 1.0) -> tuple[str, float]:
+def implementation_outcome(u: float, tech, role: str, assumptions, learning: float = 1.0,
+                           joiner: bool = False) -> tuple[str, float]:
     """Map a draw u to ("fail" | "partial" | "full", share of the effect delivered)."""
-    p_fail, p_partial = implementation_odds(tech, role, assumptions, learning)
+    p_fail, p_partial = implementation_odds(tech, role, assumptions, learning, joiner)
     if u < p_fail:
         return "fail", 0.0
     if u < p_fail + p_partial:
@@ -82,8 +84,15 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
     if tech_id in s.holdings[node_id]:
         raise AdoptionError(f"{node_id} already holds {tech_id}")
     cost = tech.cost_one_time[ns.role] if one_time is None else one_time
+    A = s.cfg.assumptions
+    project = coalition_id is not None and tech.network_requirement != "solo" and A.group_project_draw
     outcome, fraction = implementation_outcome(implementation_draw(s.cfg.seed, node_id, tech_id, week), tech, ns.role,
-                                               s.cfg.assumptions, learning_multiplier(s, node_id, tech_id, week))
+                                               A, learning_multiplier(s, node_id, tech_id, week), joiner=project)
+    if project:  # the group's platform has one outcome for everyone; "MFG" = no small-firm scaling for the platform
+        p_outcome, p_fraction = implementation_outcome(implementation_draw(s.cfg.seed, coalition_id, tech_id, week),
+                                                       tech, "MFG", A)
+        fraction = min(fraction, p_fraction)
+        outcome = "fail" if "fail" in (outcome, p_outcome) else ("full" if fraction == 1.0 else "partial")
     fails_week = week + (tech.fail_after_weeks or tech.setup_weeks) if outcome == "fail" else None
     s.holdings[node_id][tech_id] = TechHolding(tech_id, week, week + tech.setup_weeks, coalition_id,
                                                fraction=fraction if outcome != "fail" else 1.0, fails_week=fails_week)

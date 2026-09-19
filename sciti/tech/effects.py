@@ -38,7 +38,7 @@ def effective_params(node_id, week, holdings, catalog, network, base) -> dict[st
             role = network.nodes[node_id].role
             ref = network.upstream[node_id] if role == "Retail" else network.downstream[node_id]
             s = sum(_active(holdings, q, tech_id, week) for q in ref) / len(ref) if ref else 0.0
-        s *= mine[tech_id].fraction  # partial success delivers a share of the effect
+        s *= mine[tech_id].fraction ** tech.depth_exponent  # partial success delivers a share of the effect
         bonus = tech.group_bonus if mine[tech_id].coalition_id else 0.0
         role = network.nodes[node_id].role
         for e in tech.effects:
