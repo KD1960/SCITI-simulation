@@ -103,6 +103,6 @@
   effects:
     - {param: recovery_weeks_saved, op: add, value: 2.0}
     - {param: early_warning_weeks, op: add, value: 2.0}
-    - {param: warning_prob, op: add, value: 0.4}
-  evidence: "Monitoring cuts buyer-side detection and response lag (GM: 6 weeks to 6 hours, Forbes 2016), not the site's physical recovery: 2 weeks saved. About 40% of events are forecastable (weather, labour, regulatory; Everstream up to 14 days ahead). Vendor and case evidence only. See evidence-table.md 2.8."
+    - {param: warning_prob, op: add, value: 0.3}
+  evidence: "Monitoring cuts buyer-side detection and response lag, not the site's physical recovery: min(2 weeks, 25% of the outage) saved (GM 6 weeks to 6 hours; Nokia vs Ericsson 2000; Cisco, Intel 2011; Jain, Girotra & Netessine 2022). About 30% of high-impact events give warning (DHL Resilience360 2019). No study measures monitoring vs outage length. See docs/sciti2/risk-intel-evidence-and-sensitivity.md."
   assumption: true

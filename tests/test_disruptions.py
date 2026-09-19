@@ -45,18 +45,19 @@ def test_risk_intel_shortens_and_warns(baseline):
     for t in range(1, 5):
         step_week(s, t)
         boosts[t] = s.nodes["MFG_US"].z_boost
-    # catalog v2: 2 weeks of warning, but only if this disruption is one that can be seen coming (p = 0.4)
-    ahead = 1.0 if warning_draw(s.cfg.seed, 0) < 0.4 else 0.0
+    # catalog v2: 2 weeks of warning, but only if this disruption is one that can be seen coming (p = 0.3)
+    ahead = 1.0 if warning_draw(s.cfg.seed, 0) < 0.3 else 0.0
     assert boosts == {1: 0.0, 2: 0.0, 3: ahead, 4: ahead}
     step_week(s, 5)
     assert s.nodes["MFG_US"].z_boost == 1.0  # once it has started, every subscriber knows
-    assert s.disruption_end[0] == 5 + 3  # 5 weeks minus 2 weeks of buyer-side lag saved
+    assert s.disruption_end[0] == 5 + 4  # 5 weeks minus min(2, 25% of 5) = 1.25 weeks, rounded up
 
 
-def test_recovery_weeks_saved_is_a_fixed_cut_with_a_one_week_floor(baseline):
-    """Risk intelligence saves a fixed number of weeks (detection and response lag), so a long
-    outage shrinks proportionally less than a short one; an outage never drops below 1 week."""
-    for weeks, until in ((12, 10 + 10), (4, 10 + 2), (2, 10 + 1)):
+def test_recovery_weeks_saved_is_capped_at_a_quarter_of_the_outage(baseline):
+    """Risk intelligence saves the buyer-side lag: min(recovery_weeks_saved, 25% of the outage),
+    rounded up to whole weeks of outage. 12 weeks -> 10; 8 -> 6; 4 -> 3 (1 week saved);
+    2 -> 2 (half a week saved rounds away)."""
+    for weeks, until in ((12, 10 + 10), (8, 10 + 6), (4, 10 + 3), (2, 10 + 2)):
         s = make_state(baseline, weeks=30)
         s.cfg.disruptions = [Disruption(target="CM_3", start_week=10, weeks=weeks, capacity_mult=0.2)]
         s.nodes["CM_3"].params["recovery_weeks_saved"] = 2.0

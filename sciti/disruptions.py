@@ -20,8 +20,9 @@ def apply_disruptions(s, t: int) -> None:
     for i, d in enumerate(s.cfg.disruptions):
         if t == d.start_week:
             P = s.nodes[d.target].params
-            # Risk intelligence saves the buyer-side lag (a fixed number of weeks), never the whole outage.
-            weeks = max(1, math.ceil(d.weeks * P["recovery_mult"] - P["recovery_weeks_saved"]))
+            # Risk intelligence saves the buyer-side lag: a fixed number of weeks, capped at a share of the outage.
+            saved = min(P["recovery_weeks_saved"], s.cfg.assumptions.recovery_saved_max_share * d.weeks)
+            weeks = max(1, math.ceil(d.weeks * P["recovery_mult"] - saved))
             s.disruption_end[i] = d.start_week + weeks
             s.events.append({"week": t, "type": "disruption_start", "target": d.target,
                              "until": s.disruption_end[i]})
