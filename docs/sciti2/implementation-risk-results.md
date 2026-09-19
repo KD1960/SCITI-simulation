@@ -59,3 +59,26 @@ Fill-rate gains at rate 0.2 with risk: hybrid +0.81 pt (was +1.53), risk intelli
 - Forced-adoption arms attempt once, in week 1; they do not retry. Agents do.
 - Group invitations do not yet show the odds, and the payback rule does not discount group responses.
 - No learning: a firm's second attempt has the same odds as its first, and partners' successes do not raise a firm's odds.
+
+## Update 2026-09-19: with learning switched on
+
+Learning (`learning-evidence.md`; MID values) cuts the odds of failure on a retry, with each technology the firm already runs, and with each direct partner already running the same technology. The random-disruption experiment was rerun on the same schedules; numbers in `experiments/random_disruptions_results_risk_learning.csv`. Forced-adoption arms attempt once in week 1, before anyone has anything to learn from, so they do not change.
+
+| Arm (profit with inventory, $M) | Every adoption works | Risk, no learning | **Risk + learning** | 95% range |
+|---|---|---|---|---|
+| Calm: payback rule, suppliers follow | +626 | +233 | **+247** | 213 to 280 |
+| Calm: hybrid | +632 | +227 | **+244** | 207 to 281 |
+| Rate 0.2: payback rule, suppliers follow | +890 | +358 | **+373** | 277 to 470 |
+| Rate 0.2: hybrid (insurance habit) | +1,444 | +611 | **+625** | 425 to 825 |
+| Rate 0.2: hybrid + robotics | +1,495 | +676 | **+693** | 497 to 889 |
+| Rate 0.4: hybrid | +2,563 | +1,111 | **+1,202** | 981 to 1,423 |
+
+Outcomes per attempt in the hybrid arm (rate 0.2), without → with learning: blockchain fail 75% → 69%; control tower 33% → 29%; ML forecasting 47% → 37%; risk intelligence 27% → 23%; routing 20% → 14%; RFID 23% → 21%; APS 14% → 11%. Working blockchain adopters per run 13.0 → 14.9; control tower 37.5 → 39.8.
+
+**Findings**
+
+1. **Learning at the MID values helps a little and changes no conclusion:** +$14–17M at rate 0.2 (about 4%), +$91M at rate 0.4. Failure shares fall by 3–10 points.
+2. **The collapse of multi-party value is not mainly about failure, so learning cannot fix it.** Control tower has ~40 of 48 firms live, yet its value stays low, because most live firms are partial successes at 0.4 and a chain's strength is (share of partners live) × (own fraction), with each partner's own visibility scaled the same way. Blockchain needs both ends of a pair live, and both ends are usually partial. The value lost is mostly in the **depth** of implementation, which learning here does not touch (the evidence review suggested it should: Dyer & Hatch measure depth, and "slap-and-ship" is shallow compliance, not failure).
+3. The insurance habit is still worth +$252M at rate 0.2 (positive in 77% of seeds).
+
+**What this points to:** if the multi-party result looks too harsh, the lever to examine is how partial successes combine across partners (multiplying fractions along a chain is a strong assumption) and whether experience and hub support deepen partial implementations, not the failure odds.
