@@ -104,13 +104,26 @@ def run(cfg, run_dir: Path | None = None, client=None) -> Path:
     return run_dir
 
 
+def commit_note(original: Path) -> str:
+    """Says which commit to check out when a run was made by different code than this."""
+    from sciti.outputs import _git
+    made, here = json.loads((Path(original) / "manifest.json").read_text()).get("git_commit"), _git()["git_commit"]
+    if not made or made == here:
+        return ""
+    return f" (the run was made at commit {made}; this code is at {here}: check out {made} to replay it)"
+
+
 def replay_run(original: Path, out_dir: Path) -> list[str]:
     from sciti.config import Config
+    from sciti.decide.replay import ReplayError
     from sciti.outputs import DETERMINISTIC_FILES
     original = Path(original)
     data = json.loads((original / "manifest.json").read_text())["config"]
     if data["decision"]["policy"] != "none":
         data["decision"]["policy"] = "replay"
         data["decision"]["replay_from"] = str(original / "decisions.jsonl")
-    out = run(Config.model_validate(data), run_dir=Path(out_dir))
+    try:
+        out = run(Config.model_validate(data), run_dir=Path(out_dir))
+    except ReplayError as e:
+        raise ReplayError(f"{e}{commit_note(original)}") from e
     return [f for f in DETERMINISTIC_FILES if (original / f).read_bytes() != (out / f).read_bytes()]

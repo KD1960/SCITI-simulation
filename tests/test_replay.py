@@ -75,3 +75,25 @@ def test_rules_roles_use_the_rules_policy_and_replay_exactly(baseline_path, tmp_
     assert all(r["policy"] == "llm" for r in records if not r["agent"].startswith("Supplier_"))
     assert len([r for r in records if r["policy"] == "llm"]) == len(records) - len(sup)
     assert replay_run(orig, tmp_path / "again") == []
+
+
+def _made_at_other_commit(orig):
+    man = json.loads((orig / "manifest.json").read_text())
+    man["git_commit"] = "abc1234def"
+    (orig / "manifest.json").write_text(json.dumps(man))
+
+
+def test_diverged_replay_names_the_commit_of_the_original_run(baseline_path, tmp_path):
+    orig = rules_run(baseline_path, tmp_path)
+    _made_at_other_commit(orig)
+    (orig / "decisions.jsonl").write_text("")
+    with pytest.raises(ReplayError, match="abc1234def"):
+        replay_run(orig, tmp_path / "again")
+
+
+def test_cli_replay_mismatch_names_the_commit_of_the_original_run(baseline_path, tmp_path, capsys):
+    orig = rules_run(baseline_path, tmp_path)
+    _made_at_other_commit(orig)
+    (orig / "summary.json").write_text("{}")
+    assert main(["replay", str(orig), "--out", str(tmp_path / "cli")]) == 1
+    assert "abc1234def" in capsys.readouterr().out

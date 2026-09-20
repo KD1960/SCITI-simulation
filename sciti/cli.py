@@ -47,12 +47,12 @@ def main(argv: list[str] | None = None) -> int:
         print(out)
         return 0
     if args.cmd == "replay":
-        from sciti.runner import replay_run
+        from sciti.runner import commit_note, replay_run
         src = Path(args.run_dir)
         out = Path(args.out) if args.out else src.with_name(src.name + "_replay")
         diffs = replay_run(src, out)
         if diffs:
-            print("replication: MISMATCH in " + ", ".join(diffs))
+            print("replication: MISMATCH in " + ", ".join(diffs) + commit_note(src))
             return 1
         print(f"replication: exact ({out})")
         return 0
