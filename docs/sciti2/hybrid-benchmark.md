@@ -1,5 +1,7 @@
 # Hybrid benchmark — payback rule plus an insurance habit
 
+> **Status (2026-09-20):** this is the "every adoption works" case. On the current engine see `e2-e4-hybrid-current-engine.md`.
+
 **Date:** 2026-09-18
 **Engine and catalog:** branch `insurance-habit` (corrected engine, catalog v2)
 **Command:** `.venv/bin/python docs/sciti2/experiments/hybrid_benchmark.py OUT_DIR`

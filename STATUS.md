@@ -1,10 +1,69 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-19 (catalog v2 on `main`; E1–E5 rerun on it; implementation risk, learning, group project draws, and concave depth added; 221 tests pass)
-**Phase:** MVP merged to `main`; engine corrected after the 2026-09-17 test audit. See README.md for how to use it.
-**Next step (Kevin to choose):** (a) LLM agents with implementation risk (paid, ~$3–7/run): with failure odds in their briefs, do they still form groups and buy protection, and are they right to?; (b) smaller refinements: late failure for robotics, odds shown on group invitations, learning for the project draw; (c) earlier open items: LLM event feed, LLM blockchain gap, shrink baseline, cost evidence, varied severity and regional events. **Housekeeping rule:** experiments write several MB per run; run big batches one at a time and delete scratch run folders after saving result tables.
+**Last updated:** 2026-09-20 (STATUS refreshed: new "Current state" section; no code changed since `9a449bb`)
+**Phase:** research engine. MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
+**Next step:** the paid LLM run with implementation risk. Kevin said "yes, set it up" on 2026-09-19, then interrupted to ask for this STATUS update, so **it has not been set up yet**. See §0 "Pending" for what it needs. Other open items are listed there too.
 
-Read this file first in any new thread. Then read the spec and the plan index.
+Read this file first in any new thread: §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
+
+---
+
+## 0. Current state (2026-09-20)
+
+**What the engine now does beyond the MVP** (each has a dated note in §7 and tests):
+- Corrected accounting and mechanics from the 2026-09-17 audit (shipper pays freight, freight in prices, random defects, blockchain Supplier+CM only).
+- ML forecast error measured against the forecast actually used (no assumed safety-stock cut).
+- `network_profit_with_inventory`: cash profit plus the change in stock valued on one network-wide cost basis. **Use it for every technology comparison;** `network_profit` is cash-basis and swings with the order cycle.
+- **Catalog v2** (`sciti/tech/catalog.yaml`): MID effect sizes from the evidence table; ML skill by role; risk intelligence saves min(2 weeks, 25% of the outage) and warns of 30% of events. `catalog_v1.yaml` keeps the placeholders for comparison runs.
+- **Implementation risk** (default on): each adoption attempt draws fail / partial / full from keyed draws; suppliers' failure odds ×1.75; failed projects can be retried; briefs show the odds; the payback rule discounts by them.
+- **Learning:** retries, technologies already running, and direct partners already running the same technology cut the odds of failure.
+- **Group project draw:** a group adopting a pair or chain technology is one project (one draw for everyone; members only draw depth). **Concave depth** (exponent 0.5) for control tower and risk intelligence.
+- Decision-policy options: `rules_roles` (e.g. suppliers on the payback rule, saves ~60% of LLM calls) with `follow_revenue_share` (they join a partner's group when it is cheap); `insurance_techs` (the "buy cheap protection first" habit).
+- Every random draw is keyed, so `sciti replay` is still exact.
+
+**Switches for comparison runs** (all under `assumptions` unless noted): `implementation_risk: false`; `group_project_draw: false`; learning off = `retry_failure_odds: [1, 1]`, `own_success_failure_odds: 1`, `partner_success_failure_odds: 1`; `catalog_path: sciti/tech/catalog_v1.yaml`; per-technology `depth_exponent`, `p_fail`, `p_partial`, `partial_fraction`, `fail_after_weeks` in the catalog.
+
+**Headline results on the current engine** (profit with inventory, $M over 3 years, 30 paired seeds, vs same-seed no-tech; "works" = the same engine with every adoption succeeding):
+
+| | Works | Current |
+|---|---|---|
+| Calm, every eligible firm attempts: routing | +444 | **+299** |
+| … warehouse robotics | +124 | +63 |
+| … RFID | +83 | +49 |
+| … blockchain | +321 | +47 |
+| … control tower | +63 | +33 |
+| … APS / ML forecasting / risk intelligence | +20 ns / −7 ns / −8 | +10 ns / −4 ns / −7 |
+| Random disruptions, realistic rate (0.2 per site-year; no-tech loss −$2.4B, −3.95 pt fill): risk intelligence ($8M spend) | +564 | **+379** |
+| … control tower ($35M) | +465 | +380 |
+| … APS | +307 | +210 |
+| … payback-rule agents, suppliers follow | +890 | +385 |
+| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss) |
+| CM_3 12-week hit: risk intelligence / APS / control tower | +591 / +366 / +103 | +217 / +217 / +86 |
+
+What holds across every version: routing is the top calm-conditions technology; protection (risk intelligence, APS) is worth buying once disruptions are realistic and the payback rule never buys it; scattered adopters get nothing and chains matter most in disruptions; blockchain is the most fragile technology; costs rarely change a ranking. What implementation risk changed: gains are ~40–60% of the "works" case; agents who know the odds almost stop forming groups (0.2 per run, was 4.7); patience and "suppliers follow" lose most of their value.
+
+**LLM agents so far** (all on the engine *before* implementation risk; Sonnet 5, seed 1, suppliers on rules; replay exact every time): they buy protection in every paid run, which the rule never does; with suppliers following they rebuilt control tower chains (47 adopters) and gave the best service; in the CM_3 hit they recovered +$1,175M vs +$664M for the rule, almost all from one week-1 purchase (CM_3's risk intelligence); they under-use blockchain; they did not react to the disruption itself (no event feed in the brief). The hybrid rule reproduces their edge for free. Paid runs kept in `runs/` (git-ignored): `mvp_llm_s1_20260918T192217Z` (calm, suppliers on plain rules), `mvp_llm_s1_20260918T204012Z` (calm, suppliers follow), `llm_cm3hit_s1_20260918T221641Z` (CM_3 hit); `mvp_llm_s1_20260918T191706Z` is a 2-second auth-failure run to ignore. Paid spend 2026-09-18: $13.22.
+
+**Which write-up is current** (all in `docs/sciti2/`):
+
+| Topic | Current | Superseded (kept, each carries a pointer) |
+|---|---|---|
+| Effect-size evidence | `evidence-table.md`, `risk-intel-evidence-and-sensitivity.md` | — |
+| Failure, learning, multi-party evidence and design | `implementation-failure-evidence.md`, `learning-evidence.md`, `multi-party-combination-proposal.md` (§6 = what was built) | §3–5 of the proposal (stacked joiner odds, rejected) |
+| Every source, with how it was read | `citations/citations.csv` (245 rows) + README | — |
+| E1 and sensitivity | `multi-party-combination-proposal.md` §6, `implementation-risk-results.md`; "works" case: `catalog-v2-results.md` | `tech-screen-e1.md`, `tech-screen-e1-2026-09-17.md`, `sensitivity-screen.md` |
+| E2–E4, hybrid benchmark | `e2-e4-hybrid-current-engine.md`; "works" case: `e2-e4-rerun-v2.md`, `hybrid-benchmark.md` | `stress-test-e2.md`, `who-with-whom-e3.md`, `decision-rules-e4.md` |
+| Random disruptions | `multi-party-combination-proposal.md` §6 (current numbers); design and "works" case: `random-disruptions.md` | fixed-2-weeks tables inside `random-disruptions.md` |
+| LLM runs | `llm-run-e5-v2.md` (three runs, 2026-09-18) | `llm-pilot-e5.md` (2026-09-16, old engine) |
+| Test audit | `test-audit-2026-09-17.md` | — |
+
+Result tables: `docs/sciti2/experiments/*_current.csv` are the current engine; `*_v2*.csv` and the unsuffixed files are earlier engines (the write-ups say which).
+
+**Pending**
+1. **Paid LLM run with implementation risk** (Kevin approved setting it up; not yet done). Needs: a priced copy of `configs/mvp_llm.yaml` (Sonnet 5 was $2 in / $10 out per MTok on 2026-09-18; confirm), `sciti estimate` first (the last two runs cost $3.07 and $3.01 against a $7.26 estimate), same-seed free arms for comparison (no tech, payback rule with suppliers following, hybrid), and a calm and a CM_3-hit variant. **Kevin must start it himself** in a terminal where `ANTHROPIC_API_KEY` is set: the assistant's shell has no key (the first attempt on 2026-09-18 failed authentication and fell back to rules in 2 seconds; a real run takes ~30–60 minutes). Questions it should answer: with failure odds in their briefs, do LLM agents still form groups and buy protection, and are they right to?
+2. Smaller refinements: late failure for robotics (it fails 2–4.5 years after go-live in reality); odds shown on group invitations; learning for the project draw; first-mover scarcity and "only helps if you have a buffer" for risk intelligence; varied disruption severity and regional events.
+3. LLM-side ideas: an event feed in the brief (do agents react to a disruption?); each technology's expected saving for this firm in the brief (the blockchain gap); more seeds; LLM agents on the random-disruption scenario.
+4. Open data questions: the shrink baseline (0.2%/week is ~6× retail shrink, and RFID's value rides on it); cost evidence for control tower, APS, and ML forecasting (the only three where cost changes the answer); full-text checks of citation-log rows marked `snippet/abstract`, `title only`, or `memory` before any paper cites them.
 
 ---
 
@@ -30,13 +89,13 @@ It has two planned uses:
 | Ridge Line overview (source) | `~/Docs/School/LE/SCM and AI Oct2026 workshop/RidgeLine_SupplyChain_Overview.docx` |
 | Master data set (source, read-only) | `~/Docs/School/LE/SCM and AI Oct2026 workshop/Master Data Set_4.xlsx` |
 | Technology list (source) | `~/Claude/Projects/Supply chain innovation/output/technologies-2026-Q2.pdf` (Observatory lexicon v10, 48 techs) |
+| Evidence, results, and proposals since the MVP | `docs/sciti2/` (§0 lists which file is current for each topic) |
+| Citation log | `docs/sciti2/citations/citations.csv` + `README.md` |
+| Experiment scripts and result tables | `docs/sciti2/experiments/` |
+| Technology catalogs | `sciti/tech/catalog.yaml` (v2, default), `sciti/tech/catalog_v1.yaml` (placeholders) |
+| Paid LLM runs (git-ignored) | `runs/` |
 
-Git log so far:
-- `94c12e6` Add SCITI 1 design spec
-- `a047d4f` Spec: align data notes, APS effect, calibration test with workbook profile
-- `2458d68` Add SCITI 1 implementation plan (19 tasks in 4 parts)
-- `33b64fa` Add STATUS.md for thread handoff (last commit on `main`)
-- `ba198c7` Task 1: scaffold, strict config schema, named RNG streams (branch `sciti-mvp`)
+History is in `git log` (130 commits on `main` as of 2026-09-20).
 
 ## 3. Decisions made (from brainstorming, 2026-09-12)
 
@@ -69,6 +128,8 @@ Later plan-level choices (made during planning; change them if you like):
 ## 5. Standing rules for this project
 
 - Stage files **by name**. Never `git add -A` or `git add .`.
+- **Disk housekeeping.** Every run writes several MB; a 30-seed factorial can write 10+ GB. Run big batches one at a time and delete the scratch run folders after saving the result tables (on 2026-09-19 scratch output reached ~75 GB and filled Kevin's disk).
+- Merging to `main` is Kevin's call. Several merges on 2026-09-17/19 were made after he approved the build and were flagged in the reply; when the result differs from what he was told to expect, leave the branch unmerged and ask.
 - Commit messages end with a `Co-Authored-By:` line naming the Claude model that did the work (from 2026-09-17: `Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>`; earlier commits say Opus 5).
 - The repo has a local git identity (Kevin Dooley). Don't change the global git config.
 - Quote the project path in shell commands (it has a space).
@@ -82,6 +143,8 @@ Later plan-level choices (made during planning; change them if you like):
 - Don't loosen a failing test threshold (e.g., the calibration fill rate > 0.80) without Kevin's agreement.
 
 ## 6. How we build
+
+*(Since the MVP, 2026-09-14 on: work is done directly by the main assistant, tests first, on a short-lived branch per change, fast-forwarded into `main`. Research is farmed out to background helpers, and every source goes into the citation log. The paragraph below describes how the MVP itself was built.)*
 
 Chosen 2026-09-12: **subagent-driven** (`superpowers:subagent-driven-development`). A fresh helper implements each task; a reviewer checks spec + quality; fixes loop until clean. Work happens on branch `sciti-mvp` (not `main`). Each part has its own git-ignored ledger under `.superpowers/sdd/<plan-part-name>/progress.md`; trust the ledger and `git log` when resuming.
 
@@ -260,9 +323,11 @@ Update this table and the "Last updated" line as each task lands.
 
 **E2–E4 and hybrid benchmark on the current engine (2026-09-19):** `docs/sciti2/e2-e4-hybrid-current-engine.md`; numbers `experiments/*_current.csv`. (A first attempt filled the disk: ~75 GB of scratch run folders. Freed; experiments now run one at a time and delete their run folders after saving result tables. Kevin's disk was at ~850 GB before my scratch.) Works → risk, profit with inventory $M: **E2** CM_3 12-week hit: risk intel +591 → +217, APS +366 → +217 (now tied), control tower +103 → +86, payback rule +436 → +223 (calm +430 → +234). **E3:** structure holds (scattered = nothing; downstream CT chain +60 of +86 in the hit; blockchain follows volume, CM_3 hub +16), but small groups are ~worthless in calm. **E4:** gain range +$234–271M calm (was +365–576); **agents who know the odds stop forming groups** (0.2 groups per run, was 4.7; control tower 0.5 adoptions, was 14.8; blockchain 1.8, was 9.7); patience no longer pays (+$3M ns, was +97); still never APS/robotics/risk intel. **Hybrid:** habit worth +$216M in the CM_3 hit (hybrid +481 vs follow +265; was +583), free in calm; suppliers-follow worth only +$40M (was +196). All findings about ranking and structure hold; sizes are ~40–60% of the everything-works case.
 
-## 8. Known risks to watch during the build
+## 8. Known risks and caveats (2026-09-20)
 
-- **Engine tuning:** the baseline inventory policy may give a low fill rate on real data (Task 10 calibration). If so, debug the policy; don't lower the bar.
-- **Plan code is unrun.** The plan's code was written carefully but never executed. Expect small fixes. Follow TDD, and note deviations in commit messages.
-- **Tech effects are placeholders.** Research use needs cited effect sizes (§6 of the spec).
+- **Evidence quality varies by parameter.** Measured or well supported: RFID record accuracy, ML forecast skill (M5), routing cost, control tower's concavity and partner-additivity, blockchain's project failure rate. Weak or borrowed: blockchain's defect effect, APS capacity, risk intelligence (no study measures monitoring vs outage length), all failure odds except blockchain's, every learning magnitude, the depth exponent. The catalog's `assumption: true` flags and the citation log's `read_level` column say which is which.
+- **Costs are still placeholders.** They change the answer only for control tower, APS, and ML forecasting.
+- **Single-seed LLM results** are patterns, not estimates; all three paid runs predate implementation risk.
+- **Known simplifications** (details in `implementation-risk-results.md` and `multi-party-combination-proposal.md` §6): a failed project never delivers anything (no late failure); the whole one-time cost is sunk; disruptions have one severity and are independent across sites; a forced "all eligible" adoption of a pair/chain technology is one project, so that arm is all-or-nothing per seed; experience does not depreciate.
+- **Don't loosen a failing test threshold** without Kevin's agreement; don't tune a judgment parameter because it gives a nicer result (the rejected "joiner odds" are the cautionary case).
 - **LLM replication** comes from the decision log plus `sciti replay`, not from the model itself.

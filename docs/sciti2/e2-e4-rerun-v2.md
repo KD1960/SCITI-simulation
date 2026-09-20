@@ -1,5 +1,7 @@
 # E2–E4 rerun on the corrected engine and catalog v2
 
+> **Status (2026-09-20):** this is the "every adoption works" case. On the current engine see `e2-e4-hybrid-current-engine.md`.
+
 **Date:** 2026-09-18
 **Engine and catalog:** `main` at `588473e` (audit fixes, freight in prices, ML sigma fix, inventory-adjusted profit, catalog v2)
 **Commands:** `stress_test.py`, `who_with_whom.py`, `decision_rules.py` in `docs/sciti2/experiments/` (each `OUT_DIR`)

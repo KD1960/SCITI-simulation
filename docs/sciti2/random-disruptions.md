@@ -1,5 +1,7 @@
 # Random-disruption experiment
 
+> **Status (2026-09-20):** the design and the "every adoption works" numbers are here. Current-engine numbers: `multi-party-combination-proposal.md` §6 (`experiments/random_disruptions_results_current.csv`).
+
 **Date:** 2026-09-19
 **Engine and catalog:** `main` at `4f6ab09` (corrected engine, catalog v2, suppliers-follow rule, insurance habit)
 **Command:** `.venv/bin/python docs/sciti2/experiments/random_disruptions.py OUT_DIR`

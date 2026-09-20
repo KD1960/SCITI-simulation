@@ -1,5 +1,7 @@
 # E1 Technology Screen — Rerun on the corrected engine
 
+> **Status (2026-09-20):** catalog v1 placeholders, every adoption succeeding. Current numbers: `multi-party-combination-proposal.md` §6 and `implementation-risk-results.md`; catalog v2 "works" case: `catalog-v2-results.md`.
+
 **Date:** 2026-09-17
 **Engine:** `main` at `14b0a08` (after the audit fixes, freight in prices, the ML forecasting sigma fix, and inventory-adjusted profit)
 **Command:** `.venv/bin/python docs/sciti2/experiments/tech_screen.py OUT_DIR`

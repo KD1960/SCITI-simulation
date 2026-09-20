@@ -1,5 +1,7 @@
 # Sensitivity Screen — Results
 
+> **Status (2026-09-20):** catalog v1 placeholders. The catalog v2 screen is in `catalog-v2-results.md`; risk intelligence's sensitivity is in `risk-intel-evidence-and-sensitivity.md`.
+
 **Date:** 2026-09-17
 **Engine:** `main` at `97c76bb` (after the 2026-09-17 audit fixes and freight-in-prices)
 **Command:** `.venv/bin/python docs/sciti2/experiments/sensitivity_screen.py OUT_DIR`

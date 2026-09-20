@@ -1,5 +1,7 @@
 # Results with implementation risk switched on
 
+> **Status (2026-09-20):** these numbers use independent per-member draws. Since 2026-09-19 a group adopting a pair or chain technology is one project and information technologies are concave in depth: current numbers in `multi-party-combination-proposal.md` §6. Solo-technology rows here are unchanged.
+
 **Date:** 2026-09-19
 **Engine and catalog:** branch `implementation-failure` at `19519a0` (catalog v2 + implementation risk)
 **Commands:** `tech_screen.py` and `random_disruptions.py` in `docs/sciti2/experiments/`

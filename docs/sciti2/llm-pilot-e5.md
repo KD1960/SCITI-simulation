@@ -1,5 +1,7 @@
 # E5 First LLM Pilot — Results
 
+> **Status (2026-09-20):** old engine (before the 2026-09-17 fixes and catalog v2). The 2026-09-18 runs are in `llm-run-e5-v2.md`.
+
 > **Engine changed 2026-09-17** (audit fixes: freight paid by the shipper,
 > blockchain eligibility, random defects, early warning, and expected freight
 > now built into selling prices). Numbers below come from the earlier

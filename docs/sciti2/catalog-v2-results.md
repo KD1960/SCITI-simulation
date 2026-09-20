@@ -1,5 +1,7 @@
 # Catalog v2 — E1 and sensitivity screen rerun
 
+> **Status (2026-09-20):** this is the "every adoption works" case. With implementation risk, learning, and group project draws on (the default since 2026-09-19), see `multi-party-combination-proposal.md` §6.
+
 **Date:** 2026-09-18
 **Engine and catalog:** branch `catalog-v2` at `4a4d1b3` (catalog v2: MID values from `evidence-table.md`, ML skill by role, risk intelligence as weeks saved plus warning probability)
 **Commands:** `tech_screen.py OUT_DIR` and `sensitivity_screen.py OUT_DIR` (both in `docs/sciti2/experiments/`)
