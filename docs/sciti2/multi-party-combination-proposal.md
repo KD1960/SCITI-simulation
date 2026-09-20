@@ -82,7 +82,7 @@ The direction is supported (dip, then improvement; hub support doubles the rate;
 
 ## 5. Results after building Parts 1 and 2 (2026-09-19, branch `group-project-draw`, not merged)
 
-Built as proposed: `assumptions.group_project_draw` (+ `joiner_p_fail` 0.25, `joiner_p_partial` 0.45) and catalog `depth_exponent` (0.5 for control tower and risk intelligence). 221 tests pass. Numbers: `experiments/random_disruptions_results_risk_learning_project.csv`. Profit with inventory, $M, 30 seeds.
+Built as proposed: `assumptions.group_project_draw` (+ `joiner_p_fail` 0.25, `joiner_p_partial` 0.45) and catalog `depth_exponent` (0.5 for control tower and risk intelligence). 221 tests pass. (The stacked version's numbers were not kept; the table below records them.) Profit with inventory, $M, 30 seeds.
 
 | Arm | Every adoption works | Risk + learning (before) | **With Parts 1 and 2** | 95% range |
 |---|---|---|---|---|
@@ -109,3 +109,34 @@ Built as proposed: `assumptions.group_project_draw` (+ `joiner_p_fail` 0.25, `jo
 - **(d) Replace stacking with substitution:** in a group, the *project* draw replaces the members' failure draws entirely (members only draw depth). Then a control tower member fails 25% of the time, as the catalog says, but all together. This is the cleanest reading of "the measured rates are per project" and removes the double count.
 
 My recommendation is **(d)**: it keeps the evidence-based idea (one project, correlated outcome), removes my double-counting mistake, and needs no invented joiner odds. Members would keep a depth draw (partial vs full) so onboarding quality still varies.
+
+## 6. Option (d) built and run (2026-09-19, Kevin's ruling)
+
+In a group adopting a pair or chain technology, **one project draw at the catalog odds decides fail / partial / full for everyone, and it replaces the members' own failure draws.** Members only draw the depth of their onboarding: shallow with the catalog's odds of partial among survivors (blockchain 0.25/0.35 = 0.71; control tower 0.50/0.75 = 0.67), scaled by the same learning and small-firm multipliers, and a member's depth is the lesser of the project's and its own. The invented joiner odds are gone. Part 2 (concave depth, exponent 0.5, for control tower and risk intelligence) is unchanged. 221 tests pass; tech golden regenerated. Numbers: `experiments/tech_screen_results_current.csv`, `experiments/random_disruptions_results_current.csv`.
+
+Profit with inventory, $M, 30 seeds; every figure in bold is clear of zero at 95%.
+
+| Arm | Every adoption works | Independent draws + learning | Stacked (rejected) | **Option (d)** | 95% range |
+|---|---|---|---|---|---|
+| Calm: blockchain, all eligible | +321 | +5 (ns) | +15 (ns) | **+47** | 19 to 74 |
+| Calm: control tower, all 48 | +63 | +8 (ns) | +6 (ns) | **+33** | 17 to 50 |
+| Calm: payback rule, suppliers follow | +626 | +247 | +246 | **+274** | 238 to 311 |
+| Rate 0.2: risk intelligence | +564 | +259 | +379 | **+379** | 256 to 502 |
+| Rate 0.2: control tower | +465 | +210 | +212 | **+380** | 229 to 531 |
+| Rate 0.2: APS | +307 | +210 | +210 | **+210** | 147 to 272 |
+| Rate 0.2: payback rule, suppliers follow | +890 | +373 | +341 | **+385** | 253 to 516 |
+| Rate 0.2: hybrid (insurance habit) | +1,444 | +625 | +763 | **+818** | 596 to 1,040 |
+| Rate 0.2: hybrid + robotics | +1,495 | +693 | +855 | **+905** | 673 to 1,137 |
+| Rate 0.4: hybrid | +2,563 | +1,202 | — | **+1,577** | 1,341 to 1,814 |
+
+Solo technologies are untouched (calm: routing +299, robotics +63, RFID +49, APS +10 ns).
+
+**Findings**
+
+1. **Multi-party technologies are now fragile but not worthless.** Blockchain keeps 15% of its everything-works value (+$47M) and control tower 52% in calm (+$33M). Both are now distinguishable from zero.
+2. **Control tower is worth as much as risk intelligence under realistic disruptions:** +$380M (82% of its everything-works value; positive in 80% of seeds, median +$275M; fill +0.71 pt), against +$379M for risk intelligence. It costs more ($35M vs $8M), so risk intelligence is still the better value per dollar. Because a control tower is one project, it is also all-or-nothing: a quarter of seeds get nothing from it.
+3. **The hybrid recovers 34% of the realistic disruption loss** (+$818M of $2.4B; was 26%); the insurance habit is worth +$433M (positive in 90% of seeds).
+4. **What agents experience** (hybrid arm, rate 0.2): blockchain attempts fail 62% of the time (was 75%) and 21 of ~56 attempts per run end up working; control tower 29% fail, ~40 of 55 working, nearly all partial (66%) because a shallow project caps every member.
+5. The ranking in calm conditions is unchanged: routing, then robotics, RFID, blockchain, control tower.
+
+**Remaining judgment calls in this design:** the depth exponent 0.5; members' shallow-onboarding odds borrowed from the catalog's partial share; the project draw ignores learning and the small-firm penalty; one forced "all eligible" adoption is treated as a single project (34 firms on one blockchain platform, 48 on one control tower), which is the platform reading of the evidence but makes those arms all-or-nothing per seed.
