@@ -21,6 +21,9 @@ python3 -m venv .venv
 .venv/bin/pip install -e ".[dev]"
 ```
 
+`requirements.lock` lists the exact package versions the results were made
+with (`.venv/bin/pip install -r requirements.lock` to match them).
+
 ## Prepare the data
 
 The engine never reads the Excel file directly; `sciti prepare` reads it once
@@ -109,10 +112,13 @@ policy. Before spending any money:
 
 ## Interpreting results
 
-- **Tech effects, costs, and markups are placeholder assumptions.** No
-  technology in `sciti/tech/catalog.yaml` has a cited effect size yet; every
-  one is marked `assumption: true`. Treat outcome differences between runs as
-  illustrative, not as a validated estimate of any real technology's impact.
+- **Tech effect sizes come from an evidence table; costs and markups are
+  still placeholders.** `sciti/tech/catalog.yaml` (v2) uses the MID values of
+  `docs/sciti2/evidence-table.md`. APS, blockchain, and risk intelligence have
+  no measured effect and stay marked `assumption: true`; failure odds and
+  learning sizes are mostly judgment (`STATUS.md` §8). Treat outcome
+  differences as model results, not as a validated estimate of any real
+  technology's impact. `catalog_v1.yaml` keeps the old placeholders.
   Every run's manifest lists exactly which assumptions it used
   (`manifest.json` → `assumptions`), and the view shows the same list in the
   header badge's tooltip.
