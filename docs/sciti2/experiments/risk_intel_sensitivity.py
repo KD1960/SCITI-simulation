@@ -10,6 +10,7 @@ eligible firm vs no tech, and the hybrid (payback rule, suppliers follow, insura
 same rule without the habit. Writes OUT_DIR/risk_intel_sensitivity.csv and prints it.
 """
 import json
+import shutil
 import sys
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
@@ -21,6 +22,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent))
 from random_disruptions import FOLLOW, SEEDS, T_975_DF29, WEEKS, schedule  # noqa: E402
 
+from sciti.batch import provenance
 from sciti.config import Config, DecisionCfg, ForcedAdoption  # noqa: E402
 from sciti.network import build_network  # noqa: E402
 from sciti.runner import run  # noqa: E402
@@ -52,7 +54,9 @@ def _run(job):
                  decision=ARMS[arm], disruptions=schedule(seed, RATE, sites))
     if arm == "risk_intel":
         cfg.forced_adoptions = [ForcedAdoption(week=1, tech="risk_intel", members=eligible)]
-    s = json.loads((run(cfg, run_dir=out / level / arm / f"s{seed}") / "summary.json").read_text())
+    d = run(cfg, run_dir=out / level / arm / f"s{seed}")
+    s = json.loads((d / "summary.json").read_text())
+    shutil.rmtree(d)
     return {"level": level, "arm": arm, "seed": seed, "profit": s["network_profit_with_inventory"], "fill": s["fill_rate"]}
 
 
@@ -82,7 +86,7 @@ def main(out: Path) -> None:
                              "ci_low": diff.mean() - half, "ci_high": diff.mean() + half,
                              "share_positive": float((diff > 0).mean())})
     table = pd.DataFrame(rows)
-    table.to_csv(out / "risk_intel_sensitivity.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "risk_intel_sensitivity.csv", index=False)
     print(table.to_string(float_format=lambda x: f"{x:.4g}"))
 
 

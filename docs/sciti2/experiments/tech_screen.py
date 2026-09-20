@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sciti.batch import run_batch
+from sciti.batch import provenance, run_batch
 from sciti.config import Config, ForcedAdoption
 from sciti.network import build_network
 from sciti.tech.catalog import load_catalog
@@ -36,7 +36,7 @@ def _run(args):
     name, members_by_tech, out = args
     cfg = Config(name=name, seed=1, weeks=156, output_dir=str(out))
     cfg.forced_adoptions = [ForcedAdoption(week=1, tech=t, members=m) for t, m in members_by_tech.items()]
-    return name, run_batch(cfg, SEEDS, out / name)
+    return name, run_batch(cfg, SEEDS, out / name, keep_runs=False)
 
 
 def load(batch_dir: Path) -> pd.DataFrame:
@@ -69,7 +69,7 @@ def main(out: Path) -> None:
                          "ci_low": diff[c].mean() - half, "ci_high": diff[c].mean() + half,
                          "base_mean": base[c].mean()})
     table = pd.DataFrame(rows)
-    table.to_csv(out / "screen.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "screen.csv", index=False)
     print(table.to_string(float_format=lambda x: f"{x:.4g}"))
 
 

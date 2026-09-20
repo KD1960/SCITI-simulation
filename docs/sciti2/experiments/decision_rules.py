@@ -16,6 +16,7 @@ Writes:
 """
 import itertools
 import json
+import shutil
 import sys
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
@@ -24,7 +25,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sciti.batch import run_batch
+from sciti.batch import provenance, run_batch
 from sciti.config import Assumptions, Config, DecisionCfg, Disruption
 
 SEEDS = list(range(1, 31))
@@ -84,6 +85,7 @@ def _run(job):
             row.update({f"failed_{k.replace(' ', '_')}": failed[k]
                         for k in ("acceptance", "budget", "held", "quota", "no eligible partners")})
             row["mean_adopt_week"] = float(np.mean(weeks)) if weeks else np.nan
+        shutil.rmtree(r.run_dir)
         rows.append(row)
     return name, pd.DataFrame(rows).set_index("seed")
 
@@ -131,7 +133,7 @@ def main(out: Path) -> None:
                             "measure": m, "effect": diff[m].mean(), "ci_low": diff[m].mean() - half,
                             "ci_high": diff[m].mean() + half, "mean_at_low": lo[m].mean(),
                             "mean_at_high": hi[m].mean()})
-    pd.DataFrame(eff).to_csv(out / "main_effects.csv", index=False)
+    pd.DataFrame(eff).assign(**provenance()).to_csv(out / "main_effects.csv", index=False)
     print(f"wrote {out / 'runs.csv'} ({len(runs)} rows) and {out / 'main_effects.csv'}")
 
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import shutil
 from pathlib import Path
 
 from sciti.config import config_hash
@@ -122,7 +123,7 @@ def _format_config_factors(cfg) -> dict:
     }
 
 
-def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=False, client=None) -> Path:
+def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=False, client=None, keep_runs=True) -> Path:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -147,12 +148,16 @@ def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=Fals
             try:
                 d = run(c, run_dir=out_dir / f"{c.decision.policy}_s{seed}", client=client)
                 summary = json.loads((d / "summary.json").read_text())
+                commit = json.loads((d / "manifest.json").read_text())["git_commit"]
+                if not keep_runs:
+                    shutil.rmtree(d)
                 row = {
                     "seed": seed,
                     "policy": c.decision.policy,
                     "baseline_for": primary_policy if is_baseline else "",
                     "config_hash": config_hash(c),
-                    "run_dir": str(d),
+                    "git_commit": commit,
+                    "run_dir": str(d) if keep_runs else "",
                     "status": "ok",
                     "error": "",
                     **_format_config_factors(c),
@@ -181,3 +186,9 @@ def run_batch(cfg, seeds, out_dir: Path, with_baseline=False, confirm_spend=Fals
         w.writerows(rows)
 
     return out_dir
+
+
+def provenance() -> dict:
+    """Columns that tie a results table to the code that made it."""
+    from sciti.outputs import _git, now
+    return {**_git(), "run_date": now()[:10]}

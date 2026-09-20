@@ -21,7 +21,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sciti.batch import run_batch
+from sciti.batch import provenance, run_batch
 from sciti.config import Config, DecisionCfg, DemandCfg, Disruption, ForcedAdoption
 from sciti.network import build_network
 from sciti.tech.catalog import load_catalog
@@ -47,7 +47,7 @@ def scenarios():
 
 def _run(job):
     name, cfg, out = job
-    return name, run_batch(cfg, SEEDS, out / name)
+    return name, run_batch(cfg, SEEDS, out / name, keep_runs=False)
 
 
 def load(batch_dir: Path) -> pd.DataFrame:
@@ -93,7 +93,7 @@ def main(out: Path) -> None:
         for arm in FORCED_TECHS + ("rules",):
             add("tech_vs_none", scen, arm, data[f"{scen}__{arm}"] - none)
     table = pd.DataFrame(rows)
-    table.to_csv(out / "stress.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "stress.csv", index=False)
     print(f"wrote {out / 'stress.csv'}: {len(table)} rows")
 
 

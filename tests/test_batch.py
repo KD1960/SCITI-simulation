@@ -127,3 +127,22 @@ def test_estimate_excludes_rules_roles_agents():
     e = estimate(Config(name="e", seed=1, decision=DecisionCfg(**base, rules_roles=["Supplier"])))
     assert e["calls_expected"] == round(18 * 12 * 2.1)
     assert e["calls_max"] == 18 * 12 * 2 * 2
+
+
+def test_batch_can_delete_run_folders_and_records_the_commit(baseline_path, tmp_path):
+    import json
+    c = Config(name="b", seed=0, weeks=13, baseline_path=str(baseline_path), output_dir=str(tmp_path))
+    kept = run_batch(c, [1], tmp_path / "kept")
+    rows = list(csv.DictReader(open(kept / "results.csv")))
+    assert rows[0]["git_commit"] == json.loads((kept / "none_s1" / "manifest.json").read_text())["git_commit"]
+    gone = run_batch(c, [1, 2], tmp_path / "gone", keep_runs=False)
+    assert [p.name for p in gone.iterdir()] == ["results.csv"]
+    assert len(list(csv.DictReader(open(gone / "results.csv")))) == 2
+
+
+def test_provenance_stamps_commit_and_date():
+    from sciti.batch import provenance
+    from sciti.outputs import _git
+    p = provenance()
+    assert p["git_commit"] == _git()["git_commit"] and set(p) == {"git_commit", "git_dirty", "run_date"}
+    assert len(p["run_date"]) == 10

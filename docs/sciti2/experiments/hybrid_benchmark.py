@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sciti.batch import run_batch
+from sciti.batch import provenance, run_batch
 from sciti.config import Config, DecisionCfg, Disruption
 
 SEEDS = list(range(1, 31))
@@ -37,7 +37,7 @@ COLS = ["network_profit_with_inventory", "satisfaction_index", "fill_rate", "ret
 def _run(args):
     name, scen, arm, out = args
     cfg = Config(name=name, seed=1, weeks=156, output_dir=str(out), decision=ARMS[arm], disruptions=SCENARIOS[scen])
-    d = pd.read_csv(run_batch(cfg, SEEDS, out / name) / "results.csv")
+    d = pd.read_csv(run_batch(cfg, SEEDS, out / name, keep_runs=False) / "results.csv")
     if not (d.status == "ok").all():
         raise SystemExit(f"failed runs in {name}: {d.error.dropna().unique()}")
     return name, d.set_index("seed")[COLS]
@@ -59,7 +59,7 @@ def main(out: Path) -> None:
                 rows.append({"scenario": scen, "arm": arm, "measure": c, "mean": diff[c].mean(),
                              "ci_low": diff[c].mean() - half, "ci_high": diff[c].mean() + half})
     table = pd.DataFrame(rows)
-    table.to_csv(out / "hybrid.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "hybrid.csv", index=False)
     print(table.to_string(float_format=lambda x: f"{x:.4g}"))
 
 

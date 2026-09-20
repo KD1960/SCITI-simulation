@@ -18,6 +18,7 @@ the same plus robotics. Seeds 1-30, 156 weeks. Writes OUT_DIR/random_disruptions
 (paired mean difference vs the no-tech arm and 95% CI) and OUT_DIR/schedules.csv.
 """
 import json
+import shutil
 import sys
 import zlib
 from concurrent.futures import ProcessPoolExecutor
@@ -26,6 +27,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from sciti.batch import provenance
 from sciti.config import Config, DecisionCfg, Disruption, ForcedAdoption
 from sciti.network import build_network
 from sciti.runner import run
@@ -62,7 +64,9 @@ def _run(job):
                  decision=POLICIES.get(arm, DecisionCfg()), disruptions=schedule(seed, rate, members["sites"]))
     if arm in FORCED:
         cfg.forced_adoptions = [ForcedAdoption(week=1, tech=arm, members=members[arm])]
-    s = json.loads((run(cfg, run_dir=out / f"r{rate}" / arm / f"s{seed}") / "summary.json").read_text())
+    d = run(cfg, run_dir=out / f"r{rate}" / arm / f"s{seed}")
+    s = json.loads((d / "summary.json").read_text())
+    shutil.rmtree(d)
     row = {m: s[m] for m in MEASURES if m in s}
     row.update(costs_stockout=s["costs"]["stockout"], costs_tech=s["costs"]["tech"], rate=rate, arm=arm, seed=seed)
     return row
@@ -94,7 +98,7 @@ def main(out: Path) -> None:
                 rows.append({"rate": r, "arm": "none_vs_calm" if a == "none" else a, "measure": m, "mean": d[m].mean(),
                              "ci_low": d[m].mean() - half, "ci_high": d[m].mean() + half})
     table = pd.DataFrame(rows)
-    table.to_csv(out / "random_disruptions.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "random_disruptions.csv", index=False)
     print(table[table.measure == "network_profit_with_inventory"].to_string(float_format=lambda x: f"{x:.4g}"))
 
 

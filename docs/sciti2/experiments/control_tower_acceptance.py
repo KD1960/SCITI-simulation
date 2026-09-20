@@ -45,7 +45,7 @@ def main(out: Path) -> None:
     for arm, members in arms.items():
         cfg = base_cfg.model_copy(update={"name": f"ct_{arm}"}, deep=True)
         cfg.forced_adoptions = [ForcedAdoption(week=1, tech="control_tower", members=members)]
-        d = load(run_batch(cfg, SEEDS, out / arm)) - base
+        d = load(run_batch(cfg, SEEDS, out / arm, keep_runs=False)) - base
         diffs[arm] = d
         for c in COLS:
             half = T_975_DF9 * d[c].std(ddof=1) / np.sqrt(len(d))

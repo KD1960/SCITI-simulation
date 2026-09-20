@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from sciti.batch import run_batch
+from sciti.batch import provenance, run_batch
 from sciti.config import Config, Disruption, ForcedAdoption
 from sciti.network import build_network
 from sciti.tech.catalog import load_catalog
@@ -50,7 +50,7 @@ ARMS = {
 
 def _run(job):
     name, cfg, out = job
-    return name, run_batch(cfg, SEEDS, out / name)
+    return name, run_batch(cfg, SEEDS, out / name, keep_runs=False)
 
 
 def load(batch_dir: Path) -> pd.DataFrame:
@@ -88,7 +88,7 @@ def main(out: Path) -> None:
                              "groups": len(groups), "measure": c, "mean": diff[c].mean(),
                              "ci_low": diff[c].mean() - half, "ci_high": diff[c].mean() + half})
     table = pd.DataFrame(rows)
-    table.to_csv(out / "who_with_whom.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "who_with_whom.csv", index=False)
     print(f"wrote {out / 'who_with_whom.csv'}: {len(table)} rows")
 
 

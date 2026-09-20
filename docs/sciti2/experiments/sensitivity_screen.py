@@ -22,7 +22,7 @@ import numpy as np
 import pandas as pd
 import yaml
 
-from sciti.batch import run_batch
+from sciti.batch import provenance, run_batch
 from sciti.config import Config, Disruption, ForcedAdoption
 from sciti.network import build_network
 from sciti.tech.catalog import DEFAULT_PATH, load_catalog
@@ -55,7 +55,7 @@ def _run(args):
                  disruptions=SCENARIOS[scen])
     if tid:
         cfg.forced_adoptions = [ForcedAdoption(week=1, tech=tid, members=members)]
-    return name, run_batch(cfg, SEEDS, out / name)
+    return name, run_batch(cfg, SEEDS, out / name, keep_runs=False)
 
 
 def load(batch_dir: Path) -> pd.DataFrame:
@@ -92,7 +92,7 @@ def main(out: Path) -> None:
                      "costs_tech": cost, "profit_cost_x0.5": profit.mean() + 0.5 * cost,
                      "profit_cost_x2": profit.mean() - cost, "breakeven_cost_mult": 1 + profit.mean() / cost})
     table = pd.DataFrame(rows)
-    table.to_csv(out / "sensitivity.csv", index=False)
+    table.assign(**provenance()).to_csv(out / "sensitivity.csv", index=False)
     print(table.to_string(float_format=lambda x: f"{x:.4g}"))
 
 
