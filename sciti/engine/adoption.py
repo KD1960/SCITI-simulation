@@ -49,11 +49,18 @@ def learning_multiplier(s, node_id: str, tech_id: str, week: int) -> float:
 
 
 def implementation_odds(tech, role: str, assumptions, learning: float = 1.0, joiner: bool = False) -> tuple[float, float]:
-    """(p_fail, p_partial) for this role; suppliers, the small firms, fail more often, and experience helps.
-    A joiner is a member onboarding to a group's project, which has its own draw at the catalog odds."""
+    """(p_fail, p_partial) for this role; suppliers, the small firms, do worse, and experience helps.
+    A joiner is a member of a group's project: the project's own draw decides failure for everyone, so the
+    member only risks a shallow onboarding (p_fail 0; the catalog's odds of partial among survivors, scaled the same way)."""
     if not assumptions.implementation_risk:
         return 0.0, 0.0
-    p_fail, p_partial = (assumptions.joiner_p_fail, assumptions.joiner_p_partial) if joiner else (tech.p_fail, tech.p_partial)
+    if joiner:
+        shallow = tech.p_partial / (1 - tech.p_fail) if tech.p_fail < 1 else 0.0
+        if 0 < shallow < 1:
+            odds = shallow / (1 - shallow) * learning * (assumptions.small_firm_failure_odds if role == "Supplier" else 1.0)
+            shallow = odds / (1 + odds)
+        return 0.0, shallow
+    p_fail, p_partial = tech.p_fail, tech.p_partial
     mult = learning * (assumptions.small_firm_failure_odds if role == "Supplier" else 1.0)
     if mult != 1.0 and 0 < p_fail < 1:
         odds = p_fail / (1 - p_fail) * mult
@@ -88,7 +95,7 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
     project = coalition_id is not None and tech.network_requirement != "solo" and A.group_project_draw
     outcome, fraction = implementation_outcome(implementation_draw(s.cfg.seed, node_id, tech_id, week), tech, ns.role,
                                                A, learning_multiplier(s, node_id, tech_id, week), joiner=project)
-    if project:  # the group's platform has one outcome for everyone; "MFG" = no small-firm scaling for the platform
+    if project:  # the group's project has one outcome for everyone; "MFG" = no small-firm scaling for the project
         p_outcome, p_fraction = implementation_outcome(implementation_draw(s.cfg.seed, coalition_id, tech_id, week),
                                                        tech, "MFG", A)
         fraction = min(fraction, p_fraction)

@@ -162,10 +162,11 @@ def test_information_technologies_are_concave_in_depth(baseline):
 def test_a_group_adopting_a_multi_party_technology_is_one_project(baseline, monkeypatch):
     """The measured failure rates are per project. A blockchain pair or control tower chain adopted
     as a group gets ONE project draw at the catalog odds (blockchain 0.65 fail / 0.25 partial at 0.4),
-    keyed by the group id; if it fails, every member fails together. Each member then draws its own
-    onboarding at the milder joiner odds (0.25 fail / 0.45 partial; suppliers' failure odds x1.75 ->
-    0.368), and its depth is the lesser of the project's and its own. Solo technologies adopted in a
-    group, and firms adopting alone, draw as before."""
+    keyed by the group id: the members fail or go live together. The project draw replaces the
+    members' own failure draws (no double count); each member only draws how deep its own onboarding
+    goes: shallow with the catalog's odds of partial among survivors, 0.25 / 0.35 = 0.714 for a CM
+    (suppliers' odds x1.75 -> 0.814), and its depth is the lesser of the project's and its own.
+    Solo technologies adopted in a group, and firms adopting alone, draw as before."""
     import sciti.engine.adoption as adoption
     draws = {}
     monkeypatch.setattr(adoption, "implementation_draw", lambda seed, key, tech, week: draws[key])
@@ -181,9 +182,9 @@ def test_a_group_adopting_a_multi_party_technology_is_one_project(baseline, monk
     dead = outcomes(0.64, {"CM_1": 0.99, "Supplier_1": 0.99})           # the platform fails: everyone fails
     assert {m: o[0] for m, o in dead.items()} == {"CM_1": "fail", "Supplier_1": "fail"}
     assert dead["CM_1"][2] == 1 + 52
-    full = outcomes(0.95, {"CM_1": 0.24, "CM_2": 0.26, "CM_3": 0.71, "Supplier_1": 0.36, "Supplier_2": 0.37})
-    assert {m: o[0] for m, o in full.items()} == {"CM_1": "fail", "CM_2": "partial", "CM_3": "full",
-                                                   "Supplier_1": "fail", "Supplier_2": "partial"}
+    full = outcomes(0.95, {"CM_1": 0.01, "CM_2": 0.70, "CM_3": 0.72, "Supplier_1": 0.80, "Supplier_2": 0.82})
+    assert {m: o[0] for m, o in full.items()} == {"CM_1": "partial", "CM_2": "partial", "CM_3": "full",
+                                                   "Supplier_1": "partial", "Supplier_2": "full"}   # nobody fails alone
     assert full["CM_2"][1] == 0.4 and full["CM_3"][1] == 1.0
     shallow = outcomes(0.70, {"CM_3": 0.99})                             # a shallow platform caps a full member at 0.4
     assert shallow["CM_3"][:2] == ("partial", 0.4)
