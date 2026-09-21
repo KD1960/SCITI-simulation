@@ -37,40 +37,42 @@ For each: the question, a draft guess (the assistant's, from results so far), th
 Background: they bought risk intelligence in all three paid runs (6, 7, 7 firms). Its brief now shows about a 30% chance of failure and 45% of partial success.
 - Draft guess: yes, but fewer: 3–6 firms buy risk intelligence in each scenario.
 - Counts as yes: at least 3 firms attempt risk intelligence or APS in the calm run.
-- Kevin's guess: ______
+- Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G2. Does CM_3 still buy risk intelligence early in the hit scenario?**
 Background: that one week-1 purchase made almost all of the LLM edge on 2026-09-18 (+$798M alone).
 - Draft guess: yes, CM_3 attempts it before week 30 (persona-driven, as before). Whether it *works* is a coin toss the agent does not control (about 30% fail).
 - Counts as yes: a CM_3 risk-intelligence attempt before the hit starts.
-- Kevin's guess: ______
+- Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G3. Do LLM agents still form groups?**
 Background: rule agents who know the odds almost stop (0.2 groups per run, was 4.7). LLM agents formed 2 control tower chains and 4 blockchain pairs on 2026-09-18 (suppliers following).
 - Draft guess: fewer groups, but not zero: at least one control tower chain forms; blockchain pairs 0–2.
 - Counts as yes: at least 1 group of any kind forms in the calm run. Counts as "like the rule": 0 groups.
-- Kevin's guess: ______
+- **Open before signing (Kevin, 2026-09-21):** "there should be a slider to adjust baseline level of collaboration." Not yet designed; it is a model change, so it must be built (or set aside for a later page) before the freeze.
+- Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G4. Do LLM agents beat the payback rule?**
 Background, current engine, 30 seeds: rule with followers +$274M calm / +$265M hit; hybrid +$269M calm / +$481M hit (`e2-e4-hybrid-current-engine.md`).
 - Draft guess: calm, about the same as the rule (within ±$75M). Hit: LLM beats the rule **only if** G2 happens and that project does not fail; otherwise about the same.
 - Counts as "beats": LLM minus rule is more than +$75M on the main measure (on five seeds: in at least 4 of 5).
-- Kevin's guess: ______
+- Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G5. Does the free hybrid rule still match the LLM agents?**
 Background: on the everything-works engine the hybrid reproduced the LLM edge for free.
 - Draft guess: yes. Hybrid is within ±$100M of the LLM arm in the hit scenario, or ahead.
 - Counts as yes: LLM minus hybrid is below +$100M in the hit scenario.
-- Kevin's guess: ______
+- Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G6. Are they right to?** (the judgment question from STATUS §0)
 - For protection: compare the LLM firms' risk-intelligence and APS spend with what those purchases returned on this seed, and with the 30-seed random-disruption result (risk intelligence +$379M for $8M, positive in most seeds). Draft guess: buying it is right on average; on a single calm seed it will look like a small loss (about −$7M).
 - For groups: draft guess: avoiding blockchain pairs is right (+$47M for all firms, most fragile); avoiding control tower chains is wrong once disruptions are realistic (+$380M at rate 0.2).
-- Kevin's guess: ______
+- Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G7. Run health.**
 - Draft guess: cost $3–7 per run; malformed replies under 6%; fallbacks under 10; replay exact.
 - If replay is not exact, stop and treat it as a bug before reading any result.
+- Kevin (2026-09-21): agrees.
 
 ## 4. What we will not do after seeing the results
 
