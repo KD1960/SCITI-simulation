@@ -93,3 +93,9 @@ Every free experiment so far used seeds 1–30. Seeds **31–60** have never bee
 - [x] This page committed; commit tagged `v1.0`.
 
 Signed (Kevin), date: 2026-09-21. The prices line above is filled in on the day of the run, in the run write-up; it is not a model change.
+
+## 7. Notes added after signing (facts only; no guess or pass/fail line changed)
+
+- **2026-09-21, free arms run** (`experiments/prereg_free_arms.py` → `experiments/prereg_free_arms.csv`, seeds 1–5, engine `v1.0`). Mean gain $M / groups per run. Calm: follow at 0.25 +175 / 9.6; at 0.5 +182 / 10.6; at 0.75 +241 / 10.0; hybrid +156 / 10.8. CM_3 hit: follow at 0.25 +160 / 10.8; at 0.5 +178 / 12.0; at 0.75 +254 / 10.4; hybrid +292 / 10.8.
+- **Clarification of G3's background:** the "0.2 groups per run" figure is E4's *plain* payback rule (no following suppliers). With suppliers following, the rule forms about 10 groups per run at every slider level from 0.25 up, so the rule band for G3 is about 10 groups.
+- Paid configs: `configs/prereg_llm_calm.yaml`, `configs/prereg_llm_cm3hit.yaml` (Sonnet 5, $2 in / $10 out per MTok; `sciti estimate`: $7.26 expected, $13.82 maximum per run; cap $12 per run). Committed after the tag; `sciti/` is unchanged since `v1.0`.
