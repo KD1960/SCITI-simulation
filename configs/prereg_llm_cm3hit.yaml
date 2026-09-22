@@ -1,0 +1,16 @@
+# Pre-registered paid LLM run (docs/sciti2/prereg-llm-run-implementation-risk.md), engine tag v1.0.
+# Prices: Sonnet 5 at $2 in / $10 out per MTok (checked 2026-09-21). Estimate first: sciti estimate configs/prereg_llm_cm3hit.yaml
+name: prereg_llm_cm3hit
+seed: 1
+weeks: 156
+decision:
+  policy: llm
+  model: claude-sonnet-5
+  max_llm_calls: 1500
+  max_spend_usd: 12.0
+  price_per_mtok_in: 2.0
+  price_per_mtok_out: 10.0
+  visibility: partners
+  rules_roles: [Supplier]   # the 30 suppliers use the payback rule; only the 18 downstream firms call the LLM (about 60% fewer calls)
+disruptions:
+  - {target: CM_3, start_week: 30, weeks: 12, capacity_mult: 0.2}
