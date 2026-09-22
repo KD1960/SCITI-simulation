@@ -1,6 +1,6 @@
 # Guesses page: paid LLM run with implementation risk
 
-**Status:** DRAFT for Kevin to edit. Nothing here is fixed until Kevin signs the last line.
+**Status:** SIGNED by Kevin on 2026-09-21 (said "signed" in the working session; the assistant recorded his answers here because he could not edit the file). The commit holding this line is tagged `v1.0`.
 **Drafted:** 2026-09-20, after the independent engineering review (STATUS §7, last note).
 **Why this page exists:** the model changed shape about ten times in six days, each time after a result was seen. Writing the guesses, the measures, and the pass/fail lines down *before* the run is what lets the result count as a test. The page is committed before the run starts, so git shows it came first.
 
@@ -87,9 +87,9 @@ Every free experiment so far used seeds 1–30. Seeds **31–60** have never bee
 
 ## 6. Sign-off
 
-- [ ] Kevin has edited the guesses and the pass/fail lines.
+- [x] Kevin has reviewed the guesses and the pass/fail lines (agreed with all seven; added the collaboration slider to G3).
 - [x] Seeds chosen: 1–5
 - [ ] Sonnet 5 prices confirmed on the day: $____ in / $____ out per MTok; `sciti estimate` says $____; approved cap $____.
-- [ ] This page committed; commit tagged `v1.0`.
+- [x] This page committed; commit tagged `v1.0`.
 
-Signed (Kevin), date: ______
+Signed (Kevin), date: 2026-09-21. The prices line above is filled in on the day of the run, in the run write-up; it is not a model change.
