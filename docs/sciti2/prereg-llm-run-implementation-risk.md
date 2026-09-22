@@ -11,6 +11,7 @@
 | Engine | tag `v1.0` (to be made on the commit that holds this signed page) |
 | Catalog | `sciti/tech/catalog.yaml` (v2), unchanged |
 | Switches | all defaults: implementation risk, learning, group project draw, concave depth on |
+| Collaboration slider | `assumptions.collaboration`, 0–1, 0.5 neutral (built 2026-09-21 at Kevin's request, before the freeze). A what-if knob with no evidence behind its scale. LLM arm at 0.5; system prompt `v2` explains the scale |
 | LLM config | a priced copy of `configs/mvp_llm.yaml`: `claude-sonnet-5`, `rules_roles: [Supplier]`, `follow_revenue_share` 0.005, `max_tokens` 2000, `visibility: partners` |
 | Brief | as built (shows `implementation_odds`; no event feed; no per-firm expected saving) |
 
@@ -22,8 +23,8 @@ No engine, catalog, brief, or config change between signing and the end of the a
 |---|---|
 | Scenarios | calm; CM_3 12-week hit (the E2/E5 scenario) |
 | Paid arm | LLM agents, suppliers follow |
-| Free same-seed arms | no tech; payback rule with suppliers following; hybrid (payback + insurance habit: risk intelligence, APS) |
-| Seeds | **Kevin to choose:** seed 1 only (about $6–14 total, comparable with the 2026-09-18 runs, but still one seed), or seeds 1–5 (about $30–70; the reviewer's minimum before any LLM claim) |
+| Free same-seed arms | no tech; payback rule with suppliers following at collaboration 0.25 / 0.5 / 0.75 (the comparison band for G3); hybrid (payback + insurance habit: risk intelligence, APS) at 0.5 |
+| Seeds | **1–5** (Kevin, 2026-09-21): 10 paid runs, about $30–70 in all |
 | Main measure | `network_profit_with_inventory` vs the same-seed no-tech run |
 | Other measures | fill rate; groups formed; adoptions by technology; week of first risk-intelligence purchase at CM_3; share of adoption attempts that fail; malformed replies and fallbacks; cost |
 
@@ -49,7 +50,7 @@ Background: that one week-1 purchase made almost all of the LLM edge on 2026-09-
 Background: rule agents who know the odds almost stop (0.2 groups per run, was 4.7). LLM agents formed 2 control tower chains and 4 blockchain pairs on 2026-09-18 (suppliers following).
 - Draft guess: fewer groups, but not zero: at least one control tower chain forms; blockchain pairs 0–2.
 - Counts as yes: at least 1 group of any kind forms in the calm run. Counts as "like the rule": 0 groups.
-- **Open before signing (Kevin, 2026-09-21):** "there should be a slider to adjust baseline level of collaboration." Not yet designed; it is a model change, so it must be built (or set aside for a later page) before the freeze.
+- **Kevin's addition (2026-09-21), built before the freeze:** a collaboration slider. Free check, payback rule, calm, 10 seeds, groups per run at 0 / 0.25 / 0.5 / 0.75 / 1: suppliers following 0.0 / 9.4 / 10.1 / 10.2 / 10.2 (gain $176M → $269M); plain rules 0.0 / 0.0 / 0.3 / 1.4 / 3.1. G3 is read against the rule band at 0.25–0.75: LLM agents at 0.5 forming fewer groups than the rule at 0.25 counts as "less collaborative than the rule"; more than the rule at 0.75 as "more".
 - Kevin's guess (2026-09-21): agrees with the draft guess and the pass/fail line.
 
 **G4. Do LLM agents beat the payback rule?**
@@ -87,7 +88,7 @@ Every free experiment so far used seeds 1–30. Seeds **31–60** have never bee
 ## 6. Sign-off
 
 - [ ] Kevin has edited the guesses and the pass/fail lines.
-- [ ] Seeds chosen: ______
+- [x] Seeds chosen: 1–5
 - [ ] Sonnet 5 prices confirmed on the day: $____ in / $____ out per MTok; `sciti estimate` says $____; approved cap $____.
 - [ ] This page committed; commit tagged `v1.0`.
 
