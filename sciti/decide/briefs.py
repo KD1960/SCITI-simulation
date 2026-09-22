@@ -15,7 +15,8 @@ def make_personas(net, assumptions, rng) -> dict[str, dict]:
     for n in net.order:
         out[n] = {"risk": RISKS[int(rng.integers(0, 3))],
                   "budget_share": round(float(rng.uniform(lo, hi)), 4),
-                  "horizon_weeks": int(rng.integers(hlo, hhi + 1))}
+                  "horizon_weeks": int(rng.integers(hlo, hhi + 1)),
+                  "collaboration": assumptions.collaboration}
     return out
 
 

@@ -8,11 +8,13 @@ from sciti.decide.rules import RulesPolicy
 from sciti.runner import run
 
 
-def brief(costs, budget=1e9, horizon=104, risk="balanced", eligible=None, pass_="proposal", proposals=()):
+def brief(costs, budget=1e9, horizon=104, risk="balanced", eligible=None, pass_="proposal", proposals=(),
+          collaboration=0.5):
     eligible = eligible or [{"id": "routing", "one_time_cost": 300000, "weekly_cost": 3000,
                              "network_requirement": "solo", "group_bonus": 0.25}]
     return Brief("DC_Houston", "DC", 14, 2, pass_, {
-        "you": {"persona": {"risk": risk, "budget_share": 0.05, "horizon_weeks": horizon}},
+        "you": {"persona": {"risk": risk, "budget_share": 0.05, "horizon_weeks": horizon,
+                            "collaboration": collaboration}},
         "last_quarter": {"costs": costs}, "budget_available": budget,
         "eligible_technologies": eligible, "held": [], "partners": [{"id": "MFG_US", "role": "MFG"}],
         "proposals": list(proposals), "rules": {"max_new_adoptions": 1}})
@@ -128,3 +130,48 @@ def test_insurance_habit_buys_cheap_protection_after_the_payback_picks():
     b.data["last_quarter"]["revenue"] = 25e6
     b.data["rules"]["insurance"] = {"techs": ["risk_intel", "aps"], "revenue_share": 0.005}
     assert [d["tech"] for d in json.loads(RulesPolicy(np.random.default_rng(0)).decide(b).raw)["decisions"]] == ["risk_intel"]
+
+
+def _answer(collaboration, share):
+    prop = {"group_id": "g1", "tech": "routing", "from": "MFG_US", "members": ["DC_Houston", "MFG_US"],
+            "your_cost_share": share}
+    b = brief({"shipping": 13 * 200000}, pass_="response", proposals=[prop], collaboration=collaboration)
+    return json.loads(RulesPolicy(np.random.default_rng(1)).decide(b).raw)["decisions"][0]["action"]
+
+
+def test_collaboration_scales_what_a_group_is_worth_to_a_rules_agent():
+    assert _answer(0.5, 350000) == "accept_group"
+    assert _answer(0.0, 350000) == "decline_group"  # never joins
+    assert _answer(0.5, 3000000) == "decline_group"
+    assert _answer(1.0, 3000000) == "accept_group"  # a group looks twice as good
+
+
+def test_collaboration_changes_group_proposals_but_not_solo_adoption():
+    chain = [{"id": "control_tower", "one_time_cost": 300000, "weekly_cost": 3000,
+              "network_requirement": "chain", "group_bonus": 0.25}]
+    costs = {"stockout": 13 * 200000, "shipping": 13 * 200000}
+    def acts(c, eligible=None):
+        raw = RulesPolicy(np.random.default_rng(0)).decide(brief(costs, eligible=eligible, collaboration=c)).raw
+        return [(d["tech"], d["action"]) for d in json.loads(raw)["decisions"]]
+    assert acts(0.5, chain) == [("control_tower", "propose_group")]
+    assert acts(0.0, chain) == []
+    assert acts(0.0) == acts(0.5) == [("routing", "adopt")]
+
+
+def test_personas_carry_the_collaboration_level_and_config_bounds_it(baseline):
+    import pytest
+    from pydantic import ValidationError
+    from sciti.config import Assumptions
+    from sciti.decide.briefs import make_personas
+    from sciti.network import build_network
+    a = Assumptions(collaboration=0.75)
+    personas = make_personas(build_network(baseline, a), a, np.random.default_rng(0))
+    assert {p["collaboration"] for p in personas.values()} == {0.75}
+    assert Assumptions().collaboration == 0.5
+    with pytest.raises(ValidationError):
+        Assumptions(collaboration=1.5)
+
+
+def test_system_prompt_explains_the_collaboration_scale():
+    from sciti.decide.llm import PROMPT_VERSION, load_system_prompt
+    assert PROMPT_VERSION == "v2" and "collaboration" in load_system_prompt()

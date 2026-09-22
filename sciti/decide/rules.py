@@ -29,11 +29,12 @@ class RulesPolicy:
     def __init__(self, rng):
         self.rng = rng
 
-    def _saving(self, data, tech_id, noise, bonus=0.0) -> float:
+    def _saving(self, data, tech_id, noise, bonus=0.0, group=False) -> float:
         costs = data["last_quarter"]["costs"]
-        risk = RISK[data["you"]["persona"]["risk"]]
+        persona = data["you"]["persona"]
         base = sum(costs.get(k, 0.0) * f for k, f in TECH_SAVINGS.get(tech_id, {}).items()) / 13
-        return base * noise * risk * (1 + bonus)
+        together = 2 * persona["collaboration"] if group else 1.0  # assumptions.collaboration; 0.5 is neutral
+        return base * noise * RISK[persona["risk"]] * (1 + bonus) * together
 
     def decide(self, brief: Brief, feedback: str | None = None) -> Reply:
         data = brief.data
@@ -44,7 +45,8 @@ class RulesPolicy:
             for e in sorted(data["eligible_technologies"], key=lambda e: e["id"]):
                 noise = float(self.rng.lognormal(0, 0.3))
                 expected = e.get("implementation_odds", {}).get("expected_benefit", 1.0)  # projects can fail or fall short
-                net = self._saving(data, e["id"], noise) * expected - e["weekly_cost"]
+                net = self._saving(data, e["id"], noise, group=e["network_requirement"] != "solo") * expected \
+                    - e["weekly_cost"]
                 if net <= 0 or e["one_time_cost"] > data["budget_available"]:
                     continue
                 payback = e["one_time_cost"] / net
@@ -82,7 +84,7 @@ class RulesPolicy:
                     continue
                 noise = float(self.rng.lognormal(0, 0.3))
                 weekly = TECH_WEEKLY[p["tech"]].get(brief.role, 0.0)
-                net = self._saving(data, p["tech"], noise, TECH_BONUS[p["tech"]]) - weekly
+                net = self._saving(data, p["tech"], noise, TECH_BONUS[p["tech"]], group=True) - weekly
                 share = p["your_cost_share"]
                 ok = net > 0 and share / net <= persona["horizon_weeks"] and share <= data["budget_available"]
                 reason = "worth it" if ok else "not worth it"

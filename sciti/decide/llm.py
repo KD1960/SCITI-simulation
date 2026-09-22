@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sciti.decide.interface import Brief, Reply
 
-PROMPT_VERSION = "v1"
+PROMPT_VERSION = "v2"
 PROMPT_DIR = Path(__file__).with_name("prompts")
 
 # The reply shape, enforced by the API (spec §7.3) so a reply cannot come back malformed.

@@ -110,7 +110,7 @@ def test_llm_run_logs_and_never_writes_key(baseline_path, tmp_path, monkeypatch)
     for f in out.iterdir():
         assert FAKE_KEY not in f.read_text(), f.name
     man = json.loads((out / "manifest.json").read_text())
-    assert man["policy_stats"]["calls"] > 0 and man["policy_stats"]["prompt_version"] == "v1"
+    assert man["policy_stats"]["calls"] > 0 and man["policy_stats"]["prompt_version"] == "v2"
 
 
 def test_zero_price_refuses_construction():
