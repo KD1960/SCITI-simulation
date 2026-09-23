@@ -44,6 +44,9 @@ class DecisionCfg(Strict):
     # insurance_revenue_share of yearly revenue: the habit seen in LLM agents (E5, 2026-09-18).
     insurance_techs: list[str] = Field(default_factory=list)
     insurance_revenue_share: float = 0.005
+    # Diagnostic switches (guesses page 2, 2026-09-23); defaults reproduce v1.0.
+    prompt_version: Literal["v1", "v2"] = "v2"          # system prompt file for LLM agents
+    show_implementation_odds: bool = True               # False hides the odds from LLM agents' briefs (rules agents keep them)
 
     @model_validator(mode="after")
     def _needs(self):

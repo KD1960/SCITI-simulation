@@ -191,3 +191,10 @@ def test_request_asks_for_the_reply_schema():
     assert REPLY_SCHEMA["required"] == ["decisions"]
     assert set(decision["required"]) == {"tech", "action", "partners", "reason"}
     assert "group_id" in decision["properties"] and decision["additionalProperties"] is False
+
+
+def test_prompt_version_is_configurable_and_defaults_to_v2():
+    assert cfg().prompt_version == "v2"
+    p = LLMPolicy(cfg(prompt_version="v1"), RulesPolicy(np.random.default_rng(0)), client=FakeClient([]), sleep=lambda s: None)
+    assert "collaboration" not in p.system and p.stats()["prompt_version"] == "v1"
+    assert "collaboration" in LLMPolicy(cfg(), RulesPolicy(np.random.default_rng(0)), client=FakeClient([]), sleep=lambda s: None).system

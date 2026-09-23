@@ -36,8 +36,8 @@ REPLY_SCHEMA = {
 }
 
 
-def load_system_prompt() -> str:
-    return (PROMPT_DIR / f"{PROMPT_VERSION}_system.md").read_text()
+def load_system_prompt(version: str = PROMPT_VERSION) -> str:
+    return (PROMPT_DIR / f"{version}_system.md").read_text()
 
 
 def render_brief(brief: Brief) -> str:
@@ -85,7 +85,7 @@ class LLMPolicy:
             client = anthropic.Anthropic(timeout=decision_cfg.request_timeout_s, max_retries=0)
         self.client = client
         self.sleep = sleep
-        self.system = load_system_prompt()
+        self.system = load_system_prompt(decision_cfg.prompt_version)
         self.spend = SpendTracker(decision_cfg.max_llm_calls, decision_cfg.max_spend_usd,
                                   decision_cfg.price_per_mtok_in, decision_cfg.price_per_mtok_out)
         self.failures = 0
@@ -136,5 +136,5 @@ class LLMPolicy:
         return Reply(brief.agent, text, tokens_in=tin, tokens_out=tout, latency_s=round(time.monotonic() - start, 3))
 
     def stats(self) -> dict:
-        return {"prompt_version": PROMPT_VERSION, "model": self.cfg.model, "calls": self.spend.calls,
+        return {"prompt_version": self.cfg.prompt_version, "model": self.cfg.model, "calls": self.spend.calls,
                 "usd": round(self.spend.usd, 6), "fallbacks": self.fallbacks, "disabled_reason": self.disabled_reason}

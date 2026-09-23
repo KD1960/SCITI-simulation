@@ -175,3 +175,18 @@ def test_personas_carry_the_collaboration_level_and_config_bounds_it(baseline):
 def test_system_prompt_explains_the_collaboration_scale():
     from sciti.decide.llm import PROMPT_VERSION, load_system_prompt
     assert PROMPT_VERSION == "v2" and "collaboration" in load_system_prompt()
+
+
+def test_hiding_implementation_odds_affects_llm_agents_only(baseline):
+    from sciti.decide.briefs import build_brief, make_personas
+    from tests.helpers import make_state
+    s = make_state(baseline)
+    s.cfg.assumptions.implementation_risk = True
+    s.cfg.decision.rules_roles = ["Supplier"]
+    personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
+    def odds(node):
+        b = build_brief(s, node, 14, "proposal", personas[node], [], "partners", 1)
+        return [e for e in b.data["eligible_technologies"] if "implementation_odds" in e]
+    assert odds("DC_Houston") and odds("Supplier_1")
+    s.cfg.decision.show_implementation_odds = False
+    assert odds("DC_Houston") == [] and odds("Supplier_1")

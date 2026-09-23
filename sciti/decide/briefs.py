@@ -45,6 +45,8 @@ def _effects_text(tech, role) -> str:
 
 
 def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, proposals=None) -> Brief:
+    D = s.cfg.decision
+    show_odds = D.show_implementation_odds or s.net.nodes[node_id].role in D.rules_roles
     net, ns = s.net, s.nodes[node_id]
     node = net.nodes[node_id]
     held = sorted(s.holdings[node_id])
@@ -72,7 +74,8 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
             {"id": t.id, "name": t.name, "one_time_cost": t.cost_one_time[node.role],
              "weekly_cost": t.cost_per_week[node.role], "setup_weeks": t.setup_weeks,
              "network_requirement": t.network_requirement, "group_bonus": t.group_bonus,
-             "effects": _effects_text(t, node.role), **_odds(s, t, node_id, node.role, week)}
+             "effects": _effects_text(t, node.role),
+             **(_odds(s, t, node_id, node.role, week) if show_odds else {})}
             for t in sorted(s.catalog.values(), key=lambda x: x.id)
             if node.role in t.eligible_roles and t.id not in held],
         "rules": {"pass": pass_, "allowed_actions": list(PROPOSAL_ACTIONS if pass_ == "proposal" else RESPONSE_ACTIONS),
