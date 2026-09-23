@@ -1,0 +1,17 @@
+# Guesses page 2 (docs/sciti2/prereg-2-late-protection.md), engine tag v1.1: CM_3 hit, seeds 1-2.
+# Prices: Sonnet 5 at $2 in / $10 out per MTok (checked 2026-09-21). Estimate first: sciti estimate configs/prereg_llm_cm3hit.yaml
+name: prereg2_B_prompt_v1
+seed: 1
+weeks: 156
+decision:
+  policy: llm
+  model: claude-sonnet-5
+  max_llm_calls: 1500
+  max_spend_usd: 12.0
+  price_per_mtok_in: 2.0
+  price_per_mtok_out: 10.0
+  visibility: partners
+  rules_roles: [Supplier]   # the 30 suppliers use the payback rule; only the 18 downstream firms call the LLM (about 60% fewer calls)
+  prompt_version: v1        # arm B: the v1 system prompt (no collaboration sentence)
+disruptions:
+  - {target: CM_3, start_week: 30, weeks: 12, capacity_mult: 0.2}
