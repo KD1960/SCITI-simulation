@@ -60,3 +60,8 @@ No tuning of the odds display, the prompt, or the rule for a nicer number. If th
 - [x] Sonnet 5 $2 / $10 per MTok (2026-09-23); estimate $7.26 per run; cap $12 per run; 4 runs. Configs `configs/prereg2_B_prompt_v1.yaml`, `configs/prereg2_C_odds_hidden.yaml`.
 
 Signed (Kevin), date: 2026-09-23
+
+## 6. Notes added after signing (facts only)
+
+- **2026-09-23, Q2 free decomposition done** (`experiments/prereg2_decomposition.csv`; rule arm `follow_c0.5` rerun on seeds 1–5 to read its cost lines). LLM minus rule, $M, CM_3 hit, seeds 1–5: stockout +23 / −28 / −14 / −39 / −32; purchases −16 / +227 / +180 / +537 / +325; shipping −91 / −128 / −35 / −53 / −230; tech +30 / +26 / +21 / +27 / +9. **G3: line met 5 of 5** (|Δpurchases + Δshipping| > |Δstockout| in every seed), but not in the way the draft guess pictured: purchases *rise* with the LLM agents (more volume moves through the chain), and shipping falls (routing); scrap savings are not the story. Revenue was not in the table and should be read next. **G4: wrong 5 of 5**: the LLM firms adopt only 1.04–1.30× as often as the rule's same 18 firms (80–93 vs 65–83), not 1.5×; the edge is not volume of adoptions.
+- Q1 (paid arms B and C) waiting for Kevin to start.
