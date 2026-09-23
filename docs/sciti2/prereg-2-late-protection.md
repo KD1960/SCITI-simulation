@@ -1,0 +1,62 @@
+# Guesses page 2: why protection moved late, and where the LLM edge comes from
+
+**Status:** DRAFT for Kevin (drafted 2026-09-23 after scoring page 1, `prereg-llm-run-results.md`). Nothing is fixed until Kevin says "signed"; the commit holding the signed page gets tag `v1.1`.
+**Rule carried over from page 1:** no change to any parameter, brief, prompt, or rule except the two diagnostic switches listed in §1, which default to the `v1.0` behaviour.
+
+## 0. The two facts to explain
+
+- **F1.** In the three 2026-09-18 runs (engine before implementation risk, prompt v1), CM_3 bought risk intelligence in week 1, citing its cautious persona. In all ten `v1.0` runs, no firm bought risk intelligence before week 40; CM_3 first tried at week 40–79. CM_3's seed-1 persona is unchanged (the persona draw did not move), so the persona is not the reason.
+- **F2.** In the CM_3 hit, the LLM arm beats the payback rule by +$113M on average with nobody holding risk intelligence when the outage starts. Its stockout cost is only $14–39M below the rule's in 4 seeds (and $23M above in seed 1), so the edge is not mainly disruption relief.
+
+## 1. What changes (diagnostic switches only)
+
+| Switch | Default (= v1.0) | Test value |
+|---|---|---|
+| `decision.prompt_version` | `v2` | `v1` (no collaboration sentence; everything else identical) |
+| `decision.show_implementation_odds` | `true` | `false` (the brief omits `implementation_odds`; the odds still apply) |
+
+Both must leave every existing golden and replay unchanged at the default. Built and tested before signing; tag `v1.1` on the signed page.
+
+## 2. Design
+
+**Q1 (paid): which change moved protection late?** CM_3 12-week hit scenario (where early protection matters), seeds 1 and 2, suppliers following, collaboration 0.5:
+- A: `v1.0` as run (already have; no new spend).
+- B: prompt `v1`, odds shown.
+- C: prompt `v2`, odds hidden.
+Four new runs, about $11 (cap $12 each). "Early" = any LLM firm attempts risk intelligence or APS before week 30.
+
+**Q2 (free): where does the hit edge come from?** Decompose LLM minus rule (same seed, `follow_c0.5`) in the ten existing runs by cost line: stockout, purchases (incl. scrap), shipping, holding, handling, tech, and inventory change. No new runs.
+
+## 3. Guesses
+
+**G1. Hiding the odds brings the early purchase back; the prompt line does not.**
+- Draft guess: C buys protection before week 30 in both seeds; B does not.
+- Counts as "odds are the cause": C early in 2 of 2 seeds and B late in 2 of 2. "Prompt is the cause": the reverse. Anything else: "unclear" (both or neither; then the cause may be the agents' new habit of spending the one-per-quarter slot on routing/RFID first).
+- Kevin's guess: ______
+
+**G2. The early-buying arm gains more in the hit.**
+- Draft guess: whichever arm buys before week 30 gains at least +$100M more than arm A on the same seed, if the purchase does not fail.
+- Counts as yes: both early runs (if any) beat A by +$100M.
+- Kevin's guess: ______
+
+**G3. The hit edge is a calm-type edge.**
+- Draft guess: purchases + shipping (RFID, routing, control tower chains) explain more of LLM − rule than stockout does, in at least 4 of 5 hit seeds.
+- Counts as yes: |Δ purchases + Δ shipping| > |Δ stockout| in ≥ 4 of 5 seeds.
+- Kevin's guess: ______
+
+**G4. The rule's weak spot is under-adoption, not protection.**
+- Draft guess: the LLM arm's tech cost is higher in every seed (it is: +$9–30M), and its gain per adoption is lower than the rule's; the edge comes from volume.
+- Counts as yes: LLM adoptions among the 18 LLM firms ≥ 1.5 × the rule's adoptions among the same 18 firms in ≥ 4 of 5 seeds.
+- Kevin's guess: ______
+
+## 4. Not allowed after seeing results
+
+No tuning of the odds display, the prompt, or the rule for a nicer number. If the answer to G1 is "odds", the follow-on question (should agents see odds? real managers do) is a design decision for Kevin, made on a new page.
+
+## 5. Sign-off
+
+- [ ] Switches built, 229+ tests pass, goldens unchanged, tag `v1.1`.
+- [ ] Kevin's guesses filled in.
+- [ ] Prices confirmed on the day; estimate; cap.
+
+Signed (Kevin), date: ______
