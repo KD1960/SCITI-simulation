@@ -1,4 +1,4 @@
-# Guesses page 3: two kinds of failure (cancelled in pilot vs deployed then failed)
+# Guesses page 3: two kinds of failure, and ML forecast skill at stores
 
 **Status:** DRAFT for Kevin, 2026-09-24. Nothing built. Signing it makes tag `v1.2` after the build.
 
@@ -21,6 +21,10 @@ Split `p_fail` into two draws with different costs:
 
 Evidence needed before signing: a per-technology split for at least ML forecasting and APS; otherwise the 25/75 rule is used and marked `assumption: true` in the catalog. Every source goes in the citation log.
 
+## 1b. Second change (Kevin's ruling on M5, 2026-09-24)
+
+Makridakis, Spiliotis & Assimakopoulos (2022), p. 1351: the top methods beat exponential smoothing by ~40% at the total level, ~23% at the middle levels, and only ~3% at product, product-state and product-store level (level 12, "the vast majority of the series"). The catalog's `forecast_skill` 0.3 at DCs and factories is supported; **0.1 at stores is three times the evidence and drops to 0.03.** Catalog `by_role` Retail: 0.1 → 0.03; evidence note updated; nothing else in the ML entry changes.
+
 ## 2. Design
 
 Free. Rerun the calm technology screen and the random-disruption arms (rate 0.2) on seeds 1–30 and compare with `*_current.csv`; the LLM arm is not rerun (its briefs would show two odds; that is a page-4 question).
@@ -31,9 +35,10 @@ Free. Rerun the calm technology screen and the random-disruption arms (rate 0.2)
 **G2.** No solo technology moves by more than $15M (their cancelled share is small and their one-time costs are small relative to gains). Counts as yes: all seven within ±$15M of `_current`.
 **G3.** The rule agents, who discount by `expected_benefit`, form no more groups than before (0.2 per run, plain rule), because the odds of getting nothing are unchanged. Counts as yes: groups per run within ±0.2.
 **G4.** The hybrid's share of the random-disruption loss recovered stays 30–37%. Counts as yes: inside that band.
+**G5.** ML forecasting for all eligible firms stays within the noise: calm value between −$15M and +$5M (was −4 ns), and the stores-only tier falls to about the tech cost (≤ −$3M). Counts as yes: both.
 
 ## 4. Not allowed
 
-No change to `p_partial`, the effect sizes, or the pilot cost share after seeing results.
+No change to `p_partial`, the effect sizes (including the new 0.03), or the pilot cost share after seeing results.
 
 Kevin's guesses: ______ · Signed (Kevin), date: ______
