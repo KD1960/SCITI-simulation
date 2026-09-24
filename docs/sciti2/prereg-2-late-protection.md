@@ -69,3 +69,4 @@ Signed (Kevin), date: 2026-09-23
   - **G1: "unclear" by the line** (C early 2 of 2, but B early in 1 of 2, by three weeks). The pattern is one-sided all the same: hiding the odds returns the week-1 habit in both seeds; the prompt line only nudges timing.
   - **G2: right for C** (+$259M and +$537M over A, both above +$100M), **not for B seed 2** (+$97M, just under the line). 2 of 3 early runs met it.
   - So: **showing agents the fail/partial odds is what stopped them buying protection early**, and buying it early is worth $260–540M in this scenario. Whether agents *should* see the odds is Kevin's design decision (page 4 rule); real managers see something like them. Nothing changed.
+- **Kevin's ruling (2026-09-23): show them.** Default unchanged (`show_implementation_odds: true`); the hidden-odds arm stays available for comparison only.
