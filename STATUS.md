@@ -1,7 +1,7 @@
 # SCITI 1 — Status
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
-**Phase:** research engine. MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
+**Phase:** research engine, at tag `v1.2` (2026-09-24: cancelled pilots vs deployed failures; store forecast skill 0.03). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
 **Next step:** the paid LLM run with implementation risk. Kevin said "yes, set it up" on 2026-09-19, then interrupted to ask for this STATUS update, so **it has not been set up yet**. See §0 "Pending" for what it needs. Other open items are listed there too.
 
 Read this file first in any new thread: §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
@@ -27,7 +27,7 @@ Read this file first in any new thread: §0 is the current picture; §7 is the d
 
 | | Works | Current |
 |---|---|---|
-| Calm, every eligible firm attempts: routing | +444 | **+299** |
+| Calm, every eligible firm attempts: routing | +444 | **+299** (v1.2: +299) |
 | … warehouse robotics | +124 | +63 |
 | … RFID | +83 | +49 |
 | … blockchain | +321 | +47 |
@@ -36,8 +36,8 @@ Read this file first in any new thread: §0 is the current picture; §7 is the d
 | Random disruptions, realistic rate (0.2 per site-year; no-tech loss −$2.4B, −3.95 pt fill): risk intelligence ($8M spend) | +564 | **+379** |
 | … control tower ($35M) | +465 | +380 |
 | … APS | +307 | +210 |
-| … payback-rule agents, suppliers follow | +890 | +385 |
-| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss) |
+| … payback-rule agents, suppliers follow | +890 | +385 (v1.2: +476) |
+| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss; v1.2: +889, 37%) |
 | CM_3 12-week hit: risk intelligence / APS / control tower | +591 / +366 / +103 | +217 / +217 / +86 |
 
 What holds across every version: routing is the top calm-conditions technology; protection (risk intelligence, APS) is worth buying once disruptions are realistic and the payback rule never buys it; scattered adopters get nothing and chains matter most in disruptions; blockchain is the most fragile technology; costs rarely change a ranking. What implementation risk changed: gains are ~40–60% of the "works" case; agents who know the odds almost stop forming groups (0.2 per run, was 4.7); patience and "suppliers follow" lose most of their value.
@@ -340,6 +340,8 @@ Update this table and the "Last updated" line as each task lands.
 
 **Kevin read six key sources (2026-09-24):** Capgemini 2018, Gartner/Litan 2021, Vadgama & Tasca 2021 (blockchain failure); Jain, Girotra & Netessine 2022, Norrman & Jansson 2004, Banker 2016 (risk intelligence). Marked `full text (Kevin, 2026-09-24)` in the citation log. **Rulings:** the risk-intelligence effect stands as modelled. The blockchain 0.65 mostly counts projects stuck in development or pilot; only ~10% were deployed and then failed, and the two should cost differently (a cancelled pilot spends part of the deployment budget; a deployed failure spends all of it). Drafted as `docs/sciti2/prereg-3-two-kinds-of-failure.md` (`p_cancel` with a pilot cost share vs `p_fail`); not built, not signed.
 Kevin also read Gavirneni, Kapuscinski & Tayur 1999 and Croson & Donohue 2006 (same day): **concavity of information value confirmed** (so `depth_exponent` < 1 is supported; 0.5 itself stays judgment) and **control tower `visibility` 0.6 is fair.** Logged. Later the same day he read Kim & Miner 2007 (**learning-is-local carries over: yes**) and Makridakis et al. 2022 (M5): **`forecast_skill` 0.3 at DC/MFG stands; 0.1 at stores is too high and goes to 0.03** (M5 gain at product-store level ~3%). That change is added to page 3 (`prereg-3-two-kinds-of-failure.md`, now also "ML forecast skill at stores"), not yet built. All ten key sources have now been read by Kevin.
+
+**Page 3 built and scored (2026-09-24, tag `v1.2`):** two kinds of failure (`p_cancel`: stuck in pilot, pays `assumptions.pilot_cost_share` 0.4 of the one-time cost, no running cost, retry after `cancel_after_weeks` 26; `p_fail`: deployed then failed, as before; blockchain 0.55 / 0.10 measured, others split 75/25 by judgment; briefs show `cancelled_in_pilot`), and ML `forecast_skill` at stores 0.1 → 0.03 (M5). 238 tests. `docs/sciti2/prereg-3-results.md`: G1 wrong (blockchain +47 → +49, not +60–90: one-time costs are too small for the split to matter), G2–G5 right. Unguessed: rule + followers +385 → +476 at rate 0.2 (cheaper failed group pilots for suppliers). Headline tables now `*_current.csv` on v1.2; v1.1 tables kept as `*_v1.1.csv`. **Also merged, from the review's "soon" list:** a reply cut off at `max_tokens` is retried once with double the budget (paid for both); `RulesPolicy` takes the run's catalog instead of loading the default at import.
 
 ## 8. Known risks and caveats (2026-09-20)
 

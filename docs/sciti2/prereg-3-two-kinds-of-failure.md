@@ -1,6 +1,6 @@
 # Guesses page 3: two kinds of failure, and ML forecast skill at stores
 
-**Status:** DRAFT for Kevin, 2026-09-24. Nothing built. Signing it makes tag `v1.2` after the build.
+**Status:** SIGNED by Kevin 2026-09-24 ("40% is fine, yes on all 5, build"). Built, run and scored the same day: `prereg-3-results.md`; tag `v1.2`.
 
 ## 0. Why (Kevin's reading of the blockchain sources, 2026-09-24)
 
@@ -41,4 +41,4 @@ Free. Rerun the calm technology screen and the random-disruption arms (rate 0.2)
 
 No change to `p_partial`, the effect sizes (including the new 0.03), or the pilot cost share after seeing results.
 
-Kevin's guesses: ______ · Signed (Kevin), date: ______
+Kevin's guesses: agrees with all five · Signed (Kevin), date: 2026-09-24
