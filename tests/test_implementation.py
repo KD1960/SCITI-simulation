@@ -10,12 +10,12 @@ from tests.helpers import make_state
 
 
 def test_outcome_thresholds_and_small_firm_odds():
-    """Blockchain: p_fail 0.65, p_partial 0.25 (fraction 0.4), so a CM fails below 0.65, is partial
+    """Blockchain: nothing (p_cancel 0.55 + p_fail 0.10) 0.65, p_partial 0.25 (fraction 0.4), so a CM gets nothing below 0.65, is partial
     below 0.90, and full above. Suppliers are the small firms: failure odds x1.75, i.e.
     0.65/0.35 * 1.75 = 3.25 -> p_fail 3.25/4.25 = 0.7647; partial keeps its share of the rest:
     0.25 * (1 - 0.7647) / 0.35 = 0.1681."""
     bc, A = load_catalog()["blockchain"], Assumptions()
-    assert (bc.p_fail, bc.p_partial, bc.partial_fraction) == (0.65, 0.25, 0.4)
+    assert (bc.p_cancel + bc.p_fail, bc.p_partial, bc.partial_fraction) == pytest.approx((0.65, 0.25, 0.4))
     assert implementation_outcome(0.64, bc, "CM", A) == ("fail", 0.0)
     assert implementation_outcome(0.66, bc, "CM", A) == ("partial", 0.4)
     assert implementation_outcome(0.91, bc, "CM", A) == ("full", 1.0)
@@ -45,7 +45,7 @@ def test_failed_implementation_costs_money_and_never_switches_on(baseline, monke
     import sciti.engine.adoption as adoption
     s = make_state(baseline, weeks=120)
     s.cfg.assumptions.implementation_risk = True
-    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, node, tech, week: 0.01)
+    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, node, tech, week: 0.13)  # routing: cancel < 0.11 <= fail < 0.15
     ev = adopt(s, "DC_Houston", "routing", 1)
     assert ev["outcome"] == "fail" and ev["one_time"] == 300000
     h = s.holdings["DC_Houston"]["routing"]
@@ -88,7 +88,8 @@ def test_briefs_show_the_odds_and_the_payback_rule_discounts_by_them(baseline):
     personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
     b = build_brief(s, "DC_Houston", 14, "proposal", personas["DC_Houston"], [], "partners", 1)
     routing = next(e for e in b.data["eligible_technologies"] if e["id"] == "routing")
-    assert routing["implementation_odds"] == {"fail": 0.15, "partial": 0.5, "partial_benefit": 0.6, "expected_benefit": 0.65}
+    assert routing["implementation_odds"] == {"fail": 0.15, "cancelled_in_pilot": 0.11, "pilot_cost_share": 0.4,
+                                              "partial": 0.5, "partial_benefit": 0.6, "expected_benefit": 0.65}
     s.cfg.assumptions.implementation_risk = False
     b = build_brief(s, "DC_Houston", 14, "proposal", personas["DC_Houston"], [], "partners", 1)
     assert all("implementation_odds" not in e for e in b.data["eligible_technologies"])
@@ -180,7 +181,7 @@ def test_a_group_adopting_a_multi_party_technology_is_one_project(baseline, monk
                     s.holdings[m]["blockchain"].fails_week) for m in members}
 
     dead = outcomes(0.64, {"CM_1": 0.99, "Supplier_1": 0.99})           # the platform fails: everyone fails
-    assert {m: o[0] for m, o in dead.items()} == {"CM_1": "fail", "Supplier_1": "fail"}
+    assert {m: o[0] for m, o in dead.items()} == {"CM_1": "fail", "Supplier_1": "fail"}   # 0.64: deployed-then-failed region
     assert dead["CM_1"][2] == 1 + 52
     full = outcomes(0.95, {"CM_1": 0.01, "CM_2": 0.70, "CM_3": 0.72, "Supplier_1": 0.80, "Supplier_2": 0.82})
     assert {m: o[0] for m, o in full.items()} == {"CM_1": "partial", "CM_2": "partial", "CM_3": "full",
@@ -198,3 +199,69 @@ def test_a_group_adopting_a_multi_party_technology_is_one_project(baseline, monk
     s.cfg.assumptions.group_project_draw = False
     draws.update({"CM_2": 0.64})
     assert adopt(s, "CM_2", "blockchain", 1, "g3")["outcome"] == "fail"      # switch off: per-member catalog odds again
+
+
+# Two kinds of failure (guesses page 3, 2026-09-24): cancelled in pilot (pilot share of the one-time cost, no
+# running cost) vs deployed then failed (full cost, as before). The odds of getting nothing are unchanged.
+
+def test_catalog_splits_failure_into_cancel_and_fail_and_lowers_store_forecast_skill():
+    cat = load_catalog()
+    assert (cat["blockchain"].p_cancel, cat["blockchain"].p_fail) == (0.55, 0.10)
+    totals = {"ml_forecast": 0.45, "control_tower": 0.25, "rfid": 0.20, "aps": 0.15, "routing": 0.15,
+              "wh_robotics": 0.15, "blockchain": 0.65, "risk_intel": 0.30}
+    for t, total in totals.items():
+        assert cat[t].p_cancel + cat[t].p_fail == pytest.approx(total), t
+        assert cat[t].cancel_after_weeks == 26
+    assert cat["ml_forecast"].effects[0].by_role == {"Retail": 0.03}
+    assert Assumptions().pilot_cost_share == 0.4
+
+
+def test_cancel_and_fail_share_the_nothing_region_of_the_draw():
+    bc, A = load_catalog()["blockchain"], Assumptions()
+    assert implementation_outcome(0.54, bc, "CM", A) == ("cancel", 0.0)
+    assert implementation_outcome(0.56, bc, "CM", A) == ("fail", 0.0)
+    assert implementation_outcome(0.66, bc, "CM", A) == ("partial", 0.4)
+
+
+def test_cancelled_pilot_costs_the_pilot_share_and_no_running_cost(baseline, monkeypatch):
+    """A DC's routing pilot is cancelled: it pays 40% of the $300k, no weekly cost, is dropped 26 weeks
+    later with an implementation_cancelled event, and may try again."""
+    import sciti.engine.adoption as adoption
+    s = make_state(baseline, weeks=40)
+    s.cfg.assumptions.implementation_risk = True
+    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, node, tech, week: 0.01)
+    ev = adopt(s, "DC_Houston", "routing", 1)
+    assert ev["outcome"] == "cancel" and ev["one_time"] == pytest.approx(120000)
+    assert s.holdings["DC_Houston"]["routing"].fails_week == 27
+    tech_cost = 0.0
+    for t in range(1, 30):
+        step_week(s, t)
+        assert s.nodes["DC_Houston"].params["ship_cost_mult"] == 1.0
+        tech_cost += s.nodes["DC_Houston"].ledger["tech"]
+    assert tech_cost == pytest.approx(120000)
+    assert [e for e in s.events if e["type"] == "implementation_cancelled"] == \
+        [{"week": 27, "type": "implementation_cancelled", "node": "DC_Houston", "tech": "routing"}]
+    from sciti.engine.adoption import learning_multiplier
+    assert learning_multiplier(s, "DC_Houston", "routing", 30) == pytest.approx(0.75)  # a cancel teaches like a failure
+    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, node, tech, week: 0.99)
+    assert adopt(s, "DC_Houston", "routing", 30)["outcome"] == "full"
+
+
+def test_a_cancelled_group_project_is_cancelled_for_every_member(baseline, monkeypatch):
+    import sciti.engine.adoption as adoption
+    s = make_state(baseline)
+    s.cfg.assumptions.implementation_risk = True
+    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, node, tech, week: 0.01)
+    for m in ("Supplier_1", "CM_1"):
+        ev = adopt(s, m, "blockchain", 1, "g1", 50000)
+        assert ev["outcome"] == "cancel" and ev["one_time"] == pytest.approx(20000)
+
+
+def test_briefs_show_the_cancel_share_inside_the_failure_odds(baseline):
+    from sciti.decide.briefs import build_brief, make_personas
+    s = make_state(baseline)
+    s.cfg.assumptions.implementation_risk = True
+    personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
+    b = build_brief(s, "CM_1", 14, "proposal", personas["CM_1"], [], "partners", 1)
+    odds = {e["id"]: e["implementation_odds"] for e in b.data["eligible_technologies"]}["blockchain"]
+    assert odds["fail"] == 0.65 and odds["cancelled_in_pilot"] == 0.55 and odds["pilot_cost_share"] == 0.4

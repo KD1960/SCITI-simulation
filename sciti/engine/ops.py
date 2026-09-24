@@ -334,7 +334,8 @@ def _close_week(s: SimState) -> None:
             ns.ledger["scrap"] += lost * val
             ns.ledger["holding"] += ns.stock[item] * val * rate
         for tech_id in sorted(s.holdings.get(n, {})):
-            ns.ledger["tech"] += s.catalog[tech_id].cost_per_week[ns.role]
+            if not s.holdings[n][tech_id].cancelled:  # a cancelled pilot has no running cost
+                ns.ledger["tech"] += s.catalog[tech_id].cost_per_week[ns.role]
         ns.cash += ns.profit()
         if ns.role == "CM":
             received += ns.counts["received"]

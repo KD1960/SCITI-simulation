@@ -61,8 +61,9 @@ def test_dyad_forms_when_partner_accepts(baseline_path, tmp_path):
     co = [e for e in ev if e["type"] == "coalition"]
     assert co == [{"week": 14, "type": "coalition", "id": gid, "tech": "blockchain",
                    "members": ["CM_1", "Supplier_1"], "kind": "dyad"}]
-    shares = sorted(e["one_time"] for e in ev if e["type"] == "adopt")
-    assert shares == [200000.0, 200000.0]  # (300k + 100k) / 2
+    adopts = [e for e in ev if e["type"] == "adopt"]
+    assert {e["outcome"] for e in adopts} == {"cancel"}  # this seed's project draw: cancelled in pilot
+    assert sorted(e["one_time"] for e in adopts) == [80000.0, 80000.0]  # 0.4 x (300k + 100k) / 2
 
 
 def test_group_fails_when_partner_declines(baseline_path, tmp_path):

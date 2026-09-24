@@ -35,7 +35,10 @@ class Tech:
     evidence: str
     assumption: bool
     # Implementation risk (docs/sciti2/implementation-failure-evidence.md); the defaults mean "always works".
-    p_fail: float = 0.0            # abandoned: money spent, never switches on
+    p_fail: float = 0.0            # deployed, then failed: full one-time cost, running cost until fail_after_weeks
+    p_cancel: float = 0.0          # stuck in development or pilot, then cancelled: pilot_cost_share of the one-time
+                                   # cost, no running cost, retry after cancel_after_weeks (page 3, 2026-09-24)
+    cancel_after_weeks: int = 0
     p_partial: float = 0.0         # goes live at partial_fraction of the effect
     partial_fraction: float = 1.0
     fail_after_weeks: int = 0      # a failing project is abandoned this many weeks after adoption
@@ -50,6 +53,7 @@ class TechHolding:
     coalition_id: str | None = None
     fraction: float = 1.0          # share of the catalog effect delivered (partial success < 1)
     fails_week: int | None = None  # set when the implementation is failing: never active, abandoned this week
+    cancelled: bool = False        # a cancelled pilot: no running cost while it winds down
 
 
 def load_catalog(path: str | Path | None = None) -> dict[str, Tech]:

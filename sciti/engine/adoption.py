@@ -40,7 +40,8 @@ def learning_multiplier(s, node_id: str, tech_id: str, week: int) -> float:
     firm already runs, and direct partners already running this one. Failing or not-yet-live projects teach nothing."""
     A = s.cfg.assumptions
     live = lambda h: h.fails_week is None and week >= h.active_week
-    failures = sum(e["type"] == "implementation_failed" and e["node"] == node_id and e["tech"] == tech_id for e in s.events)
+    failures = sum(e["type"] in ("implementation_failed", "implementation_cancelled") and e["node"] == node_id
+                   and e["tech"] == tech_id for e in s.events)
     retry = A.retry_failure_odds[min(failures, len(A.retry_failure_odds)) - 1] if failures else 1.0
     own = sum(live(h) for t, h in s.holdings[node_id].items() if t != tech_id)
     partners = sum(tech_id in s.holdings[p] and live(s.holdings[p][tech_id]) for p in s.net.partners(node_id))
@@ -49,18 +50,19 @@ def learning_multiplier(s, node_id: str, tech_id: str, week: int) -> float:
 
 
 def implementation_odds(tech, role: str, assumptions, learning: float = 1.0, joiner: bool = False) -> tuple[float, float]:
-    """(p_fail, p_partial) for this role; suppliers, the small firms, do worse, and experience helps.
+    """(p_fail, p_partial) for this role, where p_fail is the odds of getting nothing (cancelled + failed); suppliers, the small firms, do worse, and experience helps.
     A joiner is a member of a group's project: the project's own draw decides failure for everyone, so the
     member only risks a shallow onboarding (p_fail 0; the catalog's odds of partial among survivors, scaled the same way)."""
     if not assumptions.implementation_risk:
         return 0.0, 0.0
     if joiner:
-        shallow = tech.p_partial / (1 - tech.p_fail) if tech.p_fail < 1 else 0.0
+        nothing = tech.p_cancel + tech.p_fail
+        shallow = tech.p_partial / (1 - nothing) if nothing < 1 else 0.0
         if 0 < shallow < 1:
             odds = shallow / (1 - shallow) * learning * (assumptions.small_firm_failure_odds if role == "Supplier" else 1.0)
             shallow = odds / (1 + odds)
         return 0.0, shallow
-    p_fail, p_partial = tech.p_fail, tech.p_partial
+    p_fail, p_partial = tech.p_cancel + tech.p_fail, tech.p_partial
     mult = learning * (assumptions.small_firm_failure_odds if role == "Supplier" else 1.0)
     if mult != 1.0 and 0 < p_fail < 1:
         odds = p_fail / (1 - p_fail) * mult
@@ -71,10 +73,12 @@ def implementation_odds(tech, role: str, assumptions, learning: float = 1.0, joi
 
 def implementation_outcome(u: float, tech, role: str, assumptions, learning: float = 1.0,
                            joiner: bool = False) -> tuple[str, float]:
-    """Map a draw u to ("fail" | "partial" | "full", share of the effect delivered)."""
+    """Map a draw u to ("cancel" | "fail" | "partial" | "full", share of the effect delivered). Within the
+    nothing region, cancellations keep their catalog share of it whatever learning or firm size do to the total."""
     p_fail, p_partial = implementation_odds(tech, role, assumptions, learning, joiner)
     if u < p_fail:
-        return "fail", 0.0
+        nothing = tech.p_cancel + tech.p_fail
+        return ("cancel" if nothing and u < p_fail * tech.p_cancel / nothing else "fail"), 0.0
     if u < p_fail + p_partial:
         return "partial", tech.partial_fraction
     return "full", 1.0
@@ -99,10 +103,15 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
         p_outcome, p_fraction = implementation_outcome(implementation_draw(s.cfg.seed, coalition_id, tech_id, week),
                                                        tech, "MFG", A)
         fraction = min(fraction, p_fraction)
-        outcome = "fail" if "fail" in (outcome, p_outcome) else ("full" if fraction == 1.0 else "partial")
-    fails_week = week + (tech.fail_after_weeks or tech.setup_weeks) if outcome == "fail" else None
+        outcome = p_outcome if p_outcome in ("cancel", "fail") else ("full" if fraction == 1.0 else "partial")
+    if outcome == "cancel":
+        cost *= A.pilot_cost_share
+        fails_week = week + (tech.cancel_after_weeks or tech.setup_weeks)
+    else:
+        fails_week = week + (tech.fail_after_weeks or tech.setup_weeks) if outcome == "fail" else None
     s.holdings[node_id][tech_id] = TechHolding(tech_id, week, week + tech.setup_weeks, coalition_id,
-                                               fraction=fraction if outcome != "fail" else 1.0, fails_week=fails_week)
+                                               fraction=fraction if fails_week is None else 1.0, fails_week=fails_week,
+                                               cancelled=outcome == "cancel")
     ns.pending_tech_cost += cost
     ev = {"week": week, "type": "adopt", "node": node_id, "tech": tech_id,
           "coalition": coalition_id, "one_time": cost, "outcome": outcome}  # the outcome is for analysts; agents never see it
@@ -123,9 +132,11 @@ def abandon_failed(s, week: int) -> None:
     """Failing implementations are given up in their fails_week: running cost stops and the firm may try again."""
     for n in s.net.order:
         for tech_id in sorted(s.holdings[n]):
-            if s.holdings[n][tech_id].fails_week == week:
+            h = s.holdings[n][tech_id]
+            if h.fails_week == week:
                 del s.holdings[n][tech_id]
-                s.events.append({"week": week, "type": "implementation_failed", "node": n, "tech": tech_id})
+                s.events.append({"week": week, "type": "implementation_cancelled" if h.cancelled else "implementation_failed",
+                                 "node": n, "tech": tech_id})
 
 
 def apply_forced(s, week: int) -> None:

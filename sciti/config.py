@@ -86,6 +86,8 @@ class Assumptions(Strict):
     # Baseline level of collaboration, 0 to 1, the same for every firm; 0.5 is neutral. A what-if knob, not a
     # fitted value: rules agents value a group project at 2 x this; LLM agents see it in their persona.
     collaboration: float = Field(0.5, ge=0.0, le=1.0)
+    # Share of the one-time cost spent by a project cancelled in development or pilot (judgment, Kevin 2026-09-24).
+    pilot_cost_share: float = Field(0.4, ge=0.0, le=1.0)
     supplier_cogs_share: float = 0.7
     fg_cover_weeks: float = 2.0
     initial_cash_weeks: float = 13.0

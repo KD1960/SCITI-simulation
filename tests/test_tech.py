@@ -39,7 +39,7 @@ def test_solo_effect_applies_after_setup(world):
     base = base_params("Retail", Assumptions())
     holdings = {"Retail_1": {"ml_forecast": TechHolding("ml_forecast", 1, 5)}}
     assert effective_params("Retail_1", 4, holdings, cat, net, base)["forecast_skill"] == 0.0
-    assert effective_params("Retail_1", 5, holdings, cat, net, base)["forecast_skill"] == pytest.approx(0.1)
+    assert effective_params("Retail_1", 5, holdings, cat, net, base)["forecast_skill"] == pytest.approx(0.03)
 
 
 def test_pair_needs_partner(world):

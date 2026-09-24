@@ -366,7 +366,7 @@ def test_group_bonus_additive_and_visibility_cap(baseline):
     (visibility 0.6) a full chain in a coalition gives 0.6 * 1.25 = 0.75."""
     cat = load_catalog()
     net = build_network(baseline, Assumptions())
-    for node, role, skill in (("Retail_1", "Retail", 0.1), ("DC_Houston", "DC", 0.3)):
+    for node, role, skill in (("Retail_1", "Retail", 0.03), ("DC_Houston", "DC", 0.3)):
         h = {node: {"ml_forecast": TechHolding("ml_forecast", 1, 1, coalition_id="c1")}}
         p = effective_params(node, 2, h, cat, net, base_params(role, Assumptions()))
         assert p["forecast_skill"] == pytest.approx(skill * 1.25)

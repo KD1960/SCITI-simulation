@@ -35,7 +35,10 @@ def _odds(s, tech, node_id, role, week) -> dict:
     if p_fail == 0 and p_partial == 0:
         return {}
     expected = (1 - p_fail - p_partial) + p_partial * tech.partial_fraction
-    return {"implementation_odds": {"fail": round(p_fail, 3), "partial": round(p_partial, 3),
+    nothing = tech.p_cancel + tech.p_fail
+    cancel = round(p_fail * tech.p_cancel / nothing, 3) if nothing else 0.0
+    return {"implementation_odds": {"fail": round(p_fail, 3), "cancelled_in_pilot": cancel,
+                                    "pilot_cost_share": s.cfg.assumptions.pilot_cost_share, "partial": round(p_partial, 3),
                                     "partial_benefit": tech.partial_fraction, "expected_benefit": round(expected, 3)}}
 
 
