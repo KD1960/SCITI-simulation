@@ -1,6 +1,6 @@
 # SCITI 1 — Status
 
-**Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin ruled: keep showing the odds)
+**Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin ruled: keep showing the odds; held-out seeds 31–60 run)
 **Phase:** research engine. MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
 **Next step:** the paid LLM run with implementation risk. Kevin said "yes, set it up" on 2026-09-19, then interrupted to ask for this STATUS update, so **it has not been set up yet**. See §0 "Pending" for what it needs. Other open items are listed there too.
 
@@ -23,7 +23,7 @@ Read this file first in any new thread: §0 is the current picture; §7 is the d
 
 **Switches for comparison runs** (all under `assumptions` unless noted): `implementation_risk: false`; `group_project_draw: false`; learning off = `retry_failure_odds: [1, 1]`, `own_success_failure_odds: 1`, `partner_success_failure_odds: 1`; `catalog_path: sciti/tech/catalog_v1.yaml`; per-technology `depth_exponent`, `p_fail`, `p_partial`, `partial_fraction`, `fail_after_weeks` in the catalog.
 
-**Headline results on the current engine** (profit with inventory, $M over 3 years, 30 paired seeds, vs same-seed no-tech; "works" = the same engine with every adoption succeeding):
+**Headline results on the current engine** (profit with inventory, $M over 3 years, 30 paired seeds, vs same-seed no-tech; "works" = the same engine with every adoption succeeding). **Confirmed on held-out seeds 31–60 (2026-09-23, `docs/sciti2/holdout-seeds-31-60.md`):** calm values all inside their intervals; disruption arms hold in sign, ranking (top and bottom) and share of loss recovered, but not in dollars, because the held-out seeds drew a 52% harsher schedule. Quote disruption results as a share of the no-tech loss.
 
 | | Works | Current |
 |---|---|---|
@@ -335,6 +335,8 @@ Update this table and the "Last updated" line as each task lands.
 **Backup and collaboration slider (2026-09-21):** remote `origin` = `https://github.com/KD1960/SCITI-simulation.git` (**public**, Kevin's choice; history scanned first, only fake test keys); `main` and the four tags pushed. Kevin agreed with draft guesses G1–G7 on the guesses page, chose seeds 1–5, and asked for a slider for the baseline level of collaboration. Built on branch `collaboration-slider` (merged to `main` on Kevin's word the same day; 229 tests pass; goldens unchanged): `assumptions.collaboration` (0–1, default 0.5 = neutral, bounded by the config); every persona carries it; a rules agent multiplies the saving it expects from a *group* project (proposal pass for pair/chain technologies, and every response) by 2 × the level, solo choices untouched; LLM agents see it in their persona and system prompt `v2` explains the scale (`PROMPT_VERSION` is now `v2`; `v1_system.md` kept for old runs). It is a what-if knob: no source gives its scale. Free check (payback rule, calm, 10 seeds; groups per run at 0 / 0.25 / 0.5 / 0.75 / 1): suppliers following 0.0 / 9.4 / 10.1 / 10.2 / 10.2, gain $176M / 191 / 198 / 243 / 269; plain rules 0.0 / 0.0 / 0.3 / 1.4 / 3.1, gain $176M / 173 / 178 / 219 / 219. With following suppliers the slider matters mostly at the bottom (followers go along anyway); with plain rules it matters at the top. Paid test plan: LLM at 0.5 only; rule arms at 0.25 / 0.5 / 0.75.
 
 **Pre-registered paid LLM run (2026-09-22/23, Kevin started it; 10 runs, $26.65, Sonnet 5, seeds 1–5, calm and CM_3 hit, engine `v1.0`):** `docs/sciti2/prereg-llm-run-results.md`; numbers `experiments/prereg_llm_results.csv`; free arms `experiments/prereg_free_arms.csv`. All replay exactly; 0 fallbacks; ≤1.5% malformed. Scorecard against the signed page: G1 right, G2 wrong (no risk intel anywhere before week 40; CM_3 first at week 40–79), G3 right (6–12 groups, inside the rule band), G4 line not met (LLM − rule > +$75M in 3 of 5 seeds each scenario) though LLM ahead on average, G5 wrong (hybrid trails LLM by >$100M in 4 of 5 hit seeds), G7 right. LLM firms now adopt 80–93 times per run across every technology, with 7–57% of attempts failing. Nothing changed after seeing results.
+
+**Held-out seeds 31–60 (2026-09-23, free):** `docs/sciti2/holdout-seeds-31-60.md`; CSVs `*_holdout31-60.csv`. Calm screen confirmed (8 of 8 inside CI, ranking holds within overlapping intervals). Random disruptions at 0.2 partly confirmed: no-tech loss −$3.68B (was −2.42B), so protective gains grew (hybrid +1,094, control tower +539, follow +474, risk intel +419, APS +315); shares of loss recovered within 5 points of the seeds 1–30 values. Seeds 31–60 are now used.
 
 ## 8. Known risks and caveats (2026-09-20)
 
