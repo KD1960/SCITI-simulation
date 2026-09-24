@@ -107,12 +107,19 @@ class LLMPolicy:
             content += f"\n\nYour previous reply was invalid: {feedback}\nReply again with valid JSON only."
         start = time.monotonic()
         resp, last = None, None
+        max_tokens, tin, tout = self.cfg.max_tokens, 0, 0
         for attempt in range(3):
             try:
                 resp = self.client.messages.create(
-                    model=self.cfg.model, max_tokens=self.cfg.max_tokens, system=self.system,
+                    model=self.cfg.model, max_tokens=max_tokens, system=self.system,
                     messages=[{"role": "user", "content": content}],
                     output_config={"format": {"type": "json_schema", "schema": REPLY_SCHEMA}})
+                if getattr(resp, "stop_reason", None) == "max_tokens" and max_tokens == self.cfg.max_tokens:
+                    # cut off (thinking shares the budget): pay for it, then ask once more with twice the room
+                    self.spend.record(resp.usage.input_tokens, resp.usage.output_tokens)
+                    tin, tout = resp.usage.input_tokens, resp.usage.output_tokens
+                    max_tokens *= 2
+                    continue
                 break
             except self._transient as e:
                 last = e
@@ -130,8 +137,8 @@ class LLMPolicy:
                 self.disabled_reason = f"{self.failures} consecutive API failures; last: {type(last).__name__}"
             return self._fallback(brief, self.disabled_reason or f"API error: {type(last).__name__}")
         self.failures = 0
-        tin, tout = resp.usage.input_tokens, resp.usage.output_tokens
-        self.spend.record(tin, tout)
+        self.spend.record(resp.usage.input_tokens, resp.usage.output_tokens)
+        tin, tout = tin + resp.usage.input_tokens, tout + resp.usage.output_tokens
         text = "".join(getattr(b, "text", "") for b in resp.content if getattr(b, "type", "") == "text")
         return Reply(brief.agent, text, tokens_in=tin, tokens_out=tout, latency_s=round(time.monotonic() - start, 3))
 

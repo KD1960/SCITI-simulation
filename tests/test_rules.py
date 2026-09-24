@@ -190,3 +190,16 @@ def test_hiding_implementation_odds_affects_llm_agents_only(baseline):
     assert odds("DC_Houston") and odds("Supplier_1")
     s.cfg.decision.show_implementation_odds = False
     assert odds("DC_Houston") == [] and odds("Supplier_1")
+
+
+def test_rules_policy_uses_the_run_catalog_not_the_default_one():
+    """A response is judged with the catalog the run loaded: with routing's weekly cost raised past any
+    saving, the same invitation that test_response_accepts_affordable_share accepts is declined."""
+    import copy
+    from sciti.tech.catalog import load_catalog
+    cat = copy.deepcopy(load_catalog())
+    cat["routing"].cost_per_week["DC"] = 1e9
+    prop = {"group_id": "g1", "tech": "routing", "from": "MFG_US", "members": ["DC_Houston", "MFG_US"],
+            "your_cost_share": 350000}
+    b = brief({"shipping": 13 * 200000}, pass_="response", proposals=[prop])
+    assert json.loads(RulesPolicy(np.random.default_rng(1), catalog=cat).decide(b).raw)["decisions"][0]["action"] == "decline_group"

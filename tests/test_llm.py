@@ -198,3 +198,19 @@ def test_prompt_version_is_configurable_and_defaults_to_v2():
     p = LLMPolicy(cfg(prompt_version="v1"), RulesPolicy(np.random.default_rng(0)), client=FakeClient([]), sleep=lambda s: None)
     assert "collaboration" not in p.system and p.stats()["prompt_version"] == "v1"
     assert "collaboration" in LLMPolicy(cfg(), RulesPolicy(np.random.default_rng(0)), client=FakeClient([]), sleep=lambda s: None).system
+
+
+class TruncatingClient(FakeClient):
+    """First reply is cut off at max_tokens; later ones finish."""
+    def create(self, **kw):
+        r = super().create(**kw)
+        r.stop_reason = "max_tokens" if len(self.calls) == 1 else "end_turn"
+        return r
+
+
+def test_a_reply_cut_off_at_max_tokens_is_retried_once_with_a_bigger_budget():
+    c = TruncatingClient(['{"decisions": [{"tech": "routing", "action": "ad', '{"decisions": []}'])
+    p = LLMPolicy(cfg(max_tokens=2000), RulesPolicy(np.random.default_rng(0)), client=c, sleep=lambda s: None)
+    r = p.decide(b())
+    assert [k["max_tokens"] for k in c.calls] == [2000, 4000]
+    assert r.raw == '{"decisions": []}' and r.tokens_out == 200 and p.spend.calls == 2

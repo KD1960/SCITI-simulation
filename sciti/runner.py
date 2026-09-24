@@ -30,7 +30,7 @@ def quarter_start(t: int) -> bool:
 def make_policy(cfg, s, client=None):
     """Return (policy, fallback). Tasks 14–15 extend this."""
     kind = cfg.decision.policy
-    fallback = RulesPolicy(s.streams["rules"])
+    fallback = RulesPolicy(s.streams["rules"], s.catalog)
     if kind == "none":
         return NonePolicy(), NonePolicy()
     if kind == "rules":

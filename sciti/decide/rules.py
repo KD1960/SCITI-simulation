@@ -17,17 +17,17 @@ TECH_SAVINGS = {
     "risk_intel": {"stockout": 0.05},
 }
 RISK = {"cautious": 0.7, "balanced": 1.0, "bold": 1.3}
-_CAT = load_catalog()
-TECH_ROLES = {t.id: t.eligible_roles for t in _CAT.values()}
-TECH_BONUS = {t.id: t.group_bonus for t in _CAT.values()}
-TECH_WEEKLY = {t.id: t.cost_per_week for t in _CAT.values()}
 
 
 class RulesPolicy:
     name = "rules"
 
-    def __init__(self, rng):
+    def __init__(self, rng, catalog=None):
         self.rng = rng
+        cat = catalog or load_catalog()  # the run's catalog (catalog_path), not always the default file
+        self.roles = {t.id: t.eligible_roles for t in cat.values()}
+        self.bonus = {t.id: t.group_bonus for t in cat.values()}
+        self.weekly = {t.id: t.cost_per_week for t in cat.values()}
 
     def _saving(self, data, tech_id, noise, bonus=0.0, group=False) -> float:
         costs = data["last_quarter"]["costs"]
@@ -59,7 +59,7 @@ class RulesPolicy:
                 elif e["network_requirement"] == "chain":
                     out.append({"tech": e["id"], "action": "propose_group", "partners": ["chain"], "reason": reason})
                 else:
-                    ps = sorted(p["id"] for p in data["partners"] if p["role"] in TECH_ROLES[e["id"]])
+                    ps = sorted(p["id"] for p in data["partners"] if p["role"] in self.roles[e["id"]])
                     if ps:
                         out.append({"tech": e["id"], "action": "propose_group", "partners": ps, "reason": reason})
             ins = data["rules"].get("insurance")
@@ -78,13 +78,13 @@ class RulesPolicy:
                                     "reason": "cheap protection; no payback needed"})
         else:
             for p in sorted(data.get("proposals", []), key=lambda p: p["group_id"]):
-                if p["tech"] not in TECH_WEEKLY:
+                if p["tech"] not in self.weekly:
                     out.append({"tech": p["tech"], "action": "decline_group", "partners": [],
                                 "reason": "unknown tech", "group_id": p["group_id"]})
                     continue
                 noise = float(self.rng.lognormal(0, 0.3))
-                weekly = TECH_WEEKLY[p["tech"]].get(brief.role, 0.0)
-                net = self._saving(data, p["tech"], noise, TECH_BONUS[p["tech"]], group=True) - weekly
+                weekly = self.weekly[p["tech"]].get(brief.role, 0.0)
+                net = self._saving(data, p["tech"], noise, self.bonus[p["tech"]], group=True) - weekly
                 share = p["your_cost_share"]
                 ok = net > 0 and share / net <= persona["horizon_weeks"] and share <= data["budget_available"]
                 reason = "worth it" if ok else "not worth it"
