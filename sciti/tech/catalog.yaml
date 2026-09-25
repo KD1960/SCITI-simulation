@@ -1,5 +1,6 @@
 # SCITI 1 technology catalog v2 (2026-09-18). Effect sizes are the MID values of docs/sciti2/evidence-table.md;
-# `assumption: true` marks technologies with no measured effect. Costs are still placeholders (spec §6, §9.7).
+# `assumption: true` marks technologies with no measured effect. Costs: control tower, APS, ML forecasting and risk intelligence
+# use the evidence-table ranges (page 4, 2026-09-24, vendor/analyst sources); routing, RFID, robotics and blockchain keep placeholders that sit inside their ranges.
 # p_cancel (stuck in pilot, cancelled: pilot_cost_share of the one-time cost) + p_fail (deployed, then failed: full cost)
 # = the MID odds of getting nothing. Blockchain's split is measured (Capgemini 2018, Vadgama & Tasca 2021: ~10% deployed-then-
 # failed); every other split is 75/25 by judgment (page 3, 2026-09-24). p_partial / partial_fraction / fail_after_weeks: MID values of
@@ -9,8 +10,8 @@
   name: ML demand forecasting
   observatory_name: ML demand forecasting
   eligible_roles: [Retail, DC, MFG]
-  cost_one_time: {Retail: 400000, DC: 600000, MFG: 900000}
-  cost_per_week: {Retail: 4000, DC: 6000, MFG: 9000}
+  cost_one_time: {Retail: 300000, DC: 300000, MFG: 450000}   # page 4: enterprise licence $200-500k/yr, implementation 0.75-1.25x (evidence-table 2.6)
+  cost_per_week: {Retail: 3000, DC: 4000, MFG: 7000}
   setup_weeks: 8
   network_requirement: solo
   group_bonus: 0.25
@@ -27,8 +28,8 @@
   name: Supply chain control tower
   observatory_name: Supply chain control towers
   eligible_roles: [Supplier, CM, MFG, DC, Retail]
-  cost_one_time: {Supplier: 150000, CM: 500000, MFG: 1200000, DC: 700000, Retail: 250000}
-  cost_per_week: {Supplier: 1500, CM: 5000, MFG: 12000, DC: 7000, Retail: 2500}
+  cost_one_time: {Supplier: 25000, CM: 500000, MFG: 1500000, DC: 500000, Retail: 300000}   # page 4: platform $0.5-2M/yr + implementation 1-3x; supplier = onboarding seat $5-25k (evidence-table 2.5)
+  cost_per_week: {Supplier: 300, CM: 6000, MFG: 15000, DC: 6000, Retail: 4000}
   setup_weeks: 12
   network_requirement: chain
   group_bonus: 0.25
@@ -66,8 +67,8 @@
   name: Advanced planning and scheduling
   observatory_name: Advanced planning and scheduling
   eligible_roles: [CM, MFG]
-  cost_one_time: {CM: 600000, MFG: 1500000}
-  cost_per_week: {CM: 6000, MFG: 15000}
+  cost_one_time: {CM: 300000, MFG: 1500000}   # page 4: CM mid-market licence $50-200k + services $30-100k; MFG enterprise multi-plant (evidence-table 2.7)
+  cost_per_week: {CM: 3000, MFG: 10000}
   setup_weeks: 10
   network_requirement: solo
   group_bonus: 0.25
@@ -142,8 +143,8 @@
   name: Supply chain risk intelligence
   observatory_name: Supply chain risk intelligence
   eligible_roles: [CM, MFG, DC]
-  cost_one_time: {CM: 250000, MFG: 500000, DC: 300000}
-  cost_per_week: {CM: 2500, MFG: 5000, DC: 3000}
+  cost_one_time: {CM: 50000, MFG: 100000, DC: 50000}   # page 4: subscription $50-260k/yr, little one-time (evidence-table 2.8)
+  cost_per_week: {CM: 2000, MFG: 5000, DC: 2000}
   setup_weeks: 4
   network_requirement: solo
   group_bonus: 0.25

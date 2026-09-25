@@ -15,7 +15,7 @@
   "purchases": 63384953067.45,
   "shipping": 1893720813.81,
   "stockout": 152403417.37,
-  "tech": 2584000.0
+  "tech": 2844000.0
  },
  "fill_rate": 0.9821521481633402,
  "inventory_change": -1166717849.3206367,
@@ -23,16 +23,16 @@
  "inventory_opening": 3652176842.8820305,
  "mean_lead_days": 8.721042903979725,
  "mean_transit_days": 9.1933572021151,
- "network_profit": 19532275284.01,
- "network_profit_with_inventory": 18365557434.68936,
+ "network_profit": 19532015284.01,
+ "network_profit_with_inventory": 18365297434.68936,
  "on_time_rate": 0.9788007268322229,
  "p95_lead_days": 21.6012493587483,
  "p95_transit_days": 25.659054158876653,
  "profit_by_role": {
   "CM": 1564310240.42,
-  "DC": 2366826206.08,
+  "DC": 2366878206.08,
   "MFG": 3751913251.66,
-  "Retail": 8468735335.08,
+  "Retail": 8468423335.08,
   "Supplier": 3380490250.77
  },
  "quality_mean": 0.9791797451282456,
@@ -40,6 +40,6 @@
  "revenue": 92704807024.98,
  "satisfaction_index": 0.9784613188819671,
  "scrap_value": 1061788391.44,
- "tech_spend": 2584000.0,
+ "tech_spend": 2844000.0,
  "weeks": 52
 }

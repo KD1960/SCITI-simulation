@@ -29,7 +29,7 @@ def test_forced_group_follows_cost_split_by_size(baseline_path, tmp_path):
     d = run(cfg, run_dir=tmp_path / "r")
     ev = [json.loads(l) for l in (d / "events.jsonl").read_text().splitlines()]
     one_time = {e["node"]: e["one_time"] for e in ev if e["type"] == "adopt"}
-    assert one_time == {"DC_Shanghai": 700000, "Retail_5": 250000}
+    assert one_time == {"DC_Shanghai": 500000, "Retail_5": 300000}
 
 
 def test_summary_costs_add_up_to_network_profit(baseline_path, tmp_path):

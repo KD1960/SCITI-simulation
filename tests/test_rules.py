@@ -70,11 +70,11 @@ def test_follower_accepts_a_group_invite_when_the_first_year_cost_is_small():
     """An agent put on rules by decision.rules_roles goes along with a partner's group when the
     first-year cost (its one-time share + 52 weeks of running cost) is at most
     follow_revenue_share (1%) of its yearly revenue (4 x last quarter) and the share fits its
-    budget, even with no payback. Control tower at a DC runs 7,000/week: 250,000 + 364,000 =
-    614,000 against 1% of 4 x 20M = 800,000 -> accept; against 4 x 15M = 600,000 -> decline.
+    budget, even with no payback. Control tower at a DC runs 6,000/week: 300,000 + 312,000 =
+    612,000 against 1% of 4 x 20M = 800,000 -> accept; against 4 x 15M = 600,000 -> decline.
     Without the follower flag the payback rule alone decides (no savings here -> decline)."""
     prop = {"group_id": "g1", "tech": "control_tower", "from": "MFG_US", "members": ["DC_Houston", "MFG_US"],
-            "your_cost_share": 250000}
+            "your_cost_share": 300000}
     def answer(revenue, follows, budget=1e9):
         b = brief({}, budget=budget, pass_="response", proposals=[prop])
         b.data["last_quarter"]["revenue"] = revenue

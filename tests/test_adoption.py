@@ -40,7 +40,7 @@ def test_forced_coalition_splits_cost(baseline):
                                              members=["DC_Shanghai", "Retail_6"])]
     apply_forced(s, 1)
     assert s.holdings["Retail_6"]["control_tower"].coalition_id == "forced_0"
-    assert s.nodes["Retail_6"].pending_tech_cost == pytest.approx((700_000 + 250_000) / 2)
+    assert s.nodes["Retail_6"].pending_tech_cost == pytest.approx((500_000 + 300_000) / 2)
 
 
 def test_validate_forced_adoptions_rejects_ineligible_member(baseline):

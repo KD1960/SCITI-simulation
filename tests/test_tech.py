@@ -64,3 +64,18 @@ def test_group_bonus(world):
     h = {"DC_Houston": {"routing": H("routing", coalition="c1")}}
     # routing ship_cost_mult 0.92, bonus 0.25 → 1 - 0.08*1.25 = 0.90
     assert effective_params("DC_Houston", 2, h, cat, net, base)["ship_cost_mult"] == pytest.approx(0.90)
+
+
+def test_catalog_v3_costs_for_the_four_technologies_where_cost_matters():
+    """Guesses page 4 (Kevin signed 2026-09-24): evidence-based one-time / weekly costs for control tower, APS,
+    ML forecasting and risk intelligence; the other four keep their placeholders."""
+    from sciti.tech.catalog import load_catalog
+    cat = load_catalog()
+    assert cat["control_tower"].cost_one_time == {"Supplier": 25000, "CM": 500000, "MFG": 1500000, "DC": 500000, "Retail": 300000}
+    assert cat["control_tower"].cost_per_week == {"Supplier": 300, "CM": 6000, "MFG": 15000, "DC": 6000, "Retail": 4000}
+    assert cat["aps"].cost_one_time == {"CM": 300000, "MFG": 1500000} and cat["aps"].cost_per_week == {"CM": 3000, "MFG": 10000}
+    assert cat["ml_forecast"].cost_one_time == {"Retail": 300000, "DC": 300000, "MFG": 450000}
+    assert cat["ml_forecast"].cost_per_week == {"Retail": 3000, "DC": 4000, "MFG": 7000}
+    assert cat["risk_intel"].cost_one_time == {"CM": 50000, "MFG": 100000, "DC": 50000}
+    assert cat["risk_intel"].cost_per_week == {"CM": 2000, "MFG": 5000, "DC": 2000}
+    assert cat["routing"].cost_one_time == {"CM": 200000, "MFG": 400000, "DC": 300000}  # unchanged placeholder
