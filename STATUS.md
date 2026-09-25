@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
 **Phase:** research engine, **frozen at tag `v1.5`** for the paper (2026-09-25: Kevin's four rules; v1.4 group-size odds; v1.2–v1.3 two kinds of failure, store forecast skill 0.03, evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
-**Next step (2026-09-25, night):** v1.5 is built, scored and tagged (page 8: Kevin's four rules). Held-out seeds 91–120 are running; the page-7 free arms are rerun on v1.5. **Kevin starts the page-7 paid run on v1.5** (commands in the last reply; output folders `runs/prereg7_*`). Then the write-up.
+**Next step (2026-09-25, night):** v1.5 is built, scored and tagged (page 8: Kevin's four rules). Held-out seeds 91–120 confirm v1.5 (15 of 15 inside intervals, `holdout-seeds-91-120.md`; A2 met); the page-7 free arms are rerun on v1.5. **Kevin starts the page-7 paid run on v1.5** (commands in the last reply; output folders `runs/prereg7_*`). Then the write-up.
 
 Read this file first in any new thread; then `docs/sciti2/GOALS.md` (Kevin's goals and completion criteria, 2026-09-25). §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
 
