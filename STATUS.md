@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
 **Phase:** research engine, at tag `v1.4` (2026-09-25: project odds grow with group size; plus v1.2–v1.3: cancelled pilots vs deployed failures, store forecast skill 0.03, evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
-**Next step (2026-09-25):** Goal A, per `docs/sciti2/GOALS.md`: the model is **frozen at `v1.4`**. A2 (held-out seeds) met. Left: A4, the pre-registered LLM run on v1.4 (page 7 drafted, needs Kevin's signature; ~$35–45), then A5 and the write-up.
+**Next step (2026-09-25, evening):** Kevin signed page 7 but attached four model rules (tier-adjacent groups with a network switch; protection hazard that decays and spikes after a shock; network-wide learning from others' outcomes; two attempts per technology) and chose to **unfreeze v1.4 and build them first as v1.5** (page 8, `docs/sciti2/prereg-8-kevin-rules.md`, drafted, needs his sign-off on the design). Then: headline tables and held-out seeds 91–120 on v1.5, then page 7's paid run on v1.5, then the write-up.
 
 Read this file first in any new thread; then `docs/sciti2/GOALS.md` (Kevin's goals and completion criteria, 2026-09-25). §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
 
