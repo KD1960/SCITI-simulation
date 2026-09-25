@@ -1,6 +1,6 @@
-# Guesses page 7: LLM agents on the frozen model (v1.4) — paper criterion A4
+# Guesses page 7: LLM agents on the frozen model (v1.5) — paper criterion A4
 
-**Status:** DRAFT for Kevin, 2026-09-25. Engine frozen at `v1.4`; no code change is part of this page. This is the LLM run the paper will quote.
+**Status:** SIGNED by Kevin 2026-09-25 (with four model rules attached, built first as page 8 → `v1.5`). **Runs on `v1.5`**, the frozen paper model; the guesses below were written for v1.4 and are kept as signed, with one note: on v1.5 agents also see `shocks` and `network_experience`, groups are tier-adjacent, and network proposals are refused (R1), which bears on G1–G3 and is why the run is worth doing.
 
 ## 0. Why
 
@@ -12,10 +12,10 @@ Identical to pages 1 and 5 (same configs, seeds, scenarios), so all three LLM ru
 
 | | |
 |---|---|
-| Engine | `v1.4`; odds shown; prompt `v2`; collaboration 0.5 |
+| Engine | `v1.5`; odds shown; prompt `v2` (updated for R1–R4); collaboration 0.5 |
 | Scenarios | calm; CM_3 12-week hit |
 | Paid arm | `configs/prereg_llm_calm.yaml`, `configs/prereg_llm_cm3hit.yaml` (unchanged; Sonnet 5 $2 / $10 per MTok; cap $12 per run) |
-| Free same-seed arms | no tech; rule + followers (0.5); hybrid (0.5), rerun on v1.4 |
+| Free same-seed arms | no tech; rule + followers (0.5); hybrid (0.5), rerun on v1.5: `experiments/prereg7_free_arms_v1.5.csv` |
 | Seeds | 1–5; 10 paid runs, about $35–45 (page 5 was $37.28) |
 | Output | `runs/prereg7_llm_calm`, `runs/prereg7_llm_cm3hit` |
 
@@ -36,4 +36,4 @@ Adoptions by technology and by group size; groups formed and their sizes; the sh
 
 No change to anything for this test. After it, the model stays frozen for the paper.
 
-Kevin's guesses: ______ · Signed (Kevin), date: ______
+Kevin's guesses: as drafted (signed with his 2026-09-25 message) · Signed (Kevin), date: 2026-09-25
