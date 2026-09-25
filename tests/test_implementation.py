@@ -265,3 +265,44 @@ def test_briefs_show_the_cancel_share_inside_the_failure_odds(baseline):
     b = build_brief(s, "CM_1", 14, "proposal", personas["CM_1"], [], "partners", 1)
     odds = {e["id"]: e["implementation_odds"] for e in b.data["eligible_technologies"]}["blockchain"]
     assert odds["fail"] == 0.65 and odds["cancelled_in_pilot"] == 0.55 and odds["pilot_cost_share"] == 0.4
+
+
+# Bigger projects fail more often (guesses page 6, 2026-09-25): a group project's odds of getting nothing are
+# multiplied by group_size_odds_per_doubling ** log2(members / 2). Pairs are unchanged.
+
+def test_group_size_multiplies_the_project_odds():
+    from sciti.engine.adoption import group_size_multiplier, project_nothing_prob
+    A = Assumptions()
+    assert A.group_size_odds_per_doubling == 1.4
+    assert group_size_multiplier(2, A) == 1.0 and group_size_multiplier(8, A) == pytest.approx(1.96)
+    assert group_size_multiplier(48, A) == pytest.approx(1.4 ** 4.585, rel=1e-3)
+    ct = load_catalog()["control_tower"]
+    assert project_nothing_prob(ct, 2, A) == pytest.approx(0.25)
+    assert project_nothing_prob(ct, 48, A) == pytest.approx(0.609, abs=0.005)
+    assert group_size_multiplier(48, Assumptions(group_size_odds_per_doubling=1.0)) == 1.0
+
+
+def test_a_48_firm_project_draw_uses_the_scaled_odds(baseline, monkeypatch):
+    """Control tower: u = 0.30 is partial for a pair (nothing 0.25) but cancelled for all 48 (nothing 0.57)."""
+    import sciti.engine.adoption as adoption
+    monkeypatch.setattr(adoption, "implementation_draw", lambda seed, key, tech, week: 0.30 if key == "g1" else 0.99)
+    def outcome(members):
+        s = make_state(baseline); s.cfg.assumptions.implementation_risk = True
+        s.events.append({"week": 1, "type": "coalition", "id": "g1", "tech": "control_tower", "members": members, "kind": "chain"})
+        return adopt(s, members[0], "control_tower", 1, "g1", 1000)["outcome"]
+    assert outcome(["DC_Houston", "Retail_1"]) == "partial"
+    assert outcome(list(load_catalog() and __import__("sciti.network", fromlist=["build_network"]).build_network(baseline, Assumptions()).order)) == "cancel"
+
+
+def test_briefs_show_project_odds_by_group_size_and_invitations_carry_expected_benefit(baseline):
+    from sciti.decide.briefs import build_brief, make_personas
+    s = make_state(baseline); s.cfg.assumptions.implementation_risk = True
+    personas = make_personas(s.net, s.cfg.assumptions, s.streams["personas"])
+    b = build_brief(s, "DC_Houston", 14, "proposal", personas["DC_Houston"], [], "partners", 1)
+    ct = {e["id"]: e for e in b.data["eligible_technologies"]}["control_tower"]
+    assert ct["project_odds_by_members"]["2"]["fail"] == 0.25 and ct["project_odds_by_members"]["48"]["fail"] == pytest.approx(0.609, abs=0.005)
+    assert "project_odds_by_members" not in {e["id"]: e for e in b.data["eligible_technologies"]}["routing"]
+    prop = {"group_id": "g1", "tech": "control_tower", "from": "MFG_US", "members": list(s.net.order), "your_cost_share": 1000}
+    r = build_brief(s, "DC_Houston", 14, "response", personas["DC_Houston"], [], "partners", 1, proposals=[prop])
+    assert r.data["proposals"][0]["project_odds"]["fail"] == pytest.approx(0.609, abs=0.005)
+    assert 0 < r.data["proposals"][0]["project_odds"]["expected_benefit"] < 0.75

@@ -84,7 +84,8 @@ class RulesPolicy:
                     continue
                 noise = float(self.rng.lognormal(0, 0.3))
                 weekly = self.weekly[p["tech"]].get(brief.role, 0.0)
-                net = self._saving(data, p["tech"], noise, self.bonus[p["tech"]], group=True) - weekly
+                expected = p.get("project_odds", {}).get("expected_benefit", 1.0)  # bigger projects fail more
+                net = self._saving(data, p["tech"], noise, self.bonus[p["tech"]], group=True) * expected - weekly
                 share = p["your_cost_share"]
                 ok = net > 0 and share / net <= persona["horizon_weeks"] and share <= data["budget_available"]
                 reason = "worth it" if ok else "not worth it"

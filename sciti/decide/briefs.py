@@ -1,7 +1,7 @@
 """What an agent may see at a quarterly decision (spec §7.2)."""
 from __future__ import annotations
 
-from sciti.engine.adoption import implementation_odds, learning_multiplier
+from sciti.engine.adoption import group_size_multiplier, implementation_odds, learning_multiplier
 from sciti.decide.interface import Brief, PROPOSAL_ACTIONS, RESPONSE_ACTIONS, MAX_REASON_WORDS
 from sciti.engine.state import PROFIT_COST_KEYS
 
@@ -42,6 +42,13 @@ def _odds(s, tech, node_id, role, week) -> dict:
                                     "partial_benefit": tech.partial_fraction, "expected_benefit": round(expected, 3)}}
 
 
+def _project_odds(s, tech, members: int) -> dict:
+    """What a group project of this size faces: one draw for everyone, and bigger projects fail more."""
+    p_fail, p_partial = implementation_odds(tech, "MFG", s.cfg.assumptions, group_size_multiplier(members, s.cfg.assumptions))
+    expected = (1 - p_fail - p_partial) + p_partial * tech.partial_fraction
+    return {"members": members, "fail": round(p_fail, 3), "partial": round(p_partial, 3), "expected_benefit": round(expected, 3)}
+
+
 def _effects_text(tech, role) -> str:
     return "; ".join(f"{e.param} {'x' if e.op == 'mul' else '+'}{(e.by_role or {}).get(role, e.value)}"
                      for e in tech.effects)
@@ -78,7 +85,9 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
              "weekly_cost": t.cost_per_week[node.role], "setup_weeks": t.setup_weeks,
              "network_requirement": t.network_requirement, "group_bonus": t.group_bonus,
              "effects": _effects_text(t, node.role),
-             **(_odds(s, t, node_id, node.role, week) if show_odds else {})}
+             **(_odds(s, t, node_id, node.role, week) if show_odds else {}),
+             **({"project_odds_by_members": {str(n): _project_odds(s, t, n) for n in (2, 4, 8, 16, 48)}}
+                if show_odds and t.network_requirement != "solo" and s.cfg.assumptions.implementation_risk else {})}
             for t in sorted(s.catalog.values(), key=lambda x: x.id)
             if node.role in t.eligible_roles and t.id not in held],
         "rules": {"pass": pass_, "allowed_actions": list(PROPOSAL_ACTIONS if pass_ == "proposal" else RESPONSE_ACTIONS),
@@ -96,5 +105,9 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
                 counts[t] = counts.get(t, 0) + 1
         data["network_adoption_counts"] = dict(sorted(counts.items()))
     if pass_ == "response":
-        data["proposals"] = proposals or []
+        data["proposals"] = [
+            {**p, **({"project_odds": _project_odds(s, s.catalog[p["tech"]], len(p["members"]))}
+                     if show_odds and p["tech"] in s.catalog and s.catalog[p["tech"]].network_requirement != "solo"
+                     and s.cfg.assumptions.implementation_risk else {})}
+            for p in (proposals or [])]
     return Brief(node_id, node.role, week, (week - 1) // 13 + 1, pass_, data)

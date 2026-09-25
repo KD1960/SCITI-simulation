@@ -1,6 +1,6 @@
 # Guesses page 6: bigger projects fail more often
 
-**Status:** DRAFT for Kevin, 2026-09-25. Nothing built. Signing it makes tag `v1.4` after the build.
+**Status:** SIGNED by Kevin 2026-09-25 ("1.4 is fine, yes on all 6, build"). Built the same day on branch `page6-group-size` (243 tests). **Arithmetic correction found while building, rule unchanged:** ×1.4 per doubling gives ×4.7 at 48 members (log2(24) = 4.6 doublings), not ×3.9; so control tower at 48 firms is 61% nothing, not 57%, and blockchain 90%. Guesses left as signed.
 
 ## 0. Why
 

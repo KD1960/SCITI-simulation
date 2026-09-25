@@ -1,6 +1,8 @@
 """Technology adoption bookkeeping (spec §6, §7.3)."""
 from __future__ import annotations
 
+import math
+
 from sciti.rng import implementation_draw
 from sciti.tech.catalog import TechHolding
 
@@ -71,6 +73,16 @@ def implementation_odds(tech, role: str, assumptions, learning: float = 1.0, joi
     return p_fail, p_partial
 
 
+def group_size_multiplier(members: int, assumptions) -> float:
+    """Bigger projects fail more: odds x group_size_odds_per_doubling per doubling of members beyond a pair."""
+    return assumptions.group_size_odds_per_doubling ** math.log2(max(members, 2) / 2)
+
+
+def project_nothing_prob(tech, members: int, assumptions) -> float:
+    """P(a group project of this size is cancelled or fails)."""
+    return implementation_odds(tech, "MFG", assumptions, group_size_multiplier(members, assumptions))[0]
+
+
 def implementation_outcome(u: float, tech, role: str, assumptions, learning: float = 1.0,
                            joiner: bool = False) -> tuple[str, float]:
     """Map a draw u to ("cancel" | "fail" | "partial" | "full", share of the effect delivered). Within the
@@ -100,8 +112,9 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
     outcome, fraction = implementation_outcome(implementation_draw(s.cfg.seed, node_id, tech_id, week), tech, ns.role,
                                                A, learning_multiplier(s, node_id, tech_id, week), joiner=project)
     if project:  # the group's project has one outcome for everyone; "MFG" = no small-firm scaling for the project
+        members = next((len(e["members"]) for e in reversed(s.events) if e["type"] == "coalition" and e["id"] == coalition_id), 2)
         p_outcome, p_fraction = implementation_outcome(implementation_draw(s.cfg.seed, coalition_id, tech_id, week),
-                                                       tech, "MFG", A)
+                                                       tech, "MFG", A, group_size_multiplier(members, A))
         fraction = min(fraction, p_fraction)
         outcome = p_outcome if p_outcome in ("cancel", "fail") else ("full" if fraction == 1.0 else "partial")
     if outcome == "cancel":

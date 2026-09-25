@@ -88,6 +88,9 @@ class Assumptions(Strict):
     collaboration: float = Field(0.5, ge=0.0, le=1.0)
     # Share of the one-time cost spent by a project cancelled in development or pilot (judgment, Kevin 2026-09-24).
     pilot_cost_share: float = Field(0.4, ge=0.0, le=1.0)
+    # A group project's odds of getting nothing are multiplied by this per doubling of members (pair = 1x, 48 firms
+    # = 3.9x; Standish small->grand is ~10x). Judgment, page 6, 2026-09-25. 1.0 switches it off.
+    group_size_odds_per_doubling: float = Field(1.4, ge=1.0)
     supplier_cogs_share: float = 0.7
     fg_cover_weeks: float = 2.0
     initial_cash_weeks: float = 13.0

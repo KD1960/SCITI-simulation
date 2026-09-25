@@ -203,3 +203,12 @@ def test_rules_policy_uses_the_run_catalog_not_the_default_one():
             "your_cost_share": 350000}
     b = brief({"shipping": 13 * 200000}, pass_="response", proposals=[prop])
     assert json.loads(RulesPolicy(np.random.default_rng(1), catalog=cat).decide(b).raw)["decisions"][0]["action"] == "decline_group"
+
+
+def test_rules_response_discounts_by_the_invitation_project_odds():
+    """The same invitation that test_response_accepts_affordable_share accepts is declined when the
+    project is expected to deliver only 5% of its benefit."""
+    prop = {"group_id": "g1", "tech": "routing", "from": "MFG_US", "members": ["DC_Houston", "MFG_US"],
+            "your_cost_share": 350000, "project_odds": {"fail": 0.9, "partial": 0.05, "expected_benefit": 0.05}}
+    b = brief({"shipping": 13 * 200000}, pass_="response", proposals=[prop])
+    assert json.loads(RulesPolicy(np.random.default_rng(1)).decide(b).raw)["decisions"][0]["action"] == "decline_group"
