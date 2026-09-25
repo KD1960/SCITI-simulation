@@ -1,6 +1,6 @@
 # Guesses page 4: evidence-based technology costs
 
-**Status:** DRAFT for Kevin, 2026-09-24. Nothing built. Signing it makes tag `v1.3` after the build.
+**Status:** SIGNED by Kevin 2026-09-24 ("table is fine, yes on all 6, build"). Built the same day on branch `page4-costs` (239 tests; tech golden regenerated for the new costs); comparison running; tag `v1.3` on merge.
 
 ## 0. Why
 
@@ -44,4 +44,4 @@ Rerun the calm screen, random disruptions (rate 0.2) and the E4 default point on
 
 No cost tuned after seeing results; a cost Kevin wants to revisit gets a new page.
 
-Kevin's edits to §1: ______ · Guesses: ______ · Signed (Kevin), date: ______
+Kevin's edits to §1: none · Guesses: agrees with all six · Signed (Kevin), date: 2026-09-24
