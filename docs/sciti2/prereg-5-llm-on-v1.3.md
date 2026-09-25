@@ -1,6 +1,6 @@
 # Guesses page 5: LLM agents on v1.3 (cheap seats, two kinds of failure, real costs)
 
-**Status:** DRAFT for Kevin, 2026-09-24. Engine frozen at tag `v1.3`; no code change is part of this page. Signing it fixes the design and the guesses; the paid run follows.
+**Status:** SIGNED by Kevin 2026-09-24 ("yes on all 6, signed"). Engine `v1.3`, no code change.
 
 ## 0. Why
 
@@ -34,7 +34,7 @@ No change to the brief, prompt, catalog or rules for this test. If G1 fails (LLM
 
 ## 4. Sign-off
 
-- [ ] Kevin's guesses: ______
-- [ ] Prices confirmed on the day; `sciti estimate`; cap.
+- [x] Kevin's guesses: agrees with all six
+- [x] Sonnet 5 $2 / $10 per MTok (2026-09-24); `sciti estimate` $7.26 per run; cap $12 per run
 
-Signed (Kevin), date: ______
+Signed (Kevin), date: 2026-09-24
