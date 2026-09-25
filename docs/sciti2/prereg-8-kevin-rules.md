@@ -1,6 +1,6 @@
 # Guesses page 8: four rules from Kevin (unfreeze v1.4 → v1.5)
 
-**Status:** DRAFT for Kevin, 2026-09-25. Kevin unfroze v1.4 on 2026-09-25 to build these first; the paper's LLM run (page 7, signed) then runs on v1.5. Signing this page fixes the design; tag `v1.5` after the build.
+**Status:** SIGNED by Kevin 2026-09-25 ("design is fine, yes on all 6, build"). Built, run and scored the same day: `prereg-8-results.md`; tag `v1.5`.
 
 ## 0. Kevin's requests (2026-09-25, verbatim in spirit)
 
@@ -38,4 +38,4 @@ Calm screen (forced arms; expect no change except through R4 retries), random di
 
 No change to the four parameters (0.05, 26, 0.5, 2) after the results; a different value is a new page.
 
-Kevin's edits to §1: ______ · Guesses: ______ · Signed (Kevin), date: ______
+Kevin's edits to §1: none · Guesses: agrees with all six · Signed (Kevin), date: 2026-09-25

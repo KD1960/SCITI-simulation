@@ -1,8 +1,8 @@
 # SCITI 1 — Status
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
-**Phase:** research engine, at tag `v1.4` (2026-09-25: project odds grow with group size; plus v1.2–v1.3: cancelled pilots vs deployed failures, store forecast skill 0.03, evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
-**Next step (2026-09-25, evening):** Kevin signed page 7 but attached four model rules (tier-adjacent groups with a network switch; protection hazard that decays and spikes after a shock; network-wide learning from others' outcomes; two attempts per technology) and chose to **unfreeze v1.4 and build them first as v1.5** (page 8, `docs/sciti2/prereg-8-kevin-rules.md`, drafted, needs his sign-off on the design). Then: headline tables and held-out seeds 91–120 on v1.5, then page 7's paid run on v1.5, then the write-up.
+**Phase:** research engine, **frozen at tag `v1.5`** for the paper (2026-09-25: Kevin's four rules; v1.4 group-size odds; v1.2–v1.3 two kinds of failure, store forecast skill 0.03, evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
+**Next step (2026-09-25, night):** v1.5 is built, scored and tagged (page 8: Kevin's four rules). Held-out seeds 91–120 are running; the page-7 free arms are rerun on v1.5. **Kevin starts the page-7 paid run on v1.5** (commands in the last reply; output folders `runs/prereg7_*`). Then the write-up.
 
 Read this file first in any new thread; then `docs/sciti2/GOALS.md` (Kevin's goals and completion criteria, 2026-09-25). §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
 
@@ -36,8 +36,8 @@ Read this file first in any new thread; then `docs/sciti2/GOALS.md` (Kevin's goa
 | Random disruptions, realistic rate (0.2 per site-year; no-tech loss −$2.4B, −3.95 pt fill): risk intelligence ($8M spend) | +564 | **+379** |
 | … control tower ($35M) | +465 | +380 (v1.4: +216) |
 | … APS | +307 | +210 |
-| … payback-rule agents, suppliers follow | +890 | +385 (v1.4: +328) |
-| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss; v1.4: +812, 34%) |
+| … payback-rule agents, suppliers follow | +890 | +385 (v1.5: +401) |
+| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss; v1.5: +612, 25%, because protection now waits for a shock) |
 | CM_3 12-week hit: risk intelligence / APS / control tower | +591 / +366 / +103 | +217 / +217 / +86 |
 
 What holds across every version: routing is the top calm-conditions technology; protection (risk intelligence, APS) is worth buying once disruptions are realistic and the payback rule never buys it; scattered adopters get nothing and chains matter most in disruptions; blockchain is the most fragile technology; costs rarely change a ranking. What implementation risk changed: gains are ~40–60% of the "works" case; agents who know the odds almost stop forming groups (0.2 per run, was 4.7); patience and "suppliers follow" lose most of their value.
@@ -350,6 +350,8 @@ Kevin also read Gavirneni, Kapuscinski & Tayur 1999 and Croson & Donohue 2006 (s
 **Page 6 built and scored (2026-09-25, tag `v1.4`):** `assumptions.group_size_odds_per_doubling` 1.4 (a group project's odds of getting nothing ×1.4 per doubling of members: pair 1×, 48 firms ×4.7, so control tower 25% → 61%, blockchain 65% → 90%); briefs show `project_odds_by_members` on pair/chain technologies and `project_odds` on invitations; the payback rule discounts an invitation by its project's expected benefit (closes the review's asymmetry). 243 tests. `prereg-6-results.md`: G1, G2, G3, G5, G6 right; G4 wrong (rule agents form 1.5 groups per run, not 2–4; gain −$17M). Forced whole-network arms now collapse as the evidence says (control tower all-48: +41 → +21 calm, +387 → +216 at rate 0.2; blockchain all-34: +49 → +10 ns); one-tier and solo arms unchanged; followers' value falls again (+482 → +328). Tables `*_current.csv` on v1.4; v1.3 kept.
 
 **Goal A set; v1.4 frozen; held-out seeds 61–90 (2026-09-25):** `docs/sciti2/GOALS.md` (A1–A5). A2 met: `holdout-seeds-61-90.md`, 15 of 15 headline numbers inside their seeds 1–30 intervals on v1.4, ranking holds. A4 (the paper's LLM run) drafted as page 7 (`prereg-7-llm-on-v1.4.md`), waiting for Kevin's guesses and signature.
+
+**Page 8 built and scored (2026-09-25, tag `v1.5`):** Kevin's four rules. R1 groups span a tier and its neighbours (`decision.allow_network_groups` default false); R2 briefs carry `shocks` (weeks since the last disruption in reach) and rule/hybrid agents buy protection only when a keyed draw beats `protection_hazard_floor` 0.05 + decay with `protection_half_life_weeks` 26 after a shock; R3 briefs carry `network_experience` (outcomes network-wide, last 52 weeks) and rule agents scale savings by `network_sentiment` 0.5; R4 `max_attempts` 2 per firm and technology. System prompt v2 updated in place. 251 tests; goldens unchanged. `prereg-8-results.md`: G1, G3–G6 right; G2 wrong (rule agents form *more* groups, 7 per run, all small: max 6 members). Protection now follows shocks: hybrid − follow +484 → +211 at rate 0.2 and −14 in the single CM_3 hit. Tables `*_current.csv` on v1.5; v1.4 kept.
 
 ## 8. Known risks and caveats (2026-09-20)
 
