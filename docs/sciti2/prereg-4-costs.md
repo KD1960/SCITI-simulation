@@ -1,6 +1,6 @@
 # Guesses page 4: evidence-based technology costs
 
-**Status:** SIGNED by Kevin 2026-09-24 ("table is fine, yes on all 6, build"). Built the same day on branch `page4-costs` (239 tests; tech golden regenerated for the new costs); comparison running; tag `v1.3` on merge.
+**Status:** SIGNED by Kevin 2026-09-24 ("table is fine, yes on all 6, build"). Built the same day on branch `page4-costs` (239 tests; tech golden regenerated for the new costs); scored in `prereg-4-results.md` (G1–G4 right, G5–G6 wrong); tag `v1.3`.
 
 ## 0. Why
 

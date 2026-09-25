@@ -1,7 +1,7 @@
 # SCITI 1 — Status
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
-**Phase:** research engine, at tag `v1.2` (2026-09-24: cancelled pilots vs deployed failures; store forecast skill 0.03). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
+**Phase:** research engine, at tag `v1.3` (2026-09-24: cancelled pilots vs deployed failures; store forecast skill 0.03; evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
 **Next step:** the paid LLM run with implementation risk. Kevin said "yes, set it up" on 2026-09-19, then interrupted to ask for this STATUS update, so **it has not been set up yet**. See §0 "Pending" for what it needs. Other open items are listed there too.
 
 Read this file first in any new thread: §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
@@ -31,7 +31,7 @@ Read this file first in any new thread: §0 is the current picture; §7 is the d
 | … warehouse robotics | +124 | +63 |
 | … RFID | +83 | +49 |
 | … blockchain | +321 | +47 |
-| … control tower | +63 | +33 |
+| … control tower | +63 | +33 (v1.3: +41) |
 | … APS / ML forecasting / risk intelligence | +20 ns / −7 ns / −8 | +10 ns / −4 ns / −7 |
 | Random disruptions, realistic rate (0.2 per site-year; no-tech loss −$2.4B, −3.95 pt fill): risk intelligence ($8M spend) | +564 | **+379** |
 | … control tower ($35M) | +465 | +380 |
@@ -343,12 +343,12 @@ Kevin also read Gavirneni, Kapuscinski & Tayur 1999 and Croson & Donohue 2006 (s
 
 **Page 3 built and scored (2026-09-24, tag `v1.2`):** two kinds of failure (`p_cancel`: stuck in pilot, pays `assumptions.pilot_cost_share` 0.4 of the one-time cost, no running cost, retry after `cancel_after_weeks` 26; `p_fail`: deployed then failed, as before; blockchain 0.55 / 0.10 measured, others split 75/25 by judgment; briefs show `cancelled_in_pilot`), and ML `forecast_skill` at stores 0.1 → 0.03 (M5). 238 tests. `docs/sciti2/prereg-3-results.md`: G1 wrong (blockchain +47 → +49, not +60–90: one-time costs are too small for the split to matter), G2–G5 right. Unguessed: rule + followers +385 → +476 at rate 0.2 (cheaper failed group pilots for suppliers). Headline tables now `*_current.csv` on v1.2; v1.1 tables kept as `*_v1.1.csv`. **Also merged, from the review's "soon" list:** a reply cut off at `max_tokens` is retried once with double the budget (paid for both); `RulesPolicy` takes the run's catalog instead of loading the default at import.
 
-**Page 4 drafted (2026-09-24, not signed):** `docs/sciti2/prereg-4-costs.md`, evidence-based costs for control tower, APS, ML forecasting and risk intelligence (the placeholders that matter), sized by the model's firm revenues (suppliers $0.1–0.6B/yr, others $0.5–8B/yr, so enterprise tiers); six guesses; expects little to move except cheaper supplier seats in control tower chains.
+**Page 4 built and scored (2026-09-24, tag `v1.3`):** evidence-based costs for control tower, APS, ML forecasting and risk intelligence (`prereg-4-costs.md` §1; catalog header updated; 239 tests; tech golden regenerated). `prereg-4-results.md`: G1–G4 right (calm values within $6M of v1.2; hybrid 38%), G5 wrong (at costs ×10 only routing still pays; RFID and robotics go negative too), G6 wrong in size: **rule agents form 4.8 groups per calm run (was 0.13) and adopt control tower 27 times (was 0.5)** because a supplier's seat now costs $25k not $150k; network gain unchanged (+$278M). This reverses "agents who know the odds stop forming groups": that rested on the supplier seat price. Tables now `*_current.csv` on v1.3; v1.2 kept as `*_v1.2.csv`; stress arm `tech_screen_results_costs_x10.csv`.
 
 ## 8. Known risks and caveats (2026-09-20)
 
 - **Evidence quality varies by parameter.** Measured or well supported: RFID record accuracy, ML forecast skill (M5), routing cost, control tower's concavity and partner-additivity, blockchain's project failure rate. Weak or borrowed: blockchain's defect effect, APS capacity, risk intelligence (no study measures monitoring vs outage length), all failure odds except blockchain's, every learning magnitude, the depth exponent. The catalog's `assumption: true` flags and the citation log's `read_level` column say which is which.
-- **Costs are still placeholders.** They change the answer only for control tower, APS, and ML forecasting.
+- **Costs:** control tower, APS, ML forecasting and risk intelligence use evidence-table ranges since v1.3 (vendor/analyst sources); routing, RFID, robotics and blockchain keep placeholders that sit inside their ranges. Costs are 0.01–0.1% of revenue and do not rank technologies, but the supplier seat price decides whether rule agents join chains.
 - **Single-seed LLM results** are patterns, not estimates; all three paid runs predate implementation risk.
 - **Known simplifications** (details in `implementation-risk-results.md` and `multi-party-combination-proposal.md` §6): a failed project never delivers anything (no late failure); the whole one-time cost is sunk; disruptions have one severity and are independent across sites; a forced "all eligible" adoption of a pair/chain technology is one project, so that arm is all-or-nothing per seed; experience does not depreciate.
 - **Don't loosen a failing test threshold** without Kevin's agreement; don't tune a judgment parameter because it gives a nicer result (the rejected "joiner odds" are the cautionary case).
