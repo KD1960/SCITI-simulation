@@ -2,9 +2,9 @@
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
 **Phase:** research engine, at tag `v1.4` (2026-09-25: project odds grow with group size; plus v1.2–v1.3: cancelled pilots vs deployed failures, store forecast skill 0.03, evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
-**Next step:** the paid LLM run with implementation risk. Kevin said "yes, set it up" on 2026-09-19, then interrupted to ask for this STATUS update, so **it has not been set up yet**. See §0 "Pending" for what it needs. Other open items are listed there too.
+**Next step (2026-09-25):** Goal A, per `docs/sciti2/GOALS.md`: the model is **frozen at `v1.4`**; run the two remaining paper criteria (held-out seeds 61–90, free; one pre-registered LLM run on v1.4, ~$35–40), then write up.
 
-Read this file first in any new thread: §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
+Read this file first in any new thread; then `docs/sciti2/GOALS.md` (Kevin's goals and completion criteria, 2026-09-25). §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
 
 ---
 
