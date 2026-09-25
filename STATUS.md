@@ -1,7 +1,7 @@
 # SCITI 1 — Status
 
 **Last updated:** 2026-09-23 (pages 1 and 2 both run and scored; engine at `v1.1`; Kevin read all 10 key sources; page 3 drafted: failure split + store forecast skill 0.03)
-**Phase:** research engine, at tag `v1.3` (2026-09-24: cancelled pilots vs deployed failures; store forecast skill 0.03; evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
+**Phase:** research engine, at tag `v1.4` (2026-09-25: project odds grow with group size; plus v1.2–v1.3: cancelled pilots vs deployed failures, store forecast skill 0.03, evidence-based costs). MVP built and audited; catalog v2 (evidence-based); implementation risk, learning, group project draws, and concave depth all on by default; E1–E4, the hybrid benchmark, and the random-disruption experiment rerun on that engine. 221 tests pass. `main` is clean at `9a449bb` (130 commits).
 **Next step:** the paid LLM run with implementation risk. Kevin said "yes, set it up" on 2026-09-19, then interrupted to ask for this STATUS update, so **it has not been set up yet**. See §0 "Pending" for what it needs. Other open items are listed there too.
 
 Read this file first in any new thread: §0 is the current picture; §7 is the dated history behind it (newest last). Then read the spec and the plan index.
@@ -30,14 +30,14 @@ Read this file first in any new thread: §0 is the current picture; §7 is the d
 | Calm, every eligible firm attempts: routing | +444 | **+299** (v1.2: +299) |
 | … warehouse robotics | +124 | +63 |
 | … RFID | +83 | +49 |
-| … blockchain | +321 | +47 |
-| … control tower | +63 | +33 (v1.3: +41) |
+| … blockchain | +321 | +47 (v1.4: +10 ns, same reason) |
+| … control tower | +63 | +33 (v1.4: +21; the all-48 arm is one project that now fails 61% of the time; one tier +6) |
 | … APS / ML forecasting / risk intelligence | +20 ns / −7 ns / −8 | +10 ns / −4 ns / −7 |
 | Random disruptions, realistic rate (0.2 per site-year; no-tech loss −$2.4B, −3.95 pt fill): risk intelligence ($8M spend) | +564 | **+379** |
-| … control tower ($35M) | +465 | +380 |
+| … control tower ($35M) | +465 | +380 (v1.4: +216) |
 | … APS | +307 | +210 |
-| … payback-rule agents, suppliers follow | +890 | +385 (v1.2: +476) |
-| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss; v1.2: +889, 37%) |
+| … payback-rule agents, suppliers follow | +890 | +385 (v1.4: +328) |
+| … hybrid (payback rule + insurance habit) | +1,444 | **+818** (34% of the loss; v1.4: +812, 34%) |
 | CM_3 12-week hit: risk intelligence / APS / control tower | +591 / +366 / +103 | +217 / +217 / +86 |
 
 What holds across every version: routing is the top calm-conditions technology; protection (risk intelligence, APS) is worth buying once disruptions are realistic and the payback rule never buys it; scattered adopters get nothing and chains matter most in disruptions; blockchain is the most fragile technology; costs rarely change a ranking. What implementation risk changed: gains are ~40–60% of the "works" case; agents who know the odds almost stop forming groups (0.2 per run, was 4.7); patience and "suppliers follow" lose most of their value.
@@ -347,7 +347,7 @@ Kevin also read Gavirneni, Kapuscinski & Tayur 1999 and Croson & Donohue 2006 (s
 
 **Page 5 run and scored (2026-09-25, `v1.3` unchanged; 10 paid runs, $37.28, all replay exactly):** `docs/sciti2/prereg-5-results.md`. G2 and G5 right; G1, G3, G4, G6 wrong. Findings: (1) with $25k supplier seats, control tower becomes a **48-firm network project** in nearly every run, cancelled and retried as one draw (up to 147 attempts per run); (2) **risk intel is bought in week 1 again** in 8 of 10 runs, because its one-time cost fell to $50–100k, so the page 2 "late protection" finding was about price and odds together; (3) the LLM edge over the rule is gone in calm (+240 vs +248) and seed-driven in the hit (+407 vs +240, +636 of it from seed 2). **Open design question for the next page:** should a 48-member group project have the same cancel/fail odds as a pair? (evidence says consortia fail more with more members.)
 
-**Page 6 drafted (2026-09-25, not signed):** `docs/sciti2/prereg-6-group-size-odds.md`: a group project's odds of getting nothing scale ×1.4 per doubling of members (pair unchanged; 48 firms ×3.9; Standish small→grand is ×10), shown in briefs; free rerun; six guesses. Warns that the screen's forced all-eligible arms are one project and will collapse under it.
+**Page 6 built and scored (2026-09-25, tag `v1.4`):** `assumptions.group_size_odds_per_doubling` 1.4 (a group project's odds of getting nothing ×1.4 per doubling of members: pair 1×, 48 firms ×4.7, so control tower 25% → 61%, blockchain 65% → 90%); briefs show `project_odds_by_members` on pair/chain technologies and `project_odds` on invitations; the payback rule discounts an invitation by its project's expected benefit (closes the review's asymmetry). 243 tests. `prereg-6-results.md`: G1, G2, G3, G5, G6 right; G4 wrong (rule agents form 1.5 groups per run, not 2–4; gain −$17M). Forced whole-network arms now collapse as the evidence says (control tower all-48: +41 → +21 calm, +387 → +216 at rate 0.2; blockchain all-34: +49 → +10 ns); one-tier and solo arms unchanged; followers' value falls again (+482 → +328). Tables `*_current.csv` on v1.4; v1.3 kept.
 
 ## 8. Known risks and caveats (2026-09-20)
 

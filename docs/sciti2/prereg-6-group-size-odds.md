@@ -32,3 +32,7 @@ Rerun on seeds 1–30: calm screen, random disruptions (rate 0.2), E4 default po
 No tuning of 1.4 after the results; if Kevin wants another value it is a new page. The forced all-eligible arms are reported as they come.
 
 Kevin's view on the shape/value: ______ · Guesses: ______ · Signed (Kevin), date: ______
+
+## 5. Scored 2026-09-25
+
+`prereg-6-results.md`: G1, G2, G3, G5, G6 right; G4 wrong. Tag `v1.4`.
