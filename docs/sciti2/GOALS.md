@@ -11,7 +11,7 @@ Completion criteria (from the 2026-09-20 engineering review, applied to v1.4):
 | # | Criterion | Status 2026-09-25 |
 |---|---|---|
 | A1 | Model frozen at one tag; every reported number made at that tag | `v1.4` frozen today; headline tables `*_current.csv` are on v1.4 |
-| A2 | Headline results confirmed on held-out seeds | Done for v1.1 (seeds 31–60); **to do for v1.4 on seeds 61–90** (free) |
+| A2 | Headline results confirmed on held-out seeds | **Done for v1.4, 2026-09-25:** seeds 61–90, 15 of 15 numbers inside their intervals, ranking holds (`holdout-seeds-61-90.md`) |
 | A3 | Key sources read by a human | Done: ten sources read by Kevin, 2026-09-24 |
 | A4 | LLM-agent claims rest on more than one seed, at the frozen tag | Pages 1 and 5 used 5 seeds on v1.0 and v1.3; **to do: one pre-registered LLM run on v1.4** (5 seeds × calm and CM_3 hit, ~$35–40) |
 | A5 | Every result the paper quotes has a results CSV stamped with the commit, and its write-up names the guesses page it came from | Mostly in place since 2026-09-20; check when the paper draft is assembled |
