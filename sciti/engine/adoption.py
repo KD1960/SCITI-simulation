@@ -11,6 +11,23 @@ class AdoptionError(Exception):
     pass
 
 
+def reach(net, start, edges) -> set:
+    """Every node reachable from start along edges (upstream or downstream)."""
+    seen, stack = set(), [start]
+    while stack:
+        for nxt in edges[stack.pop()]:
+            if nxt not in seen:
+                seen.add(nxt)
+                stack.append(nxt)
+    return seen
+
+
+def attempts_used_up(events, node_id: str, tech_id: str, max_attempts: int) -> bool:
+    """Kevin's rule R4: two cancelled or failed attempts and the firm may not try this technology again."""
+    return bool(max_attempts) and sum(e["type"] in ("implementation_failed", "implementation_cancelled")
+                                      and e["node"] == node_id and e["tech"] == tech_id for e in events) >= max_attempts
+
+
 def validate_forced_adoptions(forced_adoptions, net, catalog, weeks: int) -> None:
     """Fail early on a bad forced-adoption config (spec §9.5), before any run dir exists."""
     seen_pairs = set()
@@ -106,6 +123,8 @@ def adopt(s, node_id: str, tech_id: str, week: int, coalition_id: str | None = N
         raise AdoptionError(f"{node_id} ({ns.role}) is not eligible for {tech_id}")
     if tech_id in s.holdings[node_id]:
         raise AdoptionError(f"{node_id} already holds {tech_id}")
+    if attempts_used_up(s.events, node_id, tech_id, s.cfg.assumptions.max_attempts):
+        raise AdoptionError(f"{node_id} has used its two attempts at {tech_id}")
     cost = tech.cost_one_time[ns.role] if one_time is None else one_time
     A = s.cfg.assumptions
     project = coalition_id is not None and tech.network_requirement != "solo" and A.group_project_draw

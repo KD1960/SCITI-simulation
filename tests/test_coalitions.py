@@ -31,7 +31,8 @@ def events(run_dir):
 def test_group_members_chain_and_network(baseline):
     s = make_state(baseline)
     chain = group_members(s.net, s.holdings, s.catalog, "DC_Shanghai", "control_tower", ["chain"])
-    assert "Retail_8" in chain and "MFG_China" in chain and "Supplier_1" in chain and "Retail_1" not in chain
+    assert "Retail_8" in chain and "MFG_China" in chain and "Retail_1" not in chain
+    assert "Supplier_1" not in chain  # Kevin's rule R1: a DC's group reaches factories and stores, not suppliers
     net_all = group_members(s.net, s.holdings, s.catalog, "DC_Shanghai", "wh_robotics", ["network"])
     assert net_all == ["DC_Dubai", "DC_Houston", "DC_Shanghai", "DC_Sofia"]
     pair = group_members(s.net, s.holdings, s.catalog, "CM_1", "blockchain", ["Supplier_1", "Supplier_2"])
@@ -161,7 +162,7 @@ def test_formation_never_exceeds_budget(baseline, baseline_path, tmp_path, monke
             continue
         script.append({"agent": n, "week": 14, "pass": "response",
                        "replies": [reply(d("control_tower", "accept_group", group_id=gid))]})
-    out = run(mock_cfg(baseline_path, tmp_path, script), run_dir=tmp_path / "r")
+    out = run(mock_cfg(baseline_path, tmp_path, script, allow_network_groups=True), run_dir=tmp_path / "r")
     ev = events(out)
     for e in [e for e in ev if e["type"] == "adopt"]:
         assert e["one_time"] <= big_budget + 1e-6

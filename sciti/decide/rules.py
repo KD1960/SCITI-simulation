@@ -34,6 +34,10 @@ class RulesPolicy:
         persona = data["you"]["persona"]
         base = sum(costs.get(k, 0.0) * f for k, f in TECH_SAVINGS.get(tech_id, {}).items()) / 13
         together = 2 * persona["collaboration"] if group else 1.0  # assumptions.collaboration; 0.5 is neutral
+        x = data.get("network_experience", {}).get(tech_id)
+        if x:  # Kevin's rule R3: what the network saw with this technology last year moves the expected saving
+            good, bad = x["full"] + x["partial"], x["cancelled"] + x["failed"]
+            together *= 1 + data["rules"].get("network_sentiment", 0.0) * (good - bad) / (good + bad + 1)
         return base * noise * RISK[persona["risk"]] * (1 + bonus) * together
 
     def decide(self, brief: Brief, feedback: str | None = None) -> Reply:
@@ -63,6 +67,8 @@ class RulesPolicy:
                     if ps:
                         out.append({"tech": e["id"], "action": "propose_group", "partners": ps, "reason": reason})
             ins = data["rules"].get("insurance")
+            if ins and float(self.rng.random()) >= ins.get("hazard", 1.0):  # Kevin's rule R2: mostly after a shock
+                ins = None
             if ins:  # cheap protection that last quarter's costs cannot justify (decision.insurance_techs)
                 revenue = data["last_quarter"].get("revenue") or data["budget_available"] / persona["budget_share"]
                 listed = {e["id"]: e for e in data["eligible_technologies"] if e["id"] in ins["techs"]}

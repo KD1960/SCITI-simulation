@@ -44,6 +44,8 @@ class DecisionCfg(Strict):
     # insurance_revenue_share of yearly revenue: the habit seen in LLM agents (E5, 2026-09-18).
     insurance_techs: list[str] = Field(default_factory=list)
     insurance_revenue_share: float = 0.005
+    # Kevin's rule R1 (page 8, 2026-09-25): groups span a tier and its neighbours; whole-network groups need this.
+    allow_network_groups: bool = False
     # Diagnostic switches (guesses page 2, 2026-09-23); defaults reproduce v1.0.
     prompt_version: Literal["v1", "v2"] = "v2"          # system prompt file for LLM agents
     show_implementation_odds: bool = True               # False hides the odds from LLM agents' briefs (rules agents keep them)
@@ -91,6 +93,15 @@ class Assumptions(Strict):
     # A group project's odds of getting nothing are multiplied by this per doubling of members (pair = 1x, 48 firms
     # = 3.9x; Standish small->grand is ~10x). Judgment, page 6, 2026-09-25. 1.0 switches it off.
     group_size_odds_per_doubling: float = Field(1.4, ge=1.0)
+    # Kevin's rules R2-R4 (page 8, 2026-09-25). R2: rule/hybrid agents buy protection when a keyed draw beats
+    # floor + (1 - floor) * 0.5 ** (weeks since the last shock in reach / half life); 1.0 = always, as before.
+    protection_hazard_floor: float = Field(0.05, ge=0.0, le=1.0)
+    protection_half_life_weeks: float = 26.0
+    # R3: rule agents scale a technology's expected saving by 1 + this * (good - bad) / (good + bad + 1) over the
+    # network's outcomes in the last 52 weeks; 0 switches it off.
+    network_sentiment: float = 0.5
+    # R4: after this many cancelled or failed attempts a firm may not try a technology again; 0 = unlimited.
+    max_attempts: int = 2
     supplier_cogs_share: float = 0.7
     fg_cover_weeks: float = 2.0
     initial_cash_weeks: float = 13.0

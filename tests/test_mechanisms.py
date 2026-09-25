@@ -330,7 +330,7 @@ def test_chain_acceptance_forms_at_threshold_fails_below(baseline, monkeypatch):
     proposer = "CM_1"
     gid = "q2_CM_1_control_tower"
 
-    def fake_group_members(net, holdings, catalog, prop, tech, partners):
+    def fake_group_members(net, holdings, catalog, prop, tech, partners, *rest):
         return sorted([prop] + invited_pool)
 
     def run_round(n_accept):

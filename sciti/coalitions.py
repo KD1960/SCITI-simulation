@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from sciti.decide.briefs import budget_available, build_brief
 from sciti.decide.interface import ReplyError, brief_hash, parse_reply, validate_reply
-from sciti.engine.adoption import adopt, coalition_kind, drop
+from sciti.engine.adoption import attempts_used_up, reach as _reach, adopt, coalition_kind, drop
 
 
 @dataclass
@@ -18,17 +18,12 @@ class DecisionContext:
     recent: dict
 
 
-def _reach(net, start, edges):
-    seen, stack = set(), [start]
-    while stack:
-        for nxt in edges[stack.pop()]:
-            if nxt not in seen:
-                seen.add(nxt)
-                stack.append(nxt)
-    return seen
+TIERS = ("Supplier", "CM", "MFG", "DC", "Retail")
 
 
-def group_members(net, holdings, catalog, proposer, tech_id, partners) -> list[str]:
+def group_members(net, holdings, catalog, proposer, tech_id, partners, events=(), max_attempts=0) -> list[str]:
+    """Who a proposal reaches: the proposer's tier and its neighbours only (Kevin's rule R1), never a firm that has
+    used up its attempts at this technology (R4). ["network"] is every eligible firm; the caller decides if it is allowed."""
     tech = catalog[tech_id]
     if partners == ["network"]:
         pool = set(net.order)
@@ -37,8 +32,13 @@ def group_members(net, holdings, catalog, proposer, tech_id, partners) -> list[s
     else:
         pool = set(partners)
     pool.add(proposer)
+    tier = TIERS.index(net.nodes[proposer].role)
     return sorted(n for n in pool if net.nodes[n].role in tech.eligible_roles
-                  and (n == proposer or tech_id not in holdings[n]))
+                  and (partners == ["network"] or abs(TIERS.index(net.nodes[n].role) - tier) <= 1)
+                  and (n == proposer or tech_id not in holdings[n])
+                  and not attempts_used_up(events, n, tech_id, max_attempts))
+
+
 
 
 def _ask(s, t, ctx, brief, max_new):
@@ -113,7 +113,12 @@ def run_decision_round(s, t: int, ctx: DecisionContext) -> dict:
                     adopt(s, n, dcs.tech, t)
                     new_count[n] += 1
             elif dcs.action == "propose_group":
-                members = group_members(net, s.holdings, s.catalog, n, dcs.tech, dcs.partners)
+                if dcs.partners == ["network"] and not D.allow_network_groups:
+                    s.events.append({"week": t, "type": "coalition_failed", "id": None, "tech": dcs.tech,
+                                     "proposer": n, "accepted": [], "reason": "network groups off"})
+                    continue
+                members = group_members(net, s.holdings, s.catalog, n, dcs.tech, dcs.partners, s.events,
+                                        s.cfg.assumptions.max_attempts)
                 invited = [m for m in members if m != n]
                 if not invited:
                     s.events.append({"week": t, "type": "coalition_failed", "id": None, "tech": dcs.tech,

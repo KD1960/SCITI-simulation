@@ -1,7 +1,7 @@
 """What an agent may see at a quarterly decision (spec §7.2)."""
 from __future__ import annotations
 
-from sciti.engine.adoption import group_size_multiplier, implementation_odds, learning_multiplier
+from sciti.engine.adoption import attempts_used_up, group_size_multiplier, implementation_odds, learning_multiplier, reach
 from sciti.decide.interface import Brief, PROPOSAL_ACTIONS, RESPONSE_ACTIONS, MAX_REASON_WORDS
 from sciti.engine.state import PROFIT_COST_KEYS
 
@@ -49,6 +49,40 @@ def _project_odds(s, tech, members: int) -> dict:
     return {"members": members, "fail": round(p_fail, 3), "partial": round(p_partial, 3), "expected_benefit": round(expected, 3)}
 
 
+def protection_hazard(weeks_since: int | None, assumptions) -> float:
+    """Kevin's rule R2: the chance a rule agent buys protection this quarter, high right after a shock and decaying."""
+    floor = assumptions.protection_hazard_floor
+    if weeks_since is None:
+        return floor
+    return floor + (1 - floor) * 0.5 ** (weeks_since / assumptions.protection_half_life_weeks)
+
+
+def _shocks(s, node_id: str, week: int) -> dict:
+    """Disruptions so far at any site upstream or downstream of this firm, and how long ago the last one began."""
+    near = reach(s.net, node_id, s.net.upstream) | reach(s.net, node_id, s.net.downstream) | {node_id}
+    seen = [e for e in s.events if e["type"] == "disruption_start" and e["target"] in near and e["week"] <= week]
+    recent = [{"target": e["target"], "start_week": e["week"], "weeks": e["until"] - e["week"], "active": week < e["until"]}
+              for e in seen[-5:]]
+    return {"weeks_since_last": week - seen[-1]["week"] if seen else None, "recent": recent}
+
+
+def _network_experience(s, week: int) -> dict:
+    """Kevin's rule R3: what every firm can see of the network's outcomes with each technology in the last 52 weeks."""
+    out = {t: {"full": 0, "partial": 0, "cancelled": 0, "failed": 0} for t in s.catalog}
+    for e in s.events:
+        if e["week"] < week - 52 or e["week"] > week or e.get("tech") not in out:
+            continue
+        if e["type"] == "implementation_failed":
+            out[e["tech"]]["failed"] += 1
+        elif e["type"] == "implementation_cancelled":
+            out[e["tech"]]["cancelled"] += 1
+        elif e["type"] == "adopt" and e["outcome"] in ("full", "partial"):
+            h = s.holdings.get(e["node"], {}).get(e["tech"])
+            if h is not None and h.adopted_week == e["week"] and week >= h.active_week:  # live, so the outcome is public
+                out[e["tech"]][e["outcome"]] += 1
+    return out
+
+
 def _effects_text(tech, role) -> str:
     return "; ".join(f"{e.param} {'x' if e.op == 'mul' else '+'}{(e.by_role or {}).get(role, e.value)}"
                      for e in tech.effects)
@@ -89,13 +123,19 @@ def build_brief(s, node_id, week, pass_, persona, recent, visibility, max_new, p
              **({"project_odds_by_members": {str(n): _project_odds(s, t, n) for n in (2, 4, 8, 16, 48)}}
                 if show_odds and t.network_requirement != "solo" and s.cfg.assumptions.implementation_risk else {})}
             for t in sorted(s.catalog.values(), key=lambda x: x.id)
-            if node.role in t.eligible_roles and t.id not in held],
+            if node.role in t.eligible_roles and t.id not in held
+            and not attempts_used_up(s.events, node_id, t.id, s.cfg.assumptions.max_attempts)],
+        "shocks": _shocks(s, node_id, week),
+        "network_experience": _network_experience(s, week),
         "rules": {"pass": pass_, "allowed_actions": list(PROPOSAL_ACTIONS if pass_ == "proposal" else RESPONSE_ACTIONS),
                   "max_new_adoptions": max_new, "max_reason_words": MAX_REASON_WORDS},
     }
     if s.cfg.decision.insurance_techs:
         data["rules"]["insurance"] = {"techs": list(s.cfg.decision.insurance_techs),
-                                      "revenue_share": s.cfg.decision.insurance_revenue_share}
+                                      "revenue_share": s.cfg.decision.insurance_revenue_share,
+                                      "hazard": round(protection_hazard(data["shocks"]["weeks_since_last"], s.cfg.assumptions), 4)}
+    data["rules"]["network_sentiment"] = s.cfg.assumptions.network_sentiment
+    data["rules"]["group_scope"] = "your tier and the tiers next to it" + ("" if D.allow_network_groups else "; whole-network groups are off")
     if node.role in s.cfg.decision.rules_roles:
         data["rules"]["follow_revenue_share"] = s.cfg.decision.follow_revenue_share
     if visibility == "network":
