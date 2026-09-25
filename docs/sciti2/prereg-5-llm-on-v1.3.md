@@ -38,3 +38,7 @@ No change to the brief, prompt, catalog or rules for this test. If G1 fails (LLM
 - [x] Sonnet 5 $2 / $10 per MTok (2026-09-24); `sciti estimate` $7.26 per run; cap $12 per run
 
 Signed (Kevin), date: 2026-09-24
+
+## 5. Scored 2026-09-25
+
+`prereg-5-results.md`: G2, G5 right; G1, G3, G4, G6 wrong. $37.28; all ten replay exactly.
