@@ -345,6 +345,8 @@ Kevin also read Gavirneni, Kapuscinski & Tayur 1999 and Croson & Donohue 2006 (s
 
 **Page 4 built and scored (2026-09-24, tag `v1.3`):** evidence-based costs for control tower, APS, ML forecasting and risk intelligence (`prereg-4-costs.md` §1; catalog header updated; 239 tests; tech golden regenerated). `prereg-4-results.md`: G1–G4 right (calm values within $6M of v1.2; hybrid 38%), G5 wrong (at costs ×10 only routing still pays; RFID and robotics go negative too), G6 wrong in size: **rule agents form 4.8 groups per calm run (was 0.13) and adopt control tower 27 times (was 0.5)** because a supplier's seat now costs $25k not $150k; network gain unchanged (+$278M). This reverses "agents who know the odds stop forming groups": that rested on the supplier seat price. Tables now `*_current.csv` on v1.3; v1.2 kept as `*_v1.2.csv`; stress arm `tech_screen_results_costs_x10.csv`.
 
+**Page 5 drafted (2026-09-24, not signed):** `docs/sciti2/prereg-5-llm-on-v1.3.md`, the page-1 design rerun on `v1.3` (10 paid runs, ~$25–30): do LLM agents join chains now that supplier seats are cheap, and does it pay? Six guesses. No code change.
+
 ## 8. Known risks and caveats (2026-09-20)
 
 - **Evidence quality varies by parameter.** Measured or well supported: RFID record accuracy, ML forecast skill (M5), routing cost, control tower's concavity and partner-additivity, blockchain's project failure rate. Weak or borrowed: blockchain's defect effect, APS capacity, risk intelligence (no study measures monitoring vs outage length), all failure odds except blockchain's, every learning magnitude, the depth exponent. The catalog's `assumption: true` flags and the citation log's `read_level` column say which is which.
