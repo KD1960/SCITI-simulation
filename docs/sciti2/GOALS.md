@@ -13,10 +13,10 @@ Completion criteria (from the 2026-09-20 engineering review, applied to v1.4):
 | A1 | Model frozen at one tag; every reported number made at that tag | **Done: `v1.5`**, headline tables `*_current.csv` rerun on it |
 | A2 | Headline results confirmed on held-out seeds | **Done for v1.5, 2026-09-25:** seeds 91–120, 15 of 15 inside their intervals, ranking holds (`holdout-seeds-91-120.md`) |
 | A3 | Key sources read by a human | Done: ten sources read by Kevin, 2026-09-24 |
-| A4 | LLM-agent claims rest on more than one seed, at the frozen tag | Pages 1 and 5 used 5 seeds on v1.0 and v1.3; page 7 signed 2026-09-25; **run it on v1.5** (5 seeds × calm and CM_3 hit, ~$35–45) |
+| A4 | LLM-agent claims rest on more than one seed, at the frozen tag | Pages 1 and 5 used 5 seeds on v1.0 and v1.3; **Done 2026-09-26:** page 7 run on v1.5, 10 runs, $34.30, all replay exactly (`prereg-7-results.md`) |
 | A5 | Every result the paper quotes has a results CSV stamped with the commit, and its write-up names the guesses page it came from | Mostly in place since 2026-09-20; check when the paper draft is assembled |
 
-Done = A1–A5 all met. Then: results write-up → paper draft.
+A1–A4 met on 2026-09-26. **Left: A5 (assemble the results write-up, checking every quoted number is stamped), then the paper draft.**
 
 ## Goal B (later): teaching — a workshop run of the replay view
 

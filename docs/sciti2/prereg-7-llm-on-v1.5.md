@@ -37,3 +37,7 @@ Adoptions by technology and by group size; groups formed and their sizes; the sh
 No change to anything for this test. After it, the model stays frozen for the paper.
 
 Kevin's guesses: as drafted (signed with his 2026-09-25 message) · Signed (Kevin), date: 2026-09-25
+
+## 5. Scored 2026-09-26
+
+`prereg-7-results.md`: G3, G6 right; G1, G2, G4, G5 wrong. $34.30; all ten replay exactly.
