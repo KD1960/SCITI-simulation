@@ -64,10 +64,11 @@ What the LLM agents did: 76–102 adoptions among the 18 LLM firms per run acros
 
 Earlier model versions (for the history section only, not results): on v1.0 (page 1) the LLM arm was ahead in calm and behind in the hit on average; on v1.3 (page 5) it matched the rule in calm; the differences trace to the rule side (supplier seat prices, protection hazards) rather than to the agents.
 
-## 7. Structure and stress (E2, E3 on v1.5) — filled in when the reruns finish
+## 7. Structure and stress on v1.5 (`who_with_whom_results_current.csv`, `stress_test_results_current.csv`, 30 seeds)
 
-*(pending: `stress_test_results_current.csv`, `who_with_whom_results_current.csv`)*
+**Who adopts with whom (E3).** Same technology, six adopters in different structures ($M, calm / CM_3 12-week hit): control tower scattered across tiers **−4 / −4**; three DC–store pairs +3 / +1; upstream chain (suppliers–CM–factory) +3 / **+27**; downstream chain (factory–DCs–stores) +5 / **+47**; all 48 as one project +21 / +46. Blockchain: scattered −1 / −1; three supplier–CM pairs +1 / +1; CM_1 hub +2 / +2; CM_3 hub (the hit site) **+9 / +9**; all 34 +10 / +12. Reading: scattered adopters get nothing; connected chains earn most, and almost all of it in disruptions; a six-firm downstream chain recovers as much as all 48 firms; blockchain value follows the volume covered.
 
+**Stress (E2).** 21 scenarios (demand growth ×0.5 / 1 / 1.5 × no hit, or a 4- or 12-week hit at CM_3, CM_4 or DC_Shanghai) × 4 arms. No-tech cost of a 12-week CM hit at baseline growth: **−$1.7 to −2.0B** (a 4-week hit sits inside the buffers: −$8 to −25M). Risk intelligence on its 10 firms recovers **+$221–254M** of a 12-week CM hit and costs $4M in calm; APS recovers +$221–266M and is worth +$15M in calm at baseline growth, +$72M at ×1.5 growth (capacity binds); control tower (48 firms, one project) +$37–46M in CM hits; payback-rule agents +$260–270M in every scenario at baseline growth (they never buy protection, so the hit does not change what they earn). Reading: risk intelligence is insurance, APS is partial insurance that also pays when demand grows, and the rule's gain is scenario-blind.
 ## 8. Provenance
 
 Every CSV above carries `git_commit` and `run_date`; run folders were deleted after reading. The eight pre-registered pages (`prereg-*.md`) hold the guesses signed before each run and the scorecards after. Citation log: `citations/citations.csv` (245 rows; the ten headline sources read in full by Kevin, 2026-09-24). Paid LLM spend for the whole project: $135 across 2026-09-18..26.
