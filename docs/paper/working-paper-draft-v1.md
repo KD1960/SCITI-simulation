@@ -14,6 +14,8 @@ We ask how AI agents choose in this setting when they are given the same informa
 
 ## 2. The simulator
 
+[FIG1]
+
 **Network.** The Ridge Line case supply chain: 30 suppliers, 4 component makers (CMs) in Taipei, Bangalore, Guadalajara and Munich, factories in Los Angeles and Shenzhen, distribution centres in Houston, Dubai, Sofia and Shanghai, and eight retail regions from Columbus to Melbourne. Demand for three products is drawn from the case's five-year history with growth and autocorrelated noise; lanes carry multimodal lead-time and cost draws; supplier shipments carry random defect shares. The engine steps weekly for 156 weeks and tracks stock, cash, orders, fill rate, on-time delivery, quality, bullwhip and CO₂ for every firm. Network profit is measured with inventory valued at a single network-wide cost basis, so that technologies that move stock between firms are not rewarded for the move.
 
 **Technologies.** Eight from a 48-item technology lexicon: ML demand forecasting, control towers, item-level RFID, advanced planning (APS), routing/TMS, warehouse robotics, blockchain traceability and risk intelligence. Each acts on a named engine parameter (forecast skill, visibility weight, record-error and shrink multipliers, capacity, freight cost, handling cost and dispatch delay, defect share, weeks of outage saved). Effect sizes are the MID values of an evidence table built from 96 effect-size sources; three (APS, blockchain, risk intelligence) have no measured effect and are flagged as assumptions. Costs are evidence-based for the four technologies where cost changes any answer and placeholders inside their ranges for the rest; every cost is 0.01–0.1% of a firm's revenue, which is why costs do not rank technologies here.
@@ -30,6 +32,8 @@ We ask how AI agents choose in this setting when they are given the same informa
 
 Table 1 (write-up §2): with every eligible firm forced to adopt, routing is the one large calm-conditions gain (+$299M over three years, and a 148,000-tonne CO₂ cut); warehouse robotics is the only clear service gain (+0.14 fill points); RFID earns +$50M. The information technologies (control tower, ML forecasting) cut upstream bullwhip by a quarter but earn little in calm; risk intelligence is pure cost until something goes wrong. With realistic random disruptions (Table 2, write-up §3; no-tech loss −$2.4B), protection pays: risk intelligence on ten firms recovers 16% of the loss for $8M, and the hybrid rule recovers a quarter.
 
+[FIG2]
+
 ### 3.2 Who should adopt with whom
 
 Table 6 (write-up §7): scattered adopters of a network technology earn nothing (−$4M); a six-firm downstream control tower chain recovers +$47M in a twelve-week CM outage, as much as all 48 firms adopting together, because the whole-network project usually fails; blockchain's value follows the volume of parts covered, and the best hub is the site that gets hit. Structure matters most in disruptions and hardly at all in calm.
@@ -41,6 +45,8 @@ The payback rule's gain is scenario-blind: about +$260–280M whether or not a h
 ### 3.4 LLM agents against the rules
 
 Table 5 (write-up §6), five seeds, pre-registered: LLM agents earn +$315M in calm and +$315M in the CM_3 outage, against +$212M / +$208M for the payback rule with followers and +$221M / +$203M for the hybrid; ahead of the rule in 4 of 5 calm seeds and 5 of 5 hit seeds, with fill rates 0.02–0.30 points above no-tech. What they did differently: they bought risk intelligence in the first quarter in 8 of 10 runs, while the rules waited; they formed 10–17 groups per run, all tier-adjacent, the biggest 13 members, and never proposed a whole-network project once the model refused them; they adopted 76–102 times among 18 firms across every technology and kept adopting through cancelled pilots (14–28% of their attempts) and deployed failures (0–9%).
+
+[FIG3]
 
 ### 3.5 Where the edge comes from, and what it cost to learn that
 
@@ -60,4 +66,50 @@ Teaching use of the replay view; a company-supplied scenario; a second model fam
 
 ## References
 
-To be assembled from `docs/sciti2/citations/citations.csv` (245 rows) and the evidence documents listed in STATUS §0.
+ARC Advisory Group. (2016). *TMS ROI: Improving*. https://www.arcweb.com/industry-best-practices/tms-roi-improving
+
+Auburn University RFID Lab, & GS1 US. (2018). *Project Zipper: EPC-enabled item-level RFID in the retail supply chain* [Report]. Reported in Supply Chain Dive, https://www.supplychaindive.com/news/RFID-100-accurate-ROI-Auburn/539449/
+
+Banker, S. (2016, May 31). General Motors embraces supply chain resiliency. *Forbes*. https://www.forbes.com/sites/stevebanker/2016/05/31/general-motors-embraces-supply-chain-resiliency/
+
+Beck, A. (2018). *Measuring the impact of RFID in retailing: Key lessons from 10 case-study companies*. ECR Retail Loss Group.
+
+Cachon, G. P., & Fisher, M. (2000). Supply chain inventory management and the value of shared information. *Management Science, 46*(8), 1032–1048.
+
+Capgemini Research Institute. (2018). *Does blockchain hold the key to a new age of supply chain transparency and trust?* https://www.capgemini.com/in-en/wp-content/uploads/sites/18/2022/05/Digital-Blockchain-in-Supply-Chain-Report-4.pdf
+
+Chen, F. (1998). Echelon reorder points, installation reorder points, and the value of centralized demand information. *Management Science, 44*(12), S221–S234.
+
+Croson, R., & Donohue, K. (2006). Behavioral causes of the bullwhip effect and the observed value of inventory information. *Management Science, 52*(3), 323–336.
+
+Dyer, J. H., & Hatch, N. W. (2006). Relation-specific capabilities and barriers to knowledge transfers: Creating advantage through network relationships. *Strategic Management Journal, 27*(8), 701–719.
+
+Gavirneni, S., Kapuscinski, R., & Tayur, S. (1999). Value of information in capacitated supply chains. *Management Science, 45*(1), 16–24.
+
+Hardgrave, B. C., Aloysius, J. A., & Goyal, S. (2013). RFID-enabled visibility and retail inventory record inaccuracy: Experiments in the field. *Production and Operations Management, 22*(4), 843–856.
+
+Hendricks, K. B., & Singhal, V. R. (2005). An empirical analysis of the effect of supply chain disruptions on long-run stock price performance and equity risk of the firm. *Production and Operations Management, 14*(1), 35–52.
+
+Jain, N., Girotra, K., & Netessine, S. (2022). Recovering from supply interruptions: The role of sourcing strategies. *Manufacturing & Service Operations Management, 24*(2), 846–863.
+
+Kim, J.-Y., & Miner, A. S. (2007). Vicarious learning from the failures and near-failures of others: Evidence from the U.S. commercial banking industry. *Academy of Management Journal, 50*(3), 687–714.
+
+Litan, A. (2021, May 25). Six questions for Gartner's Avivah Litan [Interview]. *CoinDesk*. https://www.coindesk.com/markets/2021/05/25/consensus-2021-6-questions-for-gartners-avivah-litan
+
+Makridakis, S., Spiliotis, E., & Assimakopoulos, V. (2022). M5 accuracy competition: Results, findings, and conclusions. *International Journal of Forecasting, 38*(4), 1346–1364.
+
+McKinsey & Company. (2023). *Getting warehouse automation right*. https://www.mckinsey.com/capabilities/operations/our-insights/getting-warehouse-automation-right
+
+McKinsey Global Institute. (2020). *Risk, resilience, and rebalancing in global value chains*. https://www.mckinsey.com/capabilities/operations/our-insights/risk-resilience-and-rebalancing-in-global-value-chains
+
+Norrman, A., & Jansson, U. (2004). Ericsson's proactive supply chain risk management approach after a serious sub-supplier accident. *International Journal of Physical Distribution & Logistics Management, 34*(5), 434–456.
+
+Sahin, F., & Robinson, E. P. (2002). Flow coordination and information sharing in supply chains: Review, implications, and directions for future research. *Decision Sciences, 33*(4), 505–536.
+
+Standish Group. (2020). *CHAOS report 2020: Beyond infinity*. https://opencommons.org/CHAOS_Report_on_IT_Project_Outcomes
+
+Supply Chain Dive. (2022, November 30). *Maersk, IBM to shut down TradeLens blockchain platform*. https://www.supplychaindive.com/news/Maersk-IBM-shut-down-TradeLens/637580/
+
+Vadgama, N., & Tasca, P. (2021). An analysis of blockchain adoption in supply chains between 2010 and 2020. *Frontiers in Blockchain, 4*, 610476. https://arxiv.org/abs/2010.00092
+
+*Note.* The full evidence base (245 logged sources, with how each was read) is `docs/sciti2/citations/citations.csv` in the repository. Journal issue and page numbers above should be checked against the originals before submission; several were completed from memory of the standard citations.
